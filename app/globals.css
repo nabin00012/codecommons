@@ -1,0 +1,397 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+  }
+
+  .cosmic {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 263.4 70% 50.4%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 263.4 70% 50.4%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Cosmic mode styles */
+.cosmic-text {
+  @apply relative;
+}
+
+.cosmic-text::after {
+  content: "";
+  @apply absolute inset-0 bg-gradient-to-r from-primary/50 to-purple-500/50 opacity-0 transition-opacity duration-300;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.cosmic .cosmic-text::after {
+  @apply opacity-100;
+}
+
+.cosmic-glow {
+  @apply transition-all duration-300;
+}
+
+.cosmic .cosmic-glow {
+  @apply relative;
+  filter: drop-shadow(0 0 5px hsl(var(--primary)));
+}
+
+.cosmic-card {
+  @apply transition-all duration-300;
+}
+
+.cosmic .cosmic-card {
+  @apply border-primary/20 bg-gradient-to-b from-background to-background/95;
+  box-shadow: 0 0 20px -10px hsl(var(--primary) / 0.2);
+}
+
+.cosmic .cosmic-card:hover {
+  box-shadow: 0 0 25px -5px hsl(var(--primary) / 0.3);
+}
+
+.cosmic-button {
+  @apply transition-all duration-300;
+}
+
+.cosmic .cosmic-button {
+  @apply bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-700;
+  box-shadow: 0 0 15px -5px hsl(var(--primary) / 0.5);
+}
+
+.cosmic-float {
+  @apply transition-all duration-300;
+}
+
+.cosmic .cosmic-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+/* Cosmic card effect */
+.cosmic-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.cosmic-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: linear-gradient(to bottom, transparent, transparent, rgba(var(--primary), 0.03));
+  z-index: 1;
+  pointer-events: none;
+}
+
+.cosmic-card:hover::before {
+  background: linear-gradient(to bottom, transparent, transparent, rgba(var(--primary), 0.08));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cosmic-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(var(--primary), 0.1) 0%, transparent 25%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+
+  .cosmic-card:hover::after {
+    opacity: 1;
+  }
+}
+
+.cosmic-mode .cosmic-card {
+  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.cosmic-mode .cosmic-card:hover {
+  box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.3);
+}
+
+/* Add this if you don't already have it */
+:root {
+  --primary-rgb: 124, 58, 237;
+}
+
+.dark {
+  --primary-rgb: 167, 139, 250;
+}
+
+/* Enhanced Project Card Styles */
+/* ========================== */
+
+/* Project card base styling */
+.project-card {
+  /* Modern card styling with glass effect */
+  @apply rounded-xl border border-slate-200/50 dark:border-slate-800/50;
+  /* Smooth transitions for all properties */
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  /* Glass effect for modern UI */
+  backdrop-filter: blur(8px);
+  /* Subtle initial shadow */
+  box-shadow: 0 4px 20px -8px rgba(0, 0, 0, 0.1);
+  /* Positioning for spotlight effect */
+  position: relative;
+  /* Ensure proper stacking context */
+  isolation: isolate;
+  /* Prevent overflow for spotlight effect */
+  overflow: hidden;
+}
+
+/* Enhanced hover state */
+.project-card:hover {
+  /* Subtle scale effect */
+  transform: translateY(-5px) scale(1.02);
+  /* Enhanced shadow on hover */
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15), 0 0 20px -5px rgba(var(--primary-rgb), 0.2);
+  /* Border glow effect */
+  @apply border-primary/30 dark:border-primary/20;
+}
+
+/* Dark mode specific hover enhancement */
+.dark .project-card:hover {
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.3), 0 0 25px -5px rgba(var(--primary-rgb), 0.25);
+}
+
+/* Cosmic mode specific hover enhancement */
+.cosmic .project-card:hover {
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.4), 0 0 30px -5px rgba(var(--primary-rgb), 0.35);
+}
+
+/* Project card skeleton animation */
+.project-card-skeleton {
+  @apply rounded-xl;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Project title styling */
+.project-title {
+  @apply font-semibold text-lg;
+  /* Smooth color transition on hover */
+  transition: color 0.3s ease;
+}
+
+.project-card:hover .project-title {
+  @apply text-primary;
+}
+
+/* Project description styling */
+.project-description {
+  @apply text-sm leading-relaxed;
+  /* Improved line height for readability */
+  line-height: 1.5;
+}
+
+/* Technology badge styling */
+.project-tech-badge {
+  @apply text-xs py-0 px-2 rounded-full;
+  /* Subtle background */
+  @apply bg-slate-100/80 dark:bg-slate-800/80;
+  /* Smooth transition */
+  transition: all 0.2s ease;
+}
+
+.project-tech-badge:hover {
+  @apply bg-primary/10 text-primary;
+  transform: translateY(-1px);
+}
+
+/* View project button styling */
+.project-view-btn {
+  @apply relative overflow-hidden;
+  /* Gradient background */
+  background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.8));
+  /* Transition for hover effect */
+  transition: all 0.3s ease;
+}
+
+.project-view-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.7s ease;
+}
+
+.project-view-btn:hover::before {
+  left: 100%;
+}
+
+/* Action button styling */
+.project-action-btn {
+  @apply bg-white/20 backdrop-blur-md text-white border-white/30;
+  @apply hover:bg-white/30 hover:text-white;
+  /* Scale effect on hover */
+  transition: all 0.2s ease;
+}
+
+.project-action-btn:hover {
+  transform: scale(1.05);
+}
+
+/* Filter button styling */
+.project-filter-btn {
+  @apply rounded-full;
+  transition: all 0.2s ease;
+}
+
+.project-filter-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* Spotlight effect */
+.spotlight-effect {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    800px circle at var(--x, 50%) var(--y, 50%),
+    rgba(var(--primary-rgb), 0.06),
+    transparent 40%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 2;
+}
+
+.project-card:hover .spotlight-effect {
+  opacity: 1;
+}
+
+/* Custom animation for card appearance */
+@keyframes cardAppear {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Apply the animation to cards */
+.project-card {
+  animation: cardAppear 0.5s ease forwards;
+}
+
+/* Staggered animation delay for cards */
+.project-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.project-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.project-card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.project-card:nth-child(4) {
+  animation-delay: 0.4s;
+}
+.project-card:nth-child(5) {
+  animation-delay: 0.5s;
+}
+.project-card:nth-child(6) {
+  animation-delay: 0.6s;
+}
