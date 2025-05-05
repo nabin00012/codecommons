@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import Editor from "@monaco-editor/react";
+import { useState, useEffect } from "react";
+import Editor, { Monaco } from "@monaco-editor/react";
+import { useSettings } from "@/lib/context/settings-context";
 
 interface CodeEditorProps {
   initialValue?: string;
@@ -19,10 +20,26 @@ export function CodeEditor({
   theme = "vs-dark",
 }: CodeEditorProps) {
   const [value, setValue] = useState(initialValue);
+  const { settings } = useSettings();
 
   const handleEditorChange = (value: string | undefined) => {
     setValue(value || "");
     onChange?.(value);
+  };
+
+  const handleEditorDidMount = (editor: any, monaco: Monaco) => {
+    // Configure editor options
+    editor.updateOptions({
+      fontSize: settings.editor.fontSize,
+      tabSize: settings.editor.tabSize,
+      wordWrap: settings.editor.wordWrap ? "on" : "off",
+      minimap: { enabled: settings.editor.minimap },
+      lineNumbers: "on",
+      roundedSelection: false,
+      scrollBeyondLastLine: false,
+      readOnly: false,
+      automaticLayout: true,
+    });
   };
 
   return (
@@ -34,15 +51,22 @@ export function CodeEditor({
         value={value}
         onChange={handleEditorChange}
         theme={theme}
+        onMount={handleEditorDidMount}
+        loading={
+          <div className="w-full h-full flex items-center justify-center">
+            Loading editor...
+          </div>
+        }
         options={{
-          minimap: { enabled: false },
-          fontSize: 14,
+          minimap: { enabled: settings.editor.minimap },
+          fontSize: settings.editor.fontSize,
+          tabSize: settings.editor.tabSize,
+          wordWrap: settings.editor.wordWrap ? "on" : "off",
           lineNumbers: "on",
           roundedSelection: false,
           scrollBeyondLastLine: false,
           readOnly: false,
           automaticLayout: true,
-          tabSize: 2,
         }}
       />
     </div>

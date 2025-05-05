@@ -8,6 +8,7 @@ import { SettingsProvider } from "@/lib/context/settings-context";
 import { HelpProvider } from "@/lib/context/help-context";
 import { Toaster } from "@/components/ui/toaster";
 import { CosmicMode } from "@/components/cosmic-mode";
+import "@/lib/monaco-config";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,16 +26,19 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        suppressHydrationWarning
-        className="min-h-screen bg-background antialiased"
-      >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <body className={inter.className}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
           <UserProvider>
             <SettingsProvider>
               <HelpProvider>
-                <CosmicMode>{children}</CosmicMode>
+                {children}
                 <Toaster />
+                <CosmicMode />
               </HelpProvider>
             </SettingsProvider>
           </UserProvider>
