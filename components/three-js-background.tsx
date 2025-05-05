@@ -52,7 +52,7 @@ export default function ThreeJsBackground() {
         0.1,
         1000
       );
-      camera.position.z = 30;
+      camera.position.z = 15;
       cameraRef.current = camera;
 
       // Create renderer
@@ -72,16 +72,17 @@ export default function ThreeJsBackground() {
         const starGeometry = new THREE.BufferGeometry();
         const starMaterial = new THREE.PointsMaterial({
           color: 0xffffff,
-          size: 0.1,
+          size: 1.0,
           transparent: true,
           opacity: 0.8,
+          sizeAttenuation: true,
         });
 
         const starVertices: number[] = [];
         for (let i = 0; i < 10000; i++) {
-          const x = (Math.random() - 0.5) * 2000;
-          const y = (Math.random() - 0.5) * 2000;
-          const z = (Math.random() - 0.5) * 2000;
+          const x = (Math.random() - 0.5) * 1000;
+          const y = (Math.random() - 0.5) * 1000;
+          const z = (Math.random() - 0.5) * 1000;
           starVertices.push(x, y, z);
         }
 
