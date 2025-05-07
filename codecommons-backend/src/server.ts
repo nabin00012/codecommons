@@ -13,18 +13,39 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
+// CORS configuration
+const corsOptions = {
+  origin: true, // Allow all origins
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Basic route for testing
+app.get("/", (req, res) => {
+  res.json({ message: "Welcome to CodeCommons API" });
+});
 
 // Routes
 app.use("/api/auth", authRoutes);
 
-// Basic route
-app.get("/", (req, res) => {
-  res.json({ message: "Welcome to CodeCommons API" });
-});
+// Error handling middleware
+app.use(
+  (
+    err: any,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    console.error(err.stack);
+    res.status(500).json({ message: "Something went wrong!" });
+  }
+);
 
 // Start server
 const PORT = process.env.PORT || 5000;
