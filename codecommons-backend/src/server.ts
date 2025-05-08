@@ -3,6 +3,9 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db";
 import authRoutes from "./routes/auth";
+import courseRoutes from "./routes/course";
+import assignmentRoutes from "./routes/assignment";
+import submissionRoutes from "./routes/submission";
 
 // Load environment variables
 dotenv.config();
@@ -33,6 +36,9 @@ app.get("/", (req, res) => {
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/courses", courseRoutes);
+app.use("/api/assignments", assignmentRoutes);
+app.use("/api/submissions", submissionRoutes);
 
 // Error handling middleware
 app.use(
@@ -48,7 +54,7 @@ app.use(
 );
 
 // Start server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5050;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

@@ -40,13 +40,13 @@ export const protect: Middleware = async (
 
       next();
     } catch (error) {
-      console.error(error);
-      res.status(401).json({ message: "Not authorized, token failed" });
+      next({ status: 401, message: "Not authorized, token failed" });
     }
+    return;
   }
 
   if (!token) {
-    res.status(401).json({ message: "Not authorized, no token" });
+    next({ status: 401, message: "Not authorized, no token" });
   }
 };
 
@@ -59,6 +59,6 @@ export const teacherOnly: Middleware = (
   if (req.user && req.user.role === "teacher") {
     next();
   } else {
-    res.status(403).json({ message: "Not authorized as a teacher" });
+    next({ status: 403, message: "Not authorized as a teacher" });
   }
 };
