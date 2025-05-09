@@ -1,24 +1,37 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { useToast } from "@/components/ui/use-toast"
-import { useUser } from "@/lib/context/user-context"
-import { Code, ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react"
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useToast } from "@/components/ui/use-toast";
+import { useUser } from "@/lib/context/user-context";
+import { Code, ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
+import { authService } from "@/lib/services/auth";
+
+interface FormErrors {
+  name?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+}
 
 export default function SignupPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { toast } = useToast()
-  const { setUser } = useUser()
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
+  const { login } = useUser();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -26,125 +39,129 @@ export default function SignupPage() {
     password: "",
     confirmPassword: "",
     role: "student",
-  })
+  });
 
   const [errors, setErrors] = useState({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
-  })
+  });
 
-  const [isLoading, setIsLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const redirectTo = searchParams.get("redirectTo") || ""
+  const redirectTo = searchParams.get("redirectTo") || "";
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
     // Clear error when user starts typing
     if (errors[name as keyof typeof errors]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }))
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
-  }
+  };
 
   const handleRoleChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, role: value }))
-  }
+    setFormData((prev) => ({ ...prev, role: value }));
+  };
 
   const validateForm = () => {
-    let isValid = true
-    const newErrors = { ...errors }
+    const errors: FormErrors = {};
 
-    // Validate name
     if (!formData.name.trim()) {
-      newErrors.name = "Name is required"
-      isValid = false
+      errors.name = "Name is required";
     }
 
-    // Validate email
-    const emailRegex = /^[^\s@]+@jainuniversity\.ac\.in$/
     if (!formData.email.trim()) {
-      newErrors.email = "Email is required"
-      isValid = false
-    } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = "Please use your Jain University email (@jainuniversity.ac.in)"
-      isValid = false
+      errors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = "Email is invalid";
     }
 
-    // Validate password
     if (!formData.password) {
-      newErrors.password = "Password is required"
-      isValid = false
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters"
-      isValid = false
+      errors.password = "Password is required";
+    } else if (formData.password.length < 8) {
+      errors.password = "Password must be at least 8 characters";
+    } else if (!/[A-Z]/.test(formData.password)) {
+      errors.password = "Password must contain at least one uppercase letter";
     }
 
-    // Validate confirm password
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match"
-      isValid = false
+      errors.confirmPassword = "Passwords do not match";
     }
 
-    setErrors(newErrors)
-    return isValid
-  }
+    setErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!validateForm()) {
-      return
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
-      // Simulate API call for account creation
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      // Create user object
-      const newUser = {
-        id: Math.random().toString(36).substring(2, 9),
+      const response = await authService.register({
         name: formData.name,
         email: formData.email,
+        password: formData.password,
         role: formData.role as "student" | "teacher",
+      });
+
+      // Login the user with the response data
+      login({
+        id: response._id,
+        name: response.name,
+        email: response.email,
+        role: response.role,
         avatar: "/placeholder.svg?height=40&width=40",
-      }
-
-      // Set user in context
-      setUser(newUser)
-
-      // Store in localStorage for persistence
-      localStorage.setItem("codecommons_user", JSON.stringify(newUser))
+      });
 
       toast({
         title: "Account created successfully!",
         description: `Welcome to CodeCommons, ${formData.name}!`,
-      })
+      });
 
       // Handle redirection based on role and redirectTo parameter
       if (redirectTo) {
-        router.push(redirectTo)
+        router.push(redirectTo);
       } else if (formData.role === "teacher") {
-        router.push("/dashboard/teacher")
+        router.push("/dashboard/teacher");
       } else {
-        router.push("/dashboard")
+        router.push("/dashboard");
       }
     } catch (error) {
+      console.error("Registration error:", error);
+
+      // Extract error message
+      let errorMessage = "Registration failed. Please try again.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      // Check for specific error cases
+      if (errorMessage.includes("already exists")) {
+        errorMessage = "An account with this email already exists.";
+      } else if (errorMessage.includes("Invalid response")) {
+        errorMessage =
+          "Unable to connect to the server. Please try again later.";
+      }
+
       toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
+        title: "Registration failed",
+        description: errorMessage,
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-muted/30">
@@ -161,8 +178,12 @@ export default function SignupPage() {
           <div className="flex justify-center">
             <Code className="h-6 w-6 text-primary cosmic-glow" />
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight cosmic-text">Create an account</h1>
-          <p className="text-sm text-muted-foreground">Join the Jain University coding community</p>
+          <h1 className="text-2xl font-semibold tracking-tight cosmic-text">
+            Create an account
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Join the Jain University coding community
+          </p>
         </div>
 
         <Card className="cosmic-card">
@@ -184,7 +205,9 @@ export default function SignupPage() {
                   disabled={isLoading}
                   className={errors.name ? "border-red-500" : ""}
                 />
-                {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
+                {errors.name && (
+                  <p className="text-xs text-red-500">{errors.name}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -199,7 +222,9 @@ export default function SignupPage() {
                   disabled={isLoading}
                   className={errors.email ? "border-red-500" : ""}
                 />
-                {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
+                {errors.email && (
+                  <p className="text-xs text-red-500">{errors.email}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -212,7 +237,9 @@ export default function SignupPage() {
                     value={formData.password}
                     onChange={handleChange}
                     disabled={isLoading}
-                    className={errors.password ? "border-red-500 pr-10" : "pr-10"}
+                    className={
+                      errors.password ? "border-red-500 pr-10" : "pr-10"
+                    }
                   />
                   <Button
                     type="button"
@@ -222,11 +249,19 @@ export default function SignupPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     disabled={isLoading}
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                    <span className="sr-only">
+                      {showPassword ? "Hide password" : "Show password"}
+                    </span>
                   </Button>
                 </div>
-                {errors.password && <p className="text-xs text-red-500">{errors.password}</p>}
+                {errors.password && (
+                  <p className="text-xs text-red-500">{errors.password}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -239,7 +274,9 @@ export default function SignupPage() {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     disabled={isLoading}
-                    className={errors.confirmPassword ? "border-red-500 pr-10" : "pr-10"}
+                    className={
+                      errors.confirmPassword ? "border-red-500 pr-10" : "pr-10"
+                    }
                   />
                   <Button
                     type="button"
@@ -249,24 +286,46 @@ export default function SignupPage() {
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     disabled={isLoading}
                   >
-                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    <span className="sr-only">{showConfirmPassword ? "Hide password" : "Show password"}</span>
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                    <span className="sr-only">
+                      {showConfirmPassword ? "Hide password" : "Show password"}
+                    </span>
                   </Button>
                 </div>
-                {errors.confirmPassword && <p className="text-xs text-red-500">{errors.confirmPassword}</p>}
+                {errors.confirmPassword && (
+                  <p className="text-xs text-red-500">
+                    {errors.confirmPassword}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label>I am a</Label>
-                <RadioGroup value={formData.role} onValueChange={handleRoleChange} className="flex gap-4">
+                <RadioGroup
+                  value={formData.role}
+                  onValueChange={handleRoleChange}
+                  className="flex gap-4"
+                >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="student" id="student" disabled={isLoading} />
+                    <RadioGroupItem
+                      value="student"
+                      id="student"
+                      disabled={isLoading}
+                    />
                     <Label htmlFor="student" className="cursor-pointer">
                       Student
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="teacher" id="teacher" disabled={isLoading} />
+                    <RadioGroupItem
+                      value="teacher"
+                      id="teacher"
+                      disabled={isLoading}
+                    />
                     <Label htmlFor="teacher" className="cursor-pointer">
                       Teacher
                     </Label>
@@ -275,7 +334,11 @@ export default function SignupPage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button type="submit" className="w-full cosmic-button" disabled={isLoading}>
+              <Button
+                type="submit"
+                className="w-full cosmic-button"
+                disabled={isLoading}
+              >
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -297,5 +360,5 @@ export default function SignupPage() {
         </p>
       </div>
     </div>
-  )
+  );
 }

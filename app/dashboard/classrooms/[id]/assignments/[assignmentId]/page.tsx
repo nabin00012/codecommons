@@ -1,118 +1,237 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { useParams, useRouter } from "next/navigation"
-import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/components/ui/use-toast"
-import { useUser } from "@/lib/context/user-context"
-import { ArrowLeft, Calendar, Clock, FileText } from "lucide-react"
-import Link from "next/link"
-
-// Mock assignment data
-const assignments = [
-  {
-    id: "a1",
-    classroomId: "1",
-    title: "Assignment 1: Array Implementation",
-    description:
-      "In this assignment, you will implement various array operations such as insertion, deletion, and searching. You will also analyze the time complexity of each operation.\n\n## Requirements\n\n1. Implement a dynamic array class with the following methods:\n   - `insert(index, value)`\n   - `delete(index)`\n   - `search(value)`\n   - `get(index)`\n   - `size()`\n\n2. Write test cases to verify your implementation.\n\n3. Analyze the time complexity of each operation and explain your analysis.\n\n## Submission Guidelines\n\n- Submit your code as a single file named `DynamicArray.java`.\n- Include comments to explain your implementation.\n- Write a brief report (maximum 2 pages) explaining your approach and time complexity analysis.",
-    dueDate: "April 15, 2024",
-    points: 100,
-    status: "pending",
-    submissionType: "code",
-    codeTemplate: `public class DynamicArray {
-    private int[] array;
-    private int size;
-    private int capacity;
-    
-    public DynamicArray() {
-        // TODO: Initialize the array with a default capacity
-    }
-    
-    public void insert(int index, int value) {
-        // TODO: Implement insertion at the specified index
-    }
-    
-    public void delete(int index) {
-        // TODO: Implement deletion at the specified index
-    }
-    
-    public int search(int value) {
-        // TODO: Implement search and return the index of the value
-        return -1; // Return -1 if not found
-    }
-    
-    public int get(int index) {
-        // TODO: Return the value at the specified index
-        return 0;
-    }
-    
-    public int size() {
-        // TODO: Return the current size of the array
-        return 0;
-    }
-    
-    // You may add helper methods as needed
-}`,
-  },
-  // More assignments...
-]
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
+import { useUser } from "@/lib/context/user-context";
+import { ArrowLeft, Calendar, Clock, FileText, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { assignmentService, type Assignment } from "@/lib/services/assignment";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export default function AssignmentDetailPage() {
-  const params = useParams()
-  const router = useRouter()
-  const { toast } = useToast()
-  const { user } = useUser()
-  
-  const [code, setCode] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  
-  const classroomId = params.id as string
-  const assignmentId = params.assignmentId as string
-  
-  const assignment = assignments.find((a) => a.id === assignmentId && a.classroomId === classroomId)
-  
+  const params = useParams();
+  const router = useRouter();
+  const { toast } = useToast();
+  const { user } = useUser();
+
+  const [assignment, setAssignment] = useState<Assignment | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [code, setCode] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [grading, setGrading] = useState<{
+    [key: string]: { grade: string; feedback: string; loading: boolean };
+  }>({});
+  const [newQuestion, setNewQuestion] = useState("");
+  const [newAnswer, setNewAnswer] = useState<{ [key: number]: string }>({});
+  const [qaLoading, setQaLoading] = useState(false);
+
+  const classroomId = params.id as string;
+  const assignmentId = params.assignmentId as string;
+
+  useEffect(() => {
+    const fetchAssignment = async () => {
+      try {
+        const data = await assignmentService.getAssignment(
+          classroomId,
+          assignmentId
+        );
+        setAssignment(data);
+        if (data.codeTemplate) {
+          setCode(data.codeTemplate);
+        }
+      } catch (error) {
+        console.error("Error fetching assignment:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load assignment. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAssignment();
+  }, [assignmentId, classroomId, toast]);
+
+  if (isLoading) {
+    return (
+      <div className="container py-8 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   if (!assignment) {
     return (
       <div className="container py-8 text-center">
         <h1 className="text-2xl font-bold mb-4">Assignment not found</h1>
-        <p className="text-muted-foreground mb-6">The assignment you're looking for doesn't exist.</p>
-        <Button onClick={() => router.push(`/dashboard/classrooms/${classroomId}`)}>Back to Classroom</Button>
+        <p className="text-muted-foreground mb-6">
+          The assignment you're looking for doesn't exist.
+        </p>
+        <Button
+          onClick={() => router.push(`/dashboard/classrooms/${classroomId}`)}
+        >
+          Back to Classroom
+        </Button>
       </div>
-    )
+    );
   }
-  
-  const isTeacher = user?.role === "teacher"
-  
+
+  const isTeacher = user?.role === "teacher";
+
   const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setCode(e.target.value)
-  }
-  
+    setCode(e.target.value);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0])
+      setSelectedFile(e.target.files[0]);
     }
-  }
-  
-  const handleSubmit = () => {
-    setIsSubmitting(true)
-    
-    // Simulate API call
-    setTimeout(() => {
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+
+    try {
+      await assignmentService.submitAssignment(assignmentId, {
+        content: code,
+        file: selectedFile || undefined,
+      });
+
       toast({
         title: "Assignment submitted successfully!",
         description: "Your submission has been received.",
-      })
-      setIsSubmitting(false)
-      router.push(`/dashboard/classrooms/${classroomId}`)
-    }, 1500)
-  }
-  
+      });
+      router.push(`/dashboard/classrooms/${classroomId}`);
+    } catch (error) {
+      console.error("Error submitting assignment:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit assignment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle grading submission
+  const handleGrade = async (submissionIdx: number, submissionId: string) => {
+    setGrading((prev) => ({
+      ...prev,
+      [submissionId]: { ...prev[submissionId], loading: true },
+    }));
+    try {
+      const grade = grading[submissionId]?.grade || "";
+      const feedback = grading[submissionId]?.feedback || "";
+      await assignmentService.gradeSubmission(submissionId, {
+        grade: Number(grade),
+        feedback,
+      });
+      toast({
+        title: "Graded!",
+        description: "Grade and feedback saved.",
+      });
+      // Optionally, refresh assignment data
+      const data = await assignmentService.getAssignment(
+        classroomId,
+        assignmentId
+      );
+      setAssignment(data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save grade. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setGrading((prev) => ({
+        ...prev,
+        [submissionId]: { ...prev[submissionId], loading: false },
+      }));
+    }
+  };
+
+  // Helper to get student name (if available)
+  const getStudentName = (studentId: any) => {
+    if (!studentId) return "Unknown";
+    if (typeof studentId === "object" && studentId.name) return studentId.name;
+    return studentId.toString();
+  };
+
+  // Find the current student's submission
+  const studentSubmission =
+    !isTeacher && assignment.submissions
+      ? assignment.submissions.find((sub) => sub.studentId === user?.id)
+      : null;
+
+  // Post a new question
+  const handleAskQuestion = async () => {
+    if (!newQuestion.trim()) return;
+    setQaLoading(true);
+    try {
+      await assignmentService.postQuestion(
+        classroomId,
+        assignmentId,
+        newQuestion
+      );
+      toast({ title: "Question posted!" });
+      setNewQuestion("");
+      // Refresh assignment data
+      const data = await assignmentService.getAssignment(
+        classroomId,
+        assignmentId
+      );
+      setAssignment(data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to post question.",
+        variant: "destructive",
+      });
+    } finally {
+      setQaLoading(false);
+    }
+  };
+
+  // Post a new answer
+  const handleAnswer = async (qIdx: number) => {
+    if (!newAnswer[qIdx]?.trim()) return;
+    setQaLoading(true);
+    try {
+      await assignmentService.postAnswer(
+        classroomId,
+        assignmentId,
+        qIdx,
+        newAnswer[qIdx]
+      );
+      toast({ title: "Answer posted!" });
+      setNewAnswer((prev) => ({ ...prev, [qIdx]: "" }));
+      // Refresh assignment data
+      const data = await assignmentService.getAssignment(
+        classroomId,
+        assignmentId
+      );
+      setAssignment(data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to post answer.",
+        variant: "destructive",
+      });
+    } finally {
+      setQaLoading(false);
+    }
+  };
+
   return (
     <div className="container py-8">
       <Link
@@ -122,7 +241,7 @@ export default function AssignmentDetailPage() {
         <ArrowLeft className="mr-1 h-4 w-4" />
         Back to Classroom
       </Link>
-      
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -133,7 +252,7 @@ export default function AssignmentDetailPage() {
         <div className="flex flex-wrap gap-4 mb-6">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="h-4 w-4" />
-            <span>Due {assignment.dueDate}</span>
+            <span>Due {new Date(assignment.dueDate).toLocaleDateString()}</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <FileText className="h-4 w-4" />
@@ -141,43 +260,377 @@ export default function AssignmentDetailPage() {
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="h-4 w-4" />
-            <span>Status: {assignment.status}</span>
+            <span>Type: {assignment.submissionType}</span>
           </div>
         </div>
       </motion.div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Assignment Description</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="prose prose-sm max-w-none dark:prose-invert">
-                {assignment.description.split("\n\n").map((paragraph, index) => {
-                  if (paragraph.startsWith("##")) {
-                    return <h2 key={index} className="text-xl font-bold mt-6 mb-3">{paragraph.replace("##", "").trim()}</h2>
-                  } else if (paragraph.startsWith("-")) {
-                    return (
-                      <ul key={index} className="list-disc pl-6 my-3">
-                        {paragraph.split("\n").map((item, i) => (
-                          <li key={i}>{item.replace("-", "").trim()}</li>
-                        ))}
-                      </ul>
-                    )
-                  } else if (paragraph.startsWith("1.")) {
-                    return (
-                      <ol key={index} className="list-decimal pl-6 my-3">
-                        {paragraph.split("\n").map((item, i) => {
-                          const match = item.match(/^\d+\.\s(.+)/)
-                          return match ? <li key={i}>{match[1]}</li> : null
-                        })}
-                      </ol>
-                    )
-                  } else {
-                    return <p key={index} className="mb-4">{paragraph}</p>
-                  }
-                })}
-              </div>
 
-\
+      <Tabs defaultValue="details" className="w-full">
+        <TabsList className="mb-8">
+          <TabsTrigger value="details">Details</TabsTrigger>
+          <TabsTrigger value="qa">Q&A</TabsTrigger>
+        </TabsList>
+        <TabsContent value="details">
+          {/* Teacher view: List of submissions */}
+          {isTeacher &&
+            assignment.submissions &&
+            assignment.submissions.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold mb-4">
+                  Student Submissions
+                </h2>
+                <div className="space-y-4">
+                  {assignment.submissions.map((submission, idx) => (
+                    <Card key={idx} className="p-4">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                        <div>
+                          <div className="font-medium">
+                            Student: {getStudentName(submission.studentId)}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Submitted:{" "}
+                            {submission.submittedAt
+                              ? new Date(
+                                  submission.submittedAt
+                                ).toLocaleString()
+                              : "-"}
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <div className="text-sm">
+                            <span className="font-semibold">Status:</span>{" "}
+                            {submission.status}
+                          </div>
+                          <form
+                            className="flex flex-col gap-2 mt-2"
+                            onSubmit={async (e) => {
+                              e.preventDefault();
+                              await handleGrade(
+                                idx,
+                                submission._id || idx.toString()
+                              );
+                            }}
+                          >
+                            <div className="flex gap-2 items-center">
+                              <input
+                                type="number"
+                                min={0}
+                                max={assignment.points}
+                                placeholder="Grade"
+                                className="border rounded px-2 py-1 w-20"
+                                value={
+                                  grading[submission._id]?.grade ??
+                                  submission.grade ??
+                                  ""
+                                }
+                                onChange={(e) =>
+                                  setGrading((prev) => ({
+                                    ...prev,
+                                    [submission._id]: {
+                                      ...prev[submission._id],
+                                      grade: e.target.value,
+                                      feedback:
+                                        prev[submission._id]?.feedback ??
+                                        submission.feedback ??
+                                        "",
+                                      loading: false,
+                                    },
+                                  }))
+                                }
+                              />
+                              <input
+                                type="text"
+                                placeholder="Feedback"
+                                className="border rounded px-2 py-1 w-48"
+                                value={
+                                  grading[submission._id]?.feedback ??
+                                  submission.feedback ??
+                                  ""
+                                }
+                                onChange={(e) =>
+                                  setGrading((prev) => ({
+                                    ...prev,
+                                    [submission._id]: {
+                                      ...prev[submission._id],
+                                      grade:
+                                        prev[submission._id]?.grade ??
+                                        submission.grade ??
+                                        "",
+                                      feedback: e.target.value,
+                                      loading: false,
+                                    },
+                                  }))
+                                }
+                              />
+                              <Button
+                                type="submit"
+                                size="sm"
+                                disabled={grading[submission._id]?.loading}
+                              >
+                                {grading[submission._id]?.loading
+                                  ? "Saving..."
+                                  : "Save"}
+                              </Button>
+                            </div>
+                          </form>
+                          {submission.grade !== undefined && (
+                            <div className="text-sm">
+                              <span className="font-semibold">Grade:</span>{" "}
+                              {submission.grade}
+                            </div>
+                          )}
+                          {submission.feedback && (
+                            <div className="text-sm">
+                              <span className="font-semibold">Feedback:</span>{" "}
+                              {submission.feedback}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="mt-4">
+                        <div className="font-semibold mb-1">Submission:</div>
+                        <pre className="bg-muted p-2 rounded text-sm overflow-x-auto">
+                          {submission.content || "(No content)"}
+                        </pre>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Assignment Description</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                    {assignment.description
+                      .split("\n\n")
+                      .map((paragraph, index) => {
+                        if (paragraph.startsWith("##")) {
+                          return (
+                            <h2
+                              key={index}
+                              className="text-xl font-bold mt-6 mb-3"
+                            >
+                              {paragraph.replace("##", "").trim()}
+                            </h2>
+                          );
+                        } else if (paragraph.startsWith("-")) {
+                          return (
+                            <ul key={index} className="list-disc pl-6 my-3">
+                              {paragraph.split("\n").map((item, i) => (
+                                <li key={i}>{item.replace("-", "").trim()}</li>
+                              ))}
+                            </ul>
+                          );
+                        } else if (paragraph.startsWith("1.")) {
+                          return (
+                            <ol key={index} className="list-decimal pl-6 my-3">
+                              {paragraph.split("\n").map((item, i) => {
+                                const match = item.match(/^\d+\.\s(.+)/);
+                                return match ? (
+                                  <li key={i}>{match[1]}</li>
+                                ) : null;
+                              })}
+                            </ol>
+                          );
+                        } else {
+                          return (
+                            <p key={index} className="mb-4">
+                              {paragraph}
+                            </p>
+                          );
+                        }
+                      })}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {!isTeacher && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Submit Assignment</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {assignment.submissionType === "code" && (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">
+                          Code Submission
+                        </label>
+                        <textarea
+                          value={code}
+                          onChange={handleCodeChange}
+                          className="w-full h-64 p-4 font-mono text-sm bg-muted rounded-md"
+                          placeholder="Write your code here..."
+                        />
+                      </div>
+                    )}
+
+                    {assignment.submissionType === "file" && (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">
+                          File Submission
+                        </label>
+                        <input
+                          type="file"
+                          onChange={handleFileChange}
+                          className="w-full"
+                        />
+                      </div>
+                    )}
+
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={isSubmitting}
+                      className="w-full"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        "Submit Assignment"
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Student view: Show their own submission, grade, and feedback */}
+              {!isTeacher && studentSubmission && (
+                <Card className="mt-6">
+                  <CardHeader>
+                    <CardTitle>Your Submission</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-2">
+                      <span className="font-semibold">Status:</span>{" "}
+                      {studentSubmission.status}
+                    </div>
+                    <div className="mb-2">
+                      <span className="font-semibold">Submitted:</span>{" "}
+                      {studentSubmission.submittedAt
+                        ? new Date(
+                            studentSubmission.submittedAt
+                          ).toLocaleString()
+                        : "-"}
+                    </div>
+                    <div className="mb-2">
+                      <span className="font-semibold">Grade:</span>{" "}
+                      {studentSubmission.grade !== undefined
+                        ? studentSubmission.grade
+                        : "Not graded yet"}
+                    </div>
+                    <div className="mb-2">
+                      <span className="font-semibold">Feedback:</span>{" "}
+                      {studentSubmission.feedback || "No feedback yet"}
+                    </div>
+                    <div className="font-semibold mb-1">Your Answer:</div>
+                    <pre className="bg-muted p-2 rounded text-sm overflow-x-auto">
+                      {studentSubmission.content || "(No content)"}
+                    </pre>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+        <TabsContent value="qa">
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold">Q&A</h2>
+            {/* Ask a question */}
+            {!isTeacher && (
+              <div className="flex gap-2 mb-4">
+                <input
+                  type="text"
+                  className="border rounded px-2 py-1 flex-1 bg-background text-foreground"
+                  placeholder="Ask a question..."
+                  value={newQuestion}
+                  onChange={(e) => setNewQuestion(e.target.value)}
+                  disabled={qaLoading}
+                />
+                <Button onClick={handleAskQuestion} disabled={qaLoading}>
+                  Ask
+                </Button>
+              </div>
+            )}
+            {/* List questions and answers */}
+            {assignment.questions && assignment.questions.length > 0 ? (
+              assignment.questions.map((q, qIdx) => (
+                <Card key={qIdx} className="p-4">
+                  <div className="mb-2">
+                    <span className="font-semibold">Q:</span> {q.question}
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      (Asked by{" "}
+                      {q.student?.name || q.student?.toString?.() || "Student"}{" "}
+                      on{" "}
+                      {q.createdAt
+                        ? new Date(q.createdAt).toLocaleDateString()
+                        : "-"}
+                      )
+                    </span>
+                  </div>
+                  <div className="space-y-2 ml-4">
+                    {q.answers && q.answers.length > 0 ? (
+                      q.answers.map((a, aIdx) => (
+                        <div key={aIdx} className="text-sm">
+                          <span className="font-semibold">A:</span> {a.answer}
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            (by {a.user?.name || a.user?.toString?.() || "User"}{" "}
+                            on{" "}
+                            {a.createdAt
+                              ? new Date(a.createdAt).toLocaleDateString()
+                              : "-"}
+                            )
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-xs text-muted-foreground">
+                        No answers yet.
+                      </div>
+                    )}
+                  </div>
+                  {/* Answer form for teachers */}
+                  {isTeacher && (
+                    <form
+                      className="flex gap-2 mt-2"
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        await handleAnswer(qIdx);
+                      }}
+                    >
+                      <input
+                        type="text"
+                        className="border rounded px-2 py-1 flex-1 bg-background text-foreground"
+                        placeholder="Write an answer..."
+                        value={newAnswer[qIdx] || ""}
+                        onChange={(e) =>
+                          setNewAnswer((prev) => ({
+                            ...prev,
+                            [qIdx]: e.target.value,
+                          }))
+                        }
+                        disabled={qaLoading}
+                      />
+                      <Button type="submit" disabled={qaLoading}>
+                        Answer
+                      </Button>
+                    </form>
+                  )}
+                </Card>
+              ))
+            ) : (
+              <div className="text-muted-foreground">No questions yet.</div>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

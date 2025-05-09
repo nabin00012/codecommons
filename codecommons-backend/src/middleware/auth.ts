@@ -37,6 +37,8 @@ export const protect: Middleware = async (
 
       // Get user from token
       req.user = await User.findById(decoded.id).select("-password");
+      console.log("[protect] Auth header:", req.headers.authorization);
+      console.log("[protect] Decoded user:", req.user);
 
       next();
     } catch (error) {

@@ -1,4 +1,5 @@
 import express from "express";
+import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db";
@@ -6,6 +7,7 @@ import authRoutes from "./routes/auth";
 import courseRoutes from "./routes/course";
 import assignmentRoutes from "./routes/assignment";
 import submissionRoutes from "./routes/submission";
+import classroomRoutes from "./routes/classroom";
 
 // Load environment variables
 dotenv.config();
@@ -18,7 +20,7 @@ connectDB();
 
 // CORS configuration
 const corsOptions = {
-  origin: true, // Allow all origins
+  origin: true, // Allow all origins in development
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -39,6 +41,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/assignments", assignmentRoutes);
 app.use("/api/submissions", submissionRoutes);
+app.use("/api/classrooms", classroomRoutes);
 
 // Error handling middleware
 app.use(

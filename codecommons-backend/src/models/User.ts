@@ -7,6 +7,7 @@ export interface IUser {
   email: string;
   password: string;
   role: "student" | "teacher";
+  avatar?: string;
   createdAt: Date;
   resetPasswordToken?: string;
   resetPasswordExpire?: Date;
@@ -35,11 +36,16 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, "Please provide a password"],
     minlength: 6,
+    select: false, // Don't include password in queries by default
   },
   role: {
     type: String,
     enum: ["student", "teacher"],
     default: "student",
+  },
+  avatar: {
+    type: String,
+    default: "/placeholder.svg",
   },
   resetPasswordToken: String,
   resetPasswordExpire: Date,
@@ -66,7 +72,12 @@ userSchema.pre("save", async function (next) {
 userSchema.methods.comparePassword = async function (
   candidatePassword: string
 ): Promise<boolean> {
-  return bcrypt.compare(candidatePassword, this.password);
+  try {
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch (error) {
+    console.error("Error comparing passwords:", error);
+    return false;
+  }
 };
 
 // Generate password reset token

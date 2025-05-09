@@ -86,8 +86,8 @@ export const login = async (
   try {
     const { email, password } = req.body;
 
-    // Find user
-    const user = await User.findOne({ email });
+    // Find user and explicitly select password field
+    const user = await User.findOne({ email }).select("+password");
     if (!user) {
       res.status(401).json({ message: "Invalid email or password" });
       return;
@@ -111,6 +111,7 @@ export const login = async (
       token,
     });
   } catch (error) {
+    console.error("Login error:", error);
     const errorMessage =
       error instanceof Error ? error.message : "An error occurred";
     res.status(500).json({ message: errorMessage });

@@ -1,17 +1,23 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { motion } from "framer-motion"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Calendar, Clock, FileText, Filter, Search } from "lucide-react"
+import { useState } from "react";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Calendar, Clock, FileText, Filter, Search } from "lucide-react";
 
 export default function AssignmentsPage() {
-  const [activeTab, setActiveTab] = useState("all")
+  const [activeTab, setActiveTab] = useState("all");
 
   // Mock data for assignments
   const assignments = [
@@ -33,7 +39,8 @@ export default function AssignmentsPage() {
       dueDate: "Apr 18, 2025",
       status: "in-progress",
       progress: 60,
-      description: "Analyze the time and space complexity of various sorting algorithms.",
+      description:
+        "Analyze the time and space complexity of various sorting algorithms.",
     },
     {
       id: "3",
@@ -41,7 +48,8 @@ export default function AssignmentsPage() {
       course: "Database Management Systems",
       dueDate: "Apr 25, 2025",
       status: "not-started",
-      description: "Design and implement a database schema for an e-commerce platform.",
+      description:
+        "Design and implement a database schema for an e-commerce platform.",
     },
     {
       id: "4",
@@ -50,7 +58,8 @@ export default function AssignmentsPage() {
       dueDate: "Apr 20, 2025",
       status: "in-progress",
       progress: 30,
-      description: "Create a responsive website using HTML, CSS, and JavaScript.",
+      description:
+        "Create a responsive website using HTML, CSS, and JavaScript.",
     },
     {
       id: "5",
@@ -71,22 +80,24 @@ export default function AssignmentsPage() {
       status: "not-started",
       description: "Implement a machine learning model to classify images.",
     },
-  ]
+  ];
 
   const filteredAssignments = assignments.filter((assignment) => {
-    if (activeTab === "all") return true
-    if (activeTab === "completed") return assignment.status === "completed"
-    if (activeTab === "in-progress") return assignment.status === "in-progress"
-    if (activeTab === "not-started") return assignment.status === "not-started"
-    return true
-  })
+    if (activeTab === "all") return true;
+    if (activeTab === "completed") return assignment.status === "completed";
+    if (activeTab === "in-progress") return assignment.status === "in-progress";
+    if (activeTab === "not-started") return assignment.status === "not-started";
+    return true;
+  });
 
   return (
     <div className="container py-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold mb-2 cosmic-text">Assignments</h1>
-          <p className="text-muted-foreground">Track your progress and manage your assignments</p>
+          <p className="text-muted-foreground">
+            Track your progress and manage your assignments
+          </p>
         </div>
         <div className="flex gap-2">
           <div className="relative">
@@ -102,7 +113,12 @@ export default function AssignmentsPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+      <Tabs
+        defaultValue="all"
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-8"
+      >
         <TabsList>
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="in-progress">In Progress</TabsTrigger>
@@ -123,14 +139,18 @@ export default function AssignmentsPage() {
                   <CardHeader className="pb-3">
                     <div className="flex justify-between items-start">
                       <div>
-                        <CardTitle className="line-clamp-1">{assignment.title}</CardTitle>
+                        <CardTitle className="line-clamp-1">
+                          {assignment.title}
+                        </CardTitle>
                         <CardDescription>{assignment.course}</CardDescription>
                       </div>
                       <AssignmentStatusBadge status={assignment.status} />
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <p className="text-sm text-muted-foreground line-clamp-2">{assignment.description}</p>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {assignment.description}
+                    </p>
 
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />
@@ -145,7 +165,12 @@ export default function AssignmentsPage() {
                             {assignment.score}/{assignment.totalPoints}
                           </span>
                         </div>
-                        <Progress value={(assignment.score! / assignment.totalPoints!) * 100} className="h-2" />
+                        <Progress
+                          value={
+                            (assignment.score! / assignment.totalPoints!) * 100
+                          }
+                          className="h-2"
+                        />
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Clock className="h-4 w-4" />
                           <span>Submitted {assignment.submittedDate}</span>
@@ -170,8 +195,8 @@ export default function AssignmentsPage() {
                           {assignment.status === "completed"
                             ? "View Submission"
                             : assignment.status === "in-progress"
-                              ? "Continue Working"
-                              : "Start Assignment"}
+                            ? "Continue Working"
+                            : "Start Assignment"}
                         </Button>
                       </Link>
                     </div>
@@ -189,28 +214,40 @@ export default function AssignmentsPage() {
                 {activeTab === "completed"
                   ? "You haven't completed any assignments yet."
                   : activeTab === "in-progress"
-                    ? "You don't have any assignments in progress."
-                    : activeTab === "not-started"
-                      ? "You don't have any new assignments to start."
-                      : "No assignments match your search criteria."}
+                  ? "You don't have any assignments in progress."
+                  : activeTab === "not-started"
+                  ? "You don't have any new assignments to start."
+                  : "No assignments match your search criteria."}
               </p>
             </div>
           )}
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
 
 function AssignmentStatusBadge({ status }: { status: string }) {
   switch (status) {
     case "completed":
-      return <Badge className="bg-green-100 text-green-800 hover:bg-green-200 border-green-200">Completed</Badge>
+      return (
+        <Badge className="bg-green-100 text-green-800 hover:bg-green-200 border-green-200">
+          Completed
+        </Badge>
+      );
     case "in-progress":
-      return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-200">In Progress</Badge>
+      return (
+        <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-200">
+          In Progress
+        </Badge>
+      );
     case "not-started":
-      return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-200">Not Started</Badge>
+      return (
+        <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-200">
+          Not Started
+        </Badge>
+      );
     default:
-      return null
+      return null;
   }
 }
