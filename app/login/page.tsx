@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { useUser } from "@/lib/context/user-context";
@@ -9,13 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirectTo");
   const { toast } = useToast();
-  const { login } = useUser();
+  const { login, user } = useUser();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -25,6 +26,14 @@ export default function LoginPage() {
     email: "",
     password: "",
   });
+
+  // Check if user is already logged in
+  useEffect(() => {
+    if (user) {
+      console.log("User already logged in, redirecting to dashboard");
+      router.push("/dashboard");
+    }
+  }, [user, router]);
 
   const validateForm = () => {
     let isValid = true;
@@ -53,18 +62,26 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Login form submitted");
 
     if (!validateForm()) {
+      console.log("Form validation failed");
       return;
     }
 
     setIsLoading(true);
+    console.log("Attempting login with:", formData.email);
 
     try {
       const response = await authService.login({
         email: formData.email,
         password: formData.password,
       });
+
+      console.log("Login successful, response:", response);
+
+      // Store the token
+      authService.setToken(response.token);
 
       // Login the user with the response data
       login({
@@ -80,14 +97,8 @@ export default function LoginPage() {
         description: `Welcome back, ${response.name}!`,
       });
 
-      // Handle redirection based on role and redirectTo parameter
-      if (redirectTo) {
-        router.push(redirectTo);
-      } else if (response.role === "teacher") {
-        router.push("/dashboard/teacher");
-      } else {
-        router.push("/dashboard");
-      }
+      console.log("Redirecting to dashboard");
+      router.push("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
       toast({
@@ -167,6 +178,15 @@ export default function LoginPage() {
             </Button>
           </div>
         </form>
+
+        <div className="text-center">
+          <p className="text-sm text-gray-600">
+            Don't have an account?{" "}
+            <Link href="/signup" className="text-blue-600 hover:text-blue-500">
+              Sign up
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

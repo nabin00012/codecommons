@@ -7,6 +7,9 @@ export interface ISubmission extends Document {
   grade?: string;
   feedback?: string;
   submittedAt: Date;
+  fileUrl?: string;
+  fileType?: string;
+  fileSize?: string;
 }
 
 const submissionSchema = new Schema<ISubmission>({
@@ -22,7 +25,7 @@ const submissionSchema = new Schema<ISubmission>({
   },
   content: {
     type: String,
-    required: true,
+    required: false,
   },
   grade: {
     type: String,
@@ -33,6 +36,18 @@ const submissionSchema = new Schema<ISubmission>({
   submittedAt: {
     type: Date,
     default: Date.now,
+  },
+  fileUrl: {
+    type: String,
+    required: false,
+  },
+  fileType: {
+    type: String,
+    required: false,
+  },
+  fileSize: {
+    type: String,
+    required: false,
   },
 });
 

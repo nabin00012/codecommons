@@ -23,7 +23,15 @@ const corsOptions = {
   origin: true, // Allow all origins in development
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
+    "Origin",
+  ],
+  exposedHeaders: ["Content-Range", "X-Content-Range"],
+  maxAge: 86400, // 24 hours
 };
 
 // Middleware
@@ -36,10 +44,19 @@ app.get("/", (req, res) => {
   res.json({ message: "Welcome to CodeCommons API" });
 });
 
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
+});
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/courses", courseRoutes);
-app.use("/api/assignments", assignmentRoutes);
+app.use("/api/classrooms/:classroomId/assignments", assignmentRoutes);
 app.use("/api/submissions", submissionRoutes);
 app.use("/api/classrooms", classroomRoutes);
 

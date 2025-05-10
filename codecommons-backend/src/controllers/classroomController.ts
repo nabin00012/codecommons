@@ -1,8 +1,11 @@
-import { Request, Response } from "express";
+import { Request, Response, RequestHandler } from "express";
 import Classroom from "../models/Classroom";
 import { asyncHandler } from "../middleware/async";
 import { ErrorResponse } from "../utils/errorResponse";
 import User from "../models/User";
+import mongoose from "mongoose";
+import path from "path";
+import fs from "fs";
 
 // @desc    Create a new classroom
 // @route   POST /api/classrooms
@@ -46,9 +49,14 @@ export const createClassroom = asyncHandler(
 // @access  Private
 export const getClassrooms = asyncHandler(
   async (req: Request, res: Response) => {
-    const classrooms = await Classroom.find({
-      $or: [{ teacher: req.user._id }, { students: req.user._id }],
-    })
+    // For teachers, show all their classrooms
+    // For students, only show classrooms they are enrolled in
+    const query =
+      req.user.role === "teacher"
+        ? { teacher: req.user._id }
+        : { students: { $in: [req.user._id] } };
+
+    const classrooms = await Classroom.find(query)
       .populate("teacher", "name email")
       .populate("students", "name email");
 
@@ -208,3 +216,114 @@ export const joinClassroomByCode = asyncHandler(
     });
   }
 );
+
+export const uploadMaterial: RequestHandler = async (req, res) => {
+  try {
+    console.log("Upload request received:", {
+      params: req.params,
+      body: req.body,
+      file: req.file,
+      user: req.user,
+    });
+
+    if (!req.file) {
+      res.status(400).json({
+        success: false,
+        message: "No file uploaded",
+      });
+      return;
+    }
+
+    const title = req.body.title;
+    if (!title) {
+      res.status(400).json({
+        success: false,
+        message: "Title is required",
+      });
+      return;
+    }
+
+    console.log("File details:", {
+      filename: req.file.filename,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+    });
+
+    const classroom = await Classroom.findById(req.params.id);
+    if (!classroom) {
+      res.status(404).json({
+        success: false,
+        message: "Classroom not found",
+      });
+      return;
+    }
+
+    // Check if user is the teacher of this classroom
+    if (classroom.teacher.toString() !== req.user._id.toString()) {
+      res.status(403).json({
+        success: false,
+        message: "Only the teacher can upload materials",
+      });
+      return;
+    }
+
+    const material = {
+      id: new mongoose.Types.ObjectId().toString(),
+      title,
+      type: req.file.mimetype,
+      size: `${(req.file.size / 1024).toFixed(2)} KB`,
+      uploadedOn: new Date().toISOString(),
+      fileUrl: `/uploads/materials/${req.file.filename}`,
+    };
+
+    classroom.materials.push(material);
+    await classroom.save();
+
+    res.status(201).json({
+      success: true,
+      data: material,
+    });
+  } catch (error) {
+    console.error("Error uploading material:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error uploading material",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
+
+export const downloadMaterial: RequestHandler = async (req, res) => {
+  try {
+    const { id, materialId } = req.params;
+
+    const classroom = await Classroom.findById(id);
+    if (!classroom) {
+      res.status(404).json({
+        success: false,
+        message: "Classroom not found",
+      });
+      return;
+    }
+
+    const material = classroom.materials.find(
+      (m: { id: string; fileUrl: string }) => m.id === materialId
+    );
+    if (!material) {
+      res.status(404).json({
+        success: false,
+        message: "Material not found",
+      });
+      return;
+    }
+
+    const filePath = path.join(process.cwd(), material.fileUrl);
+    res.download(filePath);
+  } catch (error) {
+    console.error("Error downloading material:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to download material",
+    });
+  }
+};

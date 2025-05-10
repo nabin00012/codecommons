@@ -21,10 +21,10 @@ import { Code, ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
 import { authService } from "@/lib/services/auth";
 
 interface FormErrors {
-  name?: string;
-  email?: string;
-  password?: string;
-  confirmPassword?: string;
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
 }
 
 export default function SignupPage() {
@@ -41,7 +41,7 @@ export default function SignupPage() {
     role: "student",
   });
 
-  const [errors, setErrors] = useState({
+  const [errors, setErrors] = useState<FormErrors>({
     name: "",
     email: "",
     password: "",
@@ -69,32 +69,38 @@ export default function SignupPage() {
   };
 
   const validateForm = () => {
-    const errors: FormErrors = {};
+    const newErrors: FormErrors = {
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    };
 
     if (!formData.name.trim()) {
-      errors.name = "Name is required";
+      newErrors.name = "Name is required";
     }
 
     if (!formData.email.trim()) {
-      errors.email = "Email is required";
+      newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = "Email is invalid";
+      newErrors.email = "Email is invalid";
     }
 
     if (!formData.password) {
-      errors.password = "Password is required";
+      newErrors.password = "Password is required";
     } else if (formData.password.length < 8) {
-      errors.password = "Password must be at least 8 characters";
+      newErrors.password = "Password must be at least 8 characters";
     } else if (!/[A-Z]/.test(formData.password)) {
-      errors.password = "Password must contain at least one uppercase letter";
+      newErrors.password =
+        "Password must contain at least one uppercase letter";
     }
 
     if (formData.password !== formData.confirmPassword) {
-      errors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = "Passwords do not match";
     }
 
-    setErrors(errors);
-    return Object.keys(errors).length === 0;
+    setErrors(newErrors);
+    return Object.values(newErrors).every((error) => !error);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -114,6 +120,9 @@ export default function SignupPage() {
         role: formData.role as "student" | "teacher",
       });
 
+      // Store the token
+      authService.setToken(response.token);
+
       // Login the user with the response data
       login({
         id: response._id,
@@ -128,14 +137,8 @@ export default function SignupPage() {
         description: `Welcome to CodeCommons, ${formData.name}!`,
       });
 
-      // Handle redirection based on role and redirectTo parameter
-      if (redirectTo) {
-        router.push(redirectTo);
-      } else if (formData.role === "teacher") {
-        router.push("/dashboard/teacher");
-      } else {
-        router.push("/dashboard");
-      }
+      // Redirect to dashboard
+      router.push("/dashboard");
     } catch (error) {
       console.error("Registration error:", error);
 

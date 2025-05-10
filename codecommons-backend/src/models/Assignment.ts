@@ -5,6 +5,8 @@ export interface IAssignment extends Document {
   description: string;
   dueDate: Date;
   classroom: mongoose.Types.ObjectId;
+  submissionType: "code" | "file" | "text";
+  codeTemplate?: string;
   submissions: Array<{
     student: mongoose.Types.ObjectId;
     submittedAt: Date;
@@ -13,6 +15,8 @@ export interface IAssignment extends Document {
     feedback?: string;
     content: string;
     fileUrl: string;
+    fileType?: string;
+    fileSize?: string;
   }>;
   questions: Array<{
     student: mongoose.Types.ObjectId;
@@ -44,6 +48,16 @@ const assignmentSchema = new Schema<IAssignment>(
     dueDate: {
       type: Date,
       required: [true, "Please add a due date"],
+    },
+    submissionType: {
+      type: String,
+      enum: ["code", "file", "text"],
+      required: [true, "Please specify submission type"],
+      default: "file",
+    },
+    codeTemplate: {
+      type: String,
+      default: "",
     },
     classroom: {
       type: mongoose.Schema.Types.ObjectId,
@@ -80,6 +94,14 @@ const assignmentSchema = new Schema<IAssignment>(
           default: "",
         },
         fileUrl: {
+          type: String,
+          default: "",
+        },
+        fileType: {
+          type: String,
+          default: "",
+        },
+        fileSize: {
           type: String,
           default: "",
         },

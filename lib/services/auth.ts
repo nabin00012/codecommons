@@ -95,10 +95,6 @@ export const authService = {
     console.log("Request body:", JSON.stringify(userData, null, 2));
 
     try {
-      // Add timeout to fetch request
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -106,22 +102,12 @@ export const authService = {
         },
         body: JSON.stringify(userData),
         credentials: "include",
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      // Log the raw response first
-      console.log("Raw response:", {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries()),
       });
 
       let data;
       try {
         data = await response.json();
-        console.log("Parsed response data:", data);
+        console.log("Registration response:", data);
       } catch (parseError) {
         console.error("Failed to parse response as JSON:", parseError);
         throw new Error("Invalid response from server");
@@ -161,8 +147,10 @@ export const authService = {
 
       // Handle specific error cases
       if (error instanceof Error) {
-        if (error.name === "AbortError") {
-          throw new Error("Registration request timed out. Please try again.");
+        if (error.message.includes("already exists")) {
+          throw new Error(
+            "An account with this email already exists. Please try logging in instead."
+          );
         } else if (error.message === "Failed to fetch") {
           throw new Error(
             "Unable to connect to the server. Please check your internet connection and try again."
@@ -180,15 +168,15 @@ export const authService = {
     console.log("Token removed on logout");
   },
 
-  getToken(): string | null {
+  getToken() {
     const token = localStorage.getItem(TOKEN_KEY);
-    console.log("Retrieved token:", token ? "Token exists" : "No token found");
+    console.log("Getting token:", token ? "Token exists" : "No token found");
     return token;
   },
 
   setToken(token: string) {
     localStorage.setItem(TOKEN_KEY, token);
-    console.log("Token set successfully");
+    console.log("Token stored successfully");
   },
 
   isAuthenticated(): boolean {
@@ -199,5 +187,27 @@ export const authService = {
       isAuth ? "Authenticated" : "Not authenticated"
     );
     return isAuth;
+  },
+
+  async verifyToken(token: string) {
+    try {
+      const response = await fetch(`${API_URL}/auth/verify`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token }),
+      });
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const result = await response.json();
+      return result.data;
+    } catch (error) {
+      console.error("Error verifying token:", error);
+      return null;
+    }
   },
 };

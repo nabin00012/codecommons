@@ -1,4 +1,5 @@
 import { API_URL } from "@/lib/constants";
+import { authService } from "@/lib/services/auth";
 
 export interface Assignment {
   _id: string;
@@ -52,8 +53,12 @@ export interface Answer {
 
 class AssignmentService {
   private getAuthHeader() {
-    const token = localStorage.getItem("codecommons_token");
+    const token = authService.getToken();
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
     return {
+      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     };
   }
@@ -64,10 +69,7 @@ class AssignmentService {
         `${API_URL}/classrooms/${data.classroomId}/assignments`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...this.getAuthHeader(),
-          },
+          headers: this.getAuthHeader(),
           body: JSON.stringify(data),
         }
       );
@@ -86,23 +88,64 @@ class AssignmentService {
 
   async getAssignments(classroomId: string): Promise<Assignment[]> {
     try {
-      const response = await fetch(
-        `${API_URL}/classrooms/${classroomId}/assignments`,
-        {
-          headers: this.getAuthHeader(),
-        }
+      const url = `${API_URL}/classrooms/${classroomId}/assignments`;
+      console.log("Fetching assignments from:", url);
+      console.log("Auth header:", this.getAuthHeader());
+
+      const response = await fetch(url, {
+        headers: this.getAuthHeader(),
+        credentials: "include",
+      });
+
+      console.log("Response status:", response.status);
+      console.log(
+        "Response headers:",
+        Object.fromEntries(response.headers.entries())
       );
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to fetch assignments");
+      let data;
+      try {
+        data = await response.json();
+        console.log("Assignments response:", data);
+      } catch (e) {
+        console.error("Failed to parse response:", e);
+        throw new Error("Invalid response from server");
       }
 
-      const result = await response.json();
-      return result.data;
+      if (!response.ok) {
+        const errorMessage =
+          data?.message ||
+          data?.error ||
+          `Server error: ${response.status} ${response.statusText}`;
+        console.error("Failed to fetch assignments:", {
+          status: response.status,
+          statusText: response.statusText,
+          data: data,
+          errorMessage,
+          url,
+        });
+        throw new Error(errorMessage);
+      }
+
+      if (!data.success || !data.data) {
+        console.error("Invalid response format:", data);
+        throw new Error("Invalid response format from server");
+      }
+
+      return data.data;
     } catch (error) {
       console.error("Error fetching assignments:", error);
-      throw error;
+      if (error instanceof Error) {
+        if (error.message === "Failed to fetch") {
+          throw new Error(
+            "Unable to connect to the server. Please check your internet connection."
+          );
+        }
+        throw error;
+      }
+      throw new Error(
+        "An unexpected error occurred while fetching assignments"
+      );
     }
   }
 
@@ -135,10 +178,7 @@ class AssignmentService {
     try {
       const response = await fetch(`${API_URL}/assignments/${id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          ...this.getAuthHeader(),
-        },
+        headers: this.getAuthHeader(),
         body: JSON.stringify(data),
       });
 
@@ -173,35 +213,96 @@ class AssignmentService {
 
   async submitAssignment(
     assignmentId: string,
-    data: { content: string; file?: File }
+    data: { content: string; file?: File },
+    classroomId: string
   ): Promise<Submission> {
     try {
+      // Create form data
       const formData = new FormData();
       formData.append("content", data.content);
+
       if (data.file) {
+        // Validate file size (20MB limit)
+        if (data.file.size > 20 * 1024 * 1024) {
+          throw new Error("File size exceeds 20MB limit");
+        }
         formData.append("file", data.file);
       }
 
+      // Get auth token
+      const token = authService.getToken();
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      console.log("Submitting assignment:", {
+        classroomId,
+        assignmentId,
+        hasFile: !!data.file,
+        fileSize: data.file?.size,
+        contentLength: data.content.length,
+      });
+
+      // Make the request
       const response = await fetch(
-        `${API_URL}/assignments/${assignmentId}/submit`,
+        `${API_URL}/classrooms/${classroomId}/assignments/${assignmentId}/submit`,
         {
           method: "POST",
           headers: {
-            ...this.getAuthHeader(),
+            Authorization: `Bearer ${token}`,
           },
           body: formData,
         }
       );
 
+      // Parse response
+      const responseData = await response.json();
+      console.log("Server response:", {
+        status: response.status,
+        ok: response.ok,
+        data: responseData,
+      });
+
+      // Handle errors
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to submit assignment");
+        const errorMessage =
+          responseData.message ||
+          responseData.error ||
+          "Failed to submit assignment";
+        console.error("Submission failed:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorMessage,
+          data: responseData,
+        });
+        throw new Error(errorMessage);
       }
 
-      return response.json();
+      if (!responseData.success || !responseData.data) {
+        console.error("Invalid response format:", responseData);
+        throw new Error("Invalid response format from server");
+      }
+
+      // Return submission data
+      return {
+        _id: responseData.data._id || "",
+        assignmentId,
+        studentId: responseData.data.student || "",
+        content: responseData.data.content || "",
+        fileUrl: responseData.data.fileUrl || "",
+        grade: responseData.data.grade,
+        feedback: responseData.data.feedback,
+        status: responseData.data.status || "submitted",
+        submittedAt: responseData.data.submittedAt || new Date().toISOString(),
+      };
     } catch (error) {
       console.error("Error submitting assignment:", error);
-      throw error;
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error(
+        "An unexpected error occurred while submitting the assignment"
+      );
     }
   }
 
@@ -214,10 +315,7 @@ class AssignmentService {
         `${API_URL}/submissions/${submissionId}/grade`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...this.getAuthHeader(),
-          },
+          headers: this.getAuthHeader(),
           body: JSON.stringify(data),
         }
       );
@@ -264,10 +362,7 @@ class AssignmentService {
       `${API_URL}/classrooms/${classroomId}/assignments/${assignmentId}/questions`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...this.getAuthHeader(),
-        },
+        headers: this.getAuthHeader(),
         body: JSON.stringify({ question }),
       }
     );
@@ -289,10 +384,7 @@ class AssignmentService {
       `${API_URL}/classrooms/${classroomId}/assignments/${assignmentId}/questions/${questionIdx}/answers`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...this.getAuthHeader(),
-        },
+        headers: this.getAuthHeader(),
         body: JSON.stringify({ answer }),
       }
     );

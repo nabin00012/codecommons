@@ -1,16 +1,12 @@
 import { Request, Response, NextFunction } from "express";
+import { Middleware } from "../types/middleware";
 
-export function roleMiddleware(role: "teacher" | "student") {
+export const roleMiddleware = (role: string): Middleware => {
   return (req: Request, res: Response, next: NextFunction) => {
-    console.log(
-      "[roleMiddleware] User role:",
-      req.user && req.user.role,
-      "Required:",
-      role
-    );
-    if (!req.user || req.user.role !== role) {
-      return res.status(403).json({ message: `Not authorized as a ${role}` });
+    if (req.user && req.user.role === role) {
+      next();
+    } else {
+      next({ status: 403, message: `Not authorized as a ${role}` });
     }
-    next();
   };
-}
+};

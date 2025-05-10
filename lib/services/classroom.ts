@@ -1,4 +1,5 @@
 import { API_URL } from "@/lib/constants";
+import { authService } from "@/lib/services/auth";
 
 export interface Classroom {
   _id: string;
@@ -38,31 +39,38 @@ export interface CreateClassroomData {
   semester: string;
 }
 
+export interface Material {
+  id: string;
+  title: string;
+  type: string;
+  size: string;
+  uploadedOn: string;
+  fileUrl: string;
+}
+
 export class ClassroomService {
   private baseUrl: string;
-  private token: string;
 
   constructor(token: string) {
     this.baseUrl = `${API_URL}/classrooms`;
-    this.token = token;
+    if (token) {
+      authService.setToken(token);
+    }
   }
 
   private getAuthHeader() {
-    if (!this.token) {
+    const token = authService.getToken();
+    if (!token) {
       throw new Error("No authentication token found");
     }
     return {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${this.token}`,
+      Authorization: `Bearer ${token}`,
     };
   }
 
   async getClassrooms(): Promise<Classroom[]> {
     try {
-      if (!this.token) {
-        throw new Error("No authentication token found");
-      }
-
       const response = await fetch(this.baseUrl, {
         method: "GET",
         headers: this.getAuthHeader(),
@@ -73,7 +81,13 @@ export class ClassroomService {
         let errorMessage = "Failed to fetch classrooms";
         try {
           const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
+          if (response.status === 401) {
+            errorMessage = "Please log in to view classrooms";
+          } else if (response.status === 403) {
+            errorMessage = "You are not authorized to view classrooms";
+          } else {
+            errorMessage = errorData.message || errorMessage;
+          }
         } catch (e) {
           console.error("Failed to parse error response:", e);
         }
@@ -95,10 +109,6 @@ export class ClassroomService {
 
   async createClassroom(data: CreateClassroomData): Promise<Classroom> {
     try {
-      if (!this.token) {
-        throw new Error("No authentication token found");
-      }
-
       console.log("Creating classroom:", data);
       const response = await fetch(this.baseUrl, {
         method: "POST",
@@ -134,10 +144,6 @@ export class ClassroomService {
 
   async getClassroom(id: string): Promise<Classroom> {
     try {
-      if (!this.token) {
-        throw new Error("No authentication token found");
-      }
-
       console.log("Fetching classroom:", id);
       const response = await fetch(`${this.baseUrl}/${id}`, {
         method: "GET",
@@ -149,7 +155,14 @@ export class ClassroomService {
         let errorMessage = "Failed to fetch classroom";
         try {
           const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
+          if (response.status === 403) {
+            errorMessage =
+              "You are not authorized to access this classroom. Please join the classroom first.";
+          } else if (response.status === 404) {
+            errorMessage = "Classroom not found";
+          } else {
+            errorMessage = errorData.message || errorMessage;
+          }
         } catch (e) {
           console.error("Failed to parse error response:", e);
         }
@@ -175,10 +188,6 @@ export class ClassroomService {
     data: Partial<CreateClassroomData>
   ): Promise<Classroom> {
     try {
-      if (!this.token) {
-        throw new Error("No authentication token found");
-      }
-
       console.log("Updating classroom:", id, data);
       const response = await fetch(`${this.baseUrl}/${id}`, {
         method: "PATCH",
@@ -214,10 +223,6 @@ export class ClassroomService {
 
   async deleteClassroom(id: string): Promise<void> {
     try {
-      if (!this.token) {
-        throw new Error("No authentication token found");
-      }
-
       console.log("Deleting classroom:", id);
       const response = await fetch(`${this.baseUrl}/${id}`, {
         method: "DELETE",
@@ -243,10 +248,6 @@ export class ClassroomService {
 
   async enrollStudent(id: string): Promise<Classroom> {
     try {
-      if (!this.token) {
-        throw new Error("No authentication token found");
-      }
-
       console.log("Enrolling student in classroom:", id);
       const response = await fetch(`${this.baseUrl}/${id}/enroll`, {
         method: "POST",
@@ -281,10 +282,6 @@ export class ClassroomService {
 
   async joinClassroomByCode(code: string): Promise<Classroom> {
     try {
-      if (!this.token) {
-        throw new Error("No authentication token found");
-      }
-
       console.log("Joining classroom with code:", code);
       const response = await fetch(`${this.baseUrl}/join`, {
         method: "POST",
@@ -293,27 +290,134 @@ export class ClassroomService {
         body: JSON.stringify({ code }),
       });
 
+      console.log("Join response status:", response.status);
+      console.log(
+        "Join response headers:",
+        Object.fromEntries(response.headers.entries())
+      );
+
+      let data;
+      try {
+        data = await response.json();
+        console.log("Join response data:", data);
+      } catch (e) {
+        console.error("Failed to parse join response:", e);
+        throw new Error("Invalid response from server");
+      }
+
       if (!response.ok) {
-        let errorMessage = "Failed to join classroom";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-        } catch (e) {
-          console.error("Failed to parse error response:", e);
-        }
+        const errorMessage =
+          data?.message ||
+          data?.error ||
+          `Server error: ${response.status} ${response.statusText}`;
+        console.error("Failed to join classroom:", {
+          status: response.status,
+          statusText: response.statusText,
+          data: data,
+          errorMessage,
+        });
         throw new Error(errorMessage);
       }
 
-      const result = await response.json();
-      console.log("Join result:", result);
-
-      if (!result.success || !result.data) {
+      if (!data.success || !data.data) {
+        console.error("Invalid response format:", data);
         throw new Error("Invalid response format from server");
       }
 
-      return result.data;
+      return data.data;
     } catch (error) {
       console.error("Error joining classroom:", error);
+      if (error instanceof Error) {
+        if (error.message.includes("already enrolled")) {
+          throw new Error("You are already enrolled in this classroom");
+        } else if (error.message.includes("not found")) {
+          throw new Error("Invalid classroom code. Please check and try again");
+        }
+        throw new Error(`Failed to join classroom: ${error.message}`);
+      }
+      throw new Error("Failed to join classroom: Unknown error occurred");
+    }
+  }
+
+  async uploadMaterial(
+    classroomId: string,
+    file: File,
+    title: string
+  ): Promise<Material> {
+    try {
+      if (!file || !title) {
+        throw new Error("File and title are required");
+      }
+
+      console.log("Preparing to upload:", {
+        classroomId,
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        title,
+      });
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("title", title);
+
+      const token = authService.getToken();
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const response = await fetch(`${this.baseUrl}/${classroomId}/materials`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        console.error("Upload failed:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: responseData,
+        });
+        throw new Error(responseData.message || "Failed to upload material");
+      }
+
+      if (!responseData.success || !responseData.data) {
+        throw new Error("Invalid response from server");
+      }
+
+      console.log("Upload successful:", responseData.data);
+      return responseData.data;
+    } catch (error) {
+      console.error("Error uploading material:", error);
+      throw error;
+    }
+  }
+
+  async downloadMaterial(
+    classroomId: string,
+    materialId: string
+  ): Promise<Blob> {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/${classroomId}/materials/${materialId}/download`,
+        {
+          headers: {
+            Authorization: `Bearer ${authService.getToken()}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to download material");
+      }
+
+      return response.blob();
+    } catch (error) {
+      console.error("Error downloading material:", error);
       throw error;
     }
   }

@@ -9,7 +9,6 @@ import { HelpProvider } from "@/lib/context/help-context";
 import { Toaster } from "@/components/ui/toaster";
 import { CosmicMode } from "@/components/cosmic-mode";
 import "@/lib/monaco-config";
-import { AuthProvider } from "@/lib/context/AuthContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -34,17 +33,15 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
-            <UserProvider>
-              <SettingsProvider>
-                <HelpProvider>
-                  {children}
-                  <Toaster />
-                  <CosmicMode />
-                </HelpProvider>
-              </SettingsProvider>
-            </UserProvider>
-          </AuthProvider>
+          <UserProvider>
+            <SettingsProvider>
+              <HelpProvider>
+                {children}
+                <Toaster />
+                <CosmicMode />
+              </HelpProvider>
+            </SettingsProvider>
+          </UserProvider>
         </ThemeProvider>
       </body>
     </html>

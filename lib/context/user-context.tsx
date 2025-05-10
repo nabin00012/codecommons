@@ -1,7 +1,14 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 import { authService } from "@/lib/services/auth";
+import { useRouter } from "next/navigation";
 
 export type UserRole = "student" | "teacher";
 
@@ -15,29 +22,67 @@ export interface User {
 
 interface UserContextType {
   user: User | null;
+  loading: boolean;
+  setUser: (user: User | null) => void;
   login: (user: User) => void;
   logout: () => void;
   isLoading: boolean;
+  switchRole: (newRole: UserRole) => void;
 }
 
-const UserContext = createContext<UserContextType | undefined>(undefined);
+const UserContext = createContext<UserContextType>({
+  user: null,
+  loading: true,
+  setUser: () => {},
+  login: () => {},
+  logout: () => {},
+  isLoading: true,
+  switchRole: () => {},
+});
 
-export function UserProvider({ children }: { children: React.ReactNode }) {
+export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    // Check if user is logged in on mount
-    const token = authService.getToken();
-    if (token) {
-      // If there's a token, try to get user data
-      // You might want to add an API call here to validate the token
-      // and get the user data
-      setIsLoading(false);
-    } else {
-      setIsLoading(false);
-    }
-  }, []);
+    const loadUser = async () => {
+      const token = authService.getToken();
+      if (token) {
+        try {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          if (response.ok) {
+            const data = await response.json();
+            setUser({
+              id: data._id,
+              name: data.name,
+              email: data.email,
+              role: data.role,
+              avatar: data.avatar || "/placeholder.svg?height=40&width=40",
+            });
+          } else {
+            // If token is invalid, clear it
+            authService.logout();
+            router.push("/login");
+          }
+        } catch (error) {
+          console.error("Error loading user:", error);
+          authService.logout();
+          router.push("/login");
+        }
+      }
+      setLoading(false);
+    };
+
+    loadUser();
+  }, [router]);
 
   const login = (userData: User) => {
     setUser(userData);
@@ -46,19 +91,31 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUser(null);
     authService.logout();
+    router.push("/login");
+  };
+
+  const switchRole = (newRole: UserRole) => {
+    if (user) {
+      const updatedUser = { ...user, role: newRole };
+      setUser(updatedUser);
+    }
   };
 
   return (
-    <UserContext.Provider value={{ user, login, logout, isLoading }}>
+    <UserContext.Provider
+      value={{
+        user,
+        loading,
+        setUser,
+        login,
+        logout,
+        isLoading: loading,
+        switchRole,
+      }}
+    >
       {children}
     </UserContext.Provider>
   );
 }
 
-export function useUser() {
-  const context = useContext(UserContext);
-  if (context === undefined) {
-    throw new Error("useUser must be used within a UserProvider");
-  }
-  return context;
-}
+export const useUser = () => useContext(UserContext);

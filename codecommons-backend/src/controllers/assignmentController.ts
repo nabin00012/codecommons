@@ -3,26 +3,20 @@ import Assignment from "../models/Assignment";
 import Classroom from "../models/Classroom";
 import { asyncHandler } from "../middleware/async";
 import { ErrorResponse } from "../utils/errorResponse";
-const multer = require("multer");
-const path = require("path");
-
-// Multer setup for file uploads
-const storage = multer.diskStorage({
-  destination: function (req: any, file: any, cb: any) {
-    cb(null, "uploads/");
-  },
-  filename: function (req: any, file: any, cb: any) {
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
-});
-const upload = multer({ storage });
 
 // @desc    Create a new assignment
 // @route   POST /api/classrooms/:classroomId/assignments
 // @access  Private (Teacher only)
 export const createAssignment = asyncHandler(
   async (req: Request, res: Response) => {
-    const { title, description, dueDate } = req.body;
+    const {
+      title,
+      description,
+      dueDate,
+      submissionType,
+      codeTemplate,
+      points,
+    } = req.body;
     const classroomId = req.params.classroomId;
 
     // Check if classroom exists and user is the teacher
@@ -40,6 +34,9 @@ export const createAssignment = asyncHandler(
       description,
       dueDate,
       classroom: classroomId,
+      submissionType,
+      codeTemplate,
+      points,
       submissions: [],
     });
 
@@ -124,61 +121,101 @@ export const getAssignmentById = asyncHandler(
 // @desc    Submit assignment
 // @route   POST /api/classrooms/:classroomId/assignments/:id/submit
 // @access  Private (Student only)
-export const submitAssignment = [
-  upload.single("file"),
-  asyncHandler(async (req: Request, res: Response) => {
-    const { classroomId, id } = req.params;
-    const { content } = req.body;
-    let fileUrl = "";
-    // @ts-ignore
-    if ((req as any).file) {
-      // @ts-ignore
-      fileUrl = `/uploads/${(req as any).file.filename}`;
-    }
+export const submitAssignment = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const classroomId = req.params.classroomId;
+    const userId = (req as any).user.id;
 
-    // Check if classroom exists and user is a student
+    console.log("Submitting assignment:", {
+      assignmentId: id,
+      classroomId,
+      userId,
+      hasFile: !!req.file,
+      fileDetails: req.file
+        ? {
+            filename: req.file.filename,
+            size: req.file.size,
+            mimetype: req.file.mimetype,
+          }
+        : null,
+      content: req.body.content,
+    });
+
+    // Check if classroom exists
     const classroom = await Classroom.findById(classroomId);
     if (!classroom) {
-      throw new ErrorResponse("Classroom not found", 404);
+      return res.status(404).json({
+        success: false,
+        message: "Classroom not found",
+      });
     }
 
-    if (!classroom.students.includes(req.user._id)) {
-      throw new ErrorResponse("Not authorized to submit assignment", 403);
+    // Check if user is enrolled in the classroom
+    const isEnrolled = classroom.students.includes(userId);
+    if (!isEnrolled) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not enrolled in this classroom",
+      });
     }
 
+    // Check if assignment exists
     const assignment = await Assignment.findById(id);
     if (!assignment) {
-      throw new ErrorResponse("Assignment not found", 404);
+      return res.status(404).json({
+        success: false,
+        message: "Assignment not found",
+      });
     }
 
-    // Check if student has already submitted
+    // Check if user has already submitted
     const existingSubmission = assignment.submissions.find(
-      (submission: any) =>
-        submission.studentId?.toString() === req.user._id.toString() ||
-        submission.student?.toString() === req.user._id.toString()
+      (sub) => sub.student.toString() === userId
     );
-
     if (existingSubmission) {
-      throw new ErrorResponse("Assignment already submitted", 400);
+      return res.status(400).json({
+        success: false,
+        message: "You have already submitted this assignment",
+      });
     }
 
-    // Add submission with content and fileUrl
-    assignment.submissions.push({
-      student: req.user._id,
+    // Create submission object
+    const submission: any = {
+      student: userId,
+      content: req.body.content,
       submittedAt: new Date(),
-      status: "submitted",
-      content,
-      fileUrl,
-    });
+    };
 
+    // Handle file upload if present
+    if (req.file) {
+      submission.fileUrl = `/uploads/submissions/${req.file.filename}`;
+      submission.fileType = req.file.mimetype;
+      submission.fileSize = req.file.size;
+    }
+
+    // Add submission to assignment
+    assignment.submissions.push(submission);
     await assignment.save();
 
-    res.status(200).json({
-      success: true,
-      data: assignment,
+    console.log("Assignment submitted successfully:", {
+      assignmentId: id,
+      submissionId: submission._id,
+      hasFile: !!req.file,
     });
-  }),
-];
+
+    res.status(201).json({
+      success: true,
+      data: submission,
+    });
+  } catch (error) {
+    console.error("Error submitting assignment:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to submit assignment",
+    });
+  }
+};
 
 // @desc    Grade assignment
 // @route   POST /api/classrooms/:classroomId/assignments/:id/grade

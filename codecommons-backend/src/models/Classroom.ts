@@ -18,6 +18,7 @@ export interface IClassroom extends Document {
     type: string;
     size: string;
     uploadedOn: string;
+    fileUrl: string;
   }>;
   createdAt: Date;
   updatedAt: Date;
@@ -73,11 +74,12 @@ const classroomSchema = new Schema<IClassroom>(
     ],
     materials: [
       {
-        id: String,
-        title: String,
-        type: String,
-        size: String,
-        uploadedOn: String,
+        id: { type: String, required: true },
+        title: { type: String, required: true },
+        type: { type: String, required: true },
+        size: { type: String, required: true },
+        uploadedOn: { type: String, required: true },
+        fileUrl: { type: String, required: true },
       },
     ],
   },
