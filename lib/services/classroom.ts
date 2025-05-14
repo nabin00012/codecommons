@@ -52,7 +52,7 @@ export class ClassroomService {
   private baseUrl: string;
 
   constructor(token: string) {
-    this.baseUrl = `${API_URL}/classrooms`;
+    this.baseUrl = `${API_URL}/api/classrooms`;
     if (token) {
       authService.setToken(token);
     }
@@ -71,11 +71,14 @@ export class ClassroomService {
 
   async getClassrooms(): Promise<Classroom[]> {
     try {
+      console.log("Fetching classrooms...");
       const response = await fetch(this.baseUrl, {
         method: "GET",
         headers: this.getAuthHeader(),
         credentials: "include",
       });
+
+      console.log("Classrooms response status:", response.status);
 
       if (!response.ok) {
         let errorMessage = "Failed to fetch classrooms";
@@ -95,8 +98,10 @@ export class ClassroomService {
       }
 
       const result = await response.json();
+      console.log("Classrooms response:", result);
 
-      if (!result.success || !result.data) {
+      if (!result.success || !Array.isArray(result.data)) {
+        console.error("Invalid response format:", result);
         throw new Error("Invalid response format from server");
       }
 

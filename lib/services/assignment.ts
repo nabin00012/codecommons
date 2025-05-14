@@ -5,7 +5,7 @@ export interface Assignment {
   _id: string;
   title: string;
   description: string;
-  classroomId: string;
+  classroom: string;
   dueDate: string;
   points: number;
   submissionType: "code" | "file" | "text";
@@ -66,7 +66,7 @@ class AssignmentService {
   async createAssignment(data: CreateAssignmentData): Promise<Assignment> {
     try {
       const response = await fetch(
-        `${API_URL}/classrooms/${data.classroomId}/assignments`,
+        `${API_URL}/api/classrooms/${data.classroomId}/assignments`,
         {
           method: "POST",
           headers: this.getAuthHeader(),
@@ -88,12 +88,14 @@ class AssignmentService {
 
   async getAssignments(classroomId: string): Promise<Assignment[]> {
     try {
-      const url = `${API_URL}/classrooms/${classroomId}/assignments`;
+      const url = `${API_URL}/api/classrooms/${classroomId}/assignments`;
       console.log("Fetching assignments from:", url);
-      console.log("Auth header:", this.getAuthHeader());
+
+      const headers = this.getAuthHeader();
+      console.log("Auth header:", headers);
 
       const response = await fetch(url, {
-        headers: this.getAuthHeader(),
+        headers,
         credentials: "include",
       });
 
@@ -103,33 +105,44 @@ class AssignmentService {
         Object.fromEntries(response.headers.entries())
       );
 
-      let data;
-      try {
-        data = await response.json();
-        console.log("Assignments response:", data);
-      } catch (e) {
-        console.error("Failed to parse response:", e);
-        throw new Error("Invalid response from server");
-      }
-
+      // First check if the response is ok
       if (!response.ok) {
-        const errorMessage =
-          data?.message ||
-          data?.error ||
-          `Server error: ${response.status} ${response.statusText}`;
+        let errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (e) {
+          console.error("Failed to parse error response:", e);
+        }
         console.error("Failed to fetch assignments:", {
           status: response.status,
           statusText: response.statusText,
-          data: data,
           errorMessage,
           url,
         });
         throw new Error(errorMessage);
       }
 
+      // Then try to parse the response
+      let data;
+      try {
+        const text = await response.text();
+        console.log("Raw response:", text);
+        data = JSON.parse(text);
+        console.log("Parsed assignments response:", data);
+      } catch (e) {
+        console.error("Failed to parse response:", e);
+        throw new Error(
+          "Invalid response from server. Please try again later."
+        );
+      }
+
+      // Validate the response format
       if (!data.success || !data.data) {
         console.error("Invalid response format:", data);
-        throw new Error("Invalid response format from server");
+        throw new Error(
+          "Invalid response format from server. Please try again later."
+        );
       }
 
       return data.data;
@@ -138,36 +151,92 @@ class AssignmentService {
       if (error instanceof Error) {
         if (error.message === "Failed to fetch") {
           throw new Error(
-            "Unable to connect to the server. Please check your internet connection."
+            "Unable to connect to the server. Please check if the server is running and try again."
           );
         }
         throw error;
       }
       throw new Error(
-        "An unexpected error occurred while fetching assignments"
+        "An unexpected error occurred while fetching assignments. Please try again later."
       );
     }
   }
 
   async getAssignment(classroomId: string, id: string): Promise<Assignment> {
     try {
+      console.log("Fetching assignment:", {
+        classroomId,
+        assignmentId: id,
+        url: `${API_URL}/api/classrooms/${classroomId}/assignments/${id}`,
+      });
+
       const response = await fetch(
-        `${API_URL}/classrooms/${classroomId}/assignments/${id}`,
+        `${API_URL}/api/classrooms/${classroomId}/assignments/${id}`,
         {
           headers: this.getAuthHeader(),
+          credentials: "include",
         }
       );
 
+      console.log("Response status:", response.status);
+      console.log(
+        "Response headers:",
+        Object.fromEntries(response.headers.entries())
+      );
+
+      // First check if the response is ok
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to fetch assignment");
+        let errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (e) {
+          console.error("Failed to parse error response:", e);
+        }
+        console.error("Failed to fetch assignment:", {
+          status: response.status,
+          statusText: response.statusText,
+          errorMessage,
+        });
+        throw new Error(errorMessage);
       }
 
-      const result = await response.json();
-      return result.data;
+      // Then try to parse the response
+      let data;
+      try {
+        const text = await response.text();
+        console.log("Raw response:", text);
+        data = JSON.parse(text);
+        console.log("Parsed assignment response:", data);
+      } catch (e) {
+        console.error("Failed to parse response:", e);
+        throw new Error(
+          "Invalid response from server. Please try again later."
+        );
+      }
+
+      // Validate the response format
+      if (!data.success || !data.data) {
+        console.error("Invalid response format:", data);
+        throw new Error(
+          "Invalid response format from server. Please try again later."
+        );
+      }
+
+      return data.data;
     } catch (error) {
       console.error("Error fetching assignment:", error);
-      throw error;
+      if (error instanceof Error) {
+        if (error.message === "Failed to fetch") {
+          throw new Error(
+            "Unable to connect to the server. Please check if the server is running and try again."
+          );
+        }
+        throw error;
+      }
+      throw new Error(
+        "An unexpected error occurred while fetching the assignment. Please try again later."
+      );
     }
   }
 
@@ -245,7 +314,7 @@ class AssignmentService {
 
       // Make the request
       const response = await fetch(
-        `${API_URL}/classrooms/${classroomId}/assignments/${assignmentId}/submit`,
+        `${API_URL}/api/classrooms/${classroomId}/assignments/${assignmentId}/submit`,
         {
           method: "POST",
           headers: {

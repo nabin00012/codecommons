@@ -19,36 +19,54 @@ export const protect: Middleware = async (
   next: NextFunction
 ) => {
   let token;
+  console.log("Protect middleware called");
+  console.log("Headers:", req.headers);
+  console.log("Cookies:", req.cookies);
 
-  // Check for token in headers
-  if (
+  // Check for token in cookies first
+  if (req.cookies && req.cookies.token) {
+    token = req.cookies.token;
+    console.log("Token found in cookies:", token.substring(0, 10) + "...");
+  }
+  // Then check for token in headers
+  else if (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
   ) {
-    try {
-      // Get token from header
-      token = req.headers.authorization.split(" ")[1];
-
-      // Verify token
-      const decoded = jwt.verify(
-        token,
-        process.env.JWT_SECRET || "your-secret-key"
-      ) as CustomJwtPayload;
-
-      // Get user from token
-      req.user = await User.findById(decoded.id).select("-password");
-      console.log("[protect] Auth header:", req.headers.authorization);
-      console.log("[protect] Decoded user:", req.user);
-
-      next();
-    } catch (error) {
-      next({ status: 401, message: "Not authorized, token failed" });
-    }
-    return;
+    token = req.headers.authorization.split(" ")[1];
+    console.log("Token found in header:", token.substring(0, 10) + "...");
   }
 
   if (!token) {
+    console.log("No token found in request");
     next({ status: 401, message: "Not authorized, no token" });
+    return;
+  }
+
+  try {
+    // Verify token
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "your-secret-key"
+    ) as CustomJwtPayload;
+    console.log("Token decoded:", decoded);
+
+    // Get user from token
+    const user = await User.findById(decoded.id).select("-password");
+    console.log("User found:", user ? user._id : "No user found");
+
+    if (!user) {
+      console.log("No user found for token");
+      next({ status: 401, message: "Not authorized, user not found" });
+      return;
+    }
+
+    req.user = user;
+    console.log("User attached to request:", req.user._id);
+    next();
+  } catch (error) {
+    console.error("Token verification error:", error);
+    next({ status: 401, message: "Not authorized, token failed" });
   }
 };
 

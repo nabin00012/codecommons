@@ -7,10 +7,27 @@ const protectedPaths = [
   "/dashboard/classrooms",
   "/dashboard/classrooms/[id]",
   "/dashboard/classrooms/[id]/assignments",
+  "/dashboard/assignments",
+  "/dashboard/discussions",
+  "/dashboard/students",
+  "/dashboard/settings",
+  "/dashboard/help",
+  "/profile",
+  "/achievements",
+  "/challenges",
+  "/community",
+  "/leaderboard",
 ];
 
 // Add paths that should be public
-const publicPaths = ["/", "/login", "/register", "/about", "/contact"];
+const publicPaths = [
+  "/",
+  "/login",
+  "/register",
+  "/signup",
+  "/about",
+  "/contact",
+];
 
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
@@ -28,9 +45,17 @@ export function middleware(request: NextRequest) {
   });
 
   if (isProtectedPath) {
-    // For protected paths, we'll let the client-side handle the redirect
-    // The ProtectedRoute component will check localStorage and redirect if needed
-    return NextResponse.next();
+    // Check for token in cookies or localStorage
+    const token =
+      request.cookies.get("token")?.value ||
+      request.headers.get("Authorization")?.split(" ")[1];
+
+    if (!token) {
+      // Redirect to login if no token is found
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("redirectTo", path);
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
   return NextResponse.next();

@@ -17,6 +17,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/components/ui/use-toast";
 import { useUser } from "@/lib/context/user-context";
+import { useAuth } from "@/lib/context/AuthContext";
 import { Code, ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
 import { authService } from "@/lib/services/auth";
 
@@ -32,6 +33,7 @@ export default function SignupPage() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const { login } = useUser();
+  const { setToken } = useAuth();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -120,8 +122,8 @@ export default function SignupPage() {
         role: formData.role as "student" | "teacher",
       });
 
-      // Store the token
-      authService.setToken(response.token);
+      // Store the token using auth context
+      setToken(response.token);
 
       // Login the user with the response data
       login({

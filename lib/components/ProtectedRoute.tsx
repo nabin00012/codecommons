@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/lib/context/user-context";
-import { authService } from "@/lib/services/auth";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -18,28 +17,17 @@ export default function ProtectedRoute({
   const { user, loading } = useUser();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const token = authService.getToken();
-
-      if (!token) {
+    if (!loading) {
+      if (!user) {
         router.push("/login");
         return;
       }
 
-      if (!loading) {
-        if (!user) {
-          router.push("/login");
-          return;
-        }
-
-        if (requireTeacher && user.role !== "teacher") {
-          router.push("/dashboard/classrooms");
-          return;
-        }
+      if (requireTeacher && user.role !== "teacher") {
+        router.push("/dashboard");
+        return;
       }
-    };
-
-    checkAuth();
+    }
   }, [user, loading, router, requireTeacher]);
 
   if (loading) {

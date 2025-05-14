@@ -49,16 +49,30 @@ export const createClassroom = asyncHandler(
 // @access  Private
 export const getClassrooms = asyncHandler(
   async (req: Request, res: Response) => {
-    // For teachers, show all their classrooms
-    // For students, only show classrooms they are enrolled in
-    const query =
-      req.user.role === "teacher"
-        ? { teacher: req.user._id }
-        : { students: { $in: [req.user._id] } };
+    console.log(
+      "Getting classrooms for user:",
+      req.user._id,
+      "with role:",
+      req.user.role
+    );
+
+    let query;
+    if (req.user.role === "teacher") {
+      // For teachers, show all their classrooms
+      query = { teacher: req.user._id };
+    } else {
+      // For students, show classrooms they are enrolled in
+      query = { students: req.user._id };
+    }
+
+    console.log("Query:", query);
 
     const classrooms = await Classroom.find(query)
       .populate("teacher", "name email")
-      .populate("students", "name email");
+      .populate("students", "name email")
+      .sort("-createdAt");
+
+    console.log("Found classrooms:", classrooms.length);
 
     res.status(200).json({
       success: true,

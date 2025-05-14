@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { useUser } from "@/lib/context/user-context";
+import { useAuth } from "@/lib/context/AuthContext";
 import { authService } from "@/lib/services/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,8 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirectTo");
   const { toast } = useToast();
-  const { login, user } = useUser();
+  const { login, user, isLoading: userLoading } = useUser();
+  const { setToken, isLoading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -29,11 +31,12 @@ export default function LoginPage() {
 
   // Check if user is already logged in
   useEffect(() => {
-    if (user) {
+    if (user && !userLoading && !authLoading) {
       console.log("User already logged in, redirecting to dashboard");
-      router.push("/dashboard");
+      const redirectPath = redirectTo || "/dashboard";
+      router.replace(redirectPath);
     }
-  }, [user, router]);
+  }, [user, userLoading, authLoading, router, redirectTo]);
 
   const validateForm = () => {
     let isValid = true;
@@ -80,8 +83,8 @@ export default function LoginPage() {
 
       console.log("Login successful, response:", response);
 
-      // Store the token
-      authService.setToken(response.token);
+      // Store the token using auth context
+      setToken(response.token);
 
       // Login the user with the response data
       login({
@@ -97,20 +100,43 @@ export default function LoginPage() {
         description: `Welcome back, ${response.name}!`,
       });
 
-      console.log("Redirecting to dashboard");
-      router.push("/dashboard");
+      // Use replace instead of push to avoid back button issues
+      const redirectPath = redirectTo || "/dashboard";
+      console.log("Redirecting to:", redirectPath);
+      router.replace(redirectPath);
     } catch (error) {
       console.error("Login error:", error);
+      let errorMessage = "Login failed. Please try again.";
+
+      if (error instanceof Error) {
+        if (error.message.includes("Invalid email or password")) {
+          errorMessage = "Invalid email or password. Please try again.";
+        } else if (error.message.includes("Failed to fetch")) {
+          errorMessage =
+            "Unable to connect to the server. Please try again later.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
       toast({
         title: "Login failed",
-        description:
-          error instanceof Error ? error.message : "Please try again",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Show loading state while checking authentication
+  if (userLoading || authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

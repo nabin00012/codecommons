@@ -8,6 +8,7 @@ import React, {
   ReactNode,
 } from "react";
 import { authService } from "@/lib/services/auth";
+import { useAuth } from "./AuthContext";
 import { useRouter } from "next/navigation";
 
 export type UserRole = "student" | "teacher";
@@ -17,7 +18,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
-  avatar: string;
+  avatar?: string;
 }
 
 interface UserContextType {
@@ -44,45 +45,63 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { token, setToken } = useAuth();
 
   useEffect(() => {
+    let mounted = true;
+
     const loadUser = async () => {
-      const token = authService.getToken();
-      if (token) {
-        try {
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          if (response.ok) {
-            const data = await response.json();
-            setUser({
-              id: data._id,
-              name: data.name,
-              email: data.email,
-              role: data.role,
-              avatar: data.avatar || "/placeholder.svg?height=40&width=40",
-            });
-          } else {
-            // If token is invalid, clear it
-            authService.logout();
-            router.push("/login");
+      try {
+        console.log("Loading user...");
+        if (!token) {
+          console.log("No token found");
+          if (mounted) {
+            setUser(null);
+            setLoading(false);
           }
-        } catch (error) {
-          console.error("Error loading user:", error);
-          authService.logout();
+          return;
+        }
+
+        const response = await authService.verifyToken(token);
+        console.log("User verification response:", response);
+
+        if (mounted && response.user) {
+          setUser({
+            id: response.user._id,
+            name: response.user.name,
+            email: response.user.email,
+            role: response.user.role,
+            avatar:
+              response.user.avatar || "/placeholder.svg?height=40&width=40",
+          });
+        } else if (mounted) {
+          console.log("No user data in response");
+          setUser(null);
+          setToken(null);
+          setLoading(false);
           router.push("/login");
         }
+      } catch (error) {
+        console.error("Error loading user:", error);
+        if (mounted) {
+          setUser(null);
+          setToken(null);
+          setLoading(false);
+          router.push("/login");
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
       }
-      setLoading(false);
     };
 
     loadUser();
-  }, [router]);
+
+    return () => {
+      mounted = false;
+    };
+  }, [token, router, setToken]);
 
   const login = (userData: User) => {
     setUser(userData);
@@ -90,7 +109,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUser(null);
-    authService.logout();
+    setToken(null);
+    localStorage.removeItem("token");
     router.push("/login");
   };
 
@@ -100,6 +120,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setUser(updatedUser);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <UserContext.Provider

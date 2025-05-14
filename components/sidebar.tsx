@@ -11,9 +11,14 @@ import {
   Settings,
   HelpCircle,
   LogOut,
+  Code2,
+  Calendar,
+  Users2,
+  Code,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { authService } from "@/lib/services/auth";
+import { ModeToggle } from "@/components/mode-toggle";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -41,10 +46,39 @@ export function Sidebar() {
       current: pathname.includes("/assignments"),
     },
     {
-      name: "Discussions",
-      href: "/dashboard/discussions",
-      icon: MessageSquare,
-      current: pathname.includes("/discussions"),
+      name: "Projects",
+      href: "/dashboard/projects",
+      icon: Code2,
+      current: pathname.includes("/projects"),
+    },
+    {
+      name: "CodeCorner",
+      href: "/dashboard/codecorner",
+      icon: Code,
+      current: pathname.includes("/codecorner"),
+    },
+    {
+      name: "Community",
+      href: "/dashboard/community",
+      icon: Users,
+      current: pathname.includes("/community"),
+      subItems: [
+        {
+          name: "Discussions",
+          href: "/dashboard/community/discussions",
+          icon: MessageSquare,
+        },
+        {
+          name: "Events",
+          href: "/dashboard/community/events",
+          icon: Calendar,
+        },
+        {
+          name: "Groups",
+          href: "/dashboard/community/groups",
+          icon: Users2,
+        },
+      ],
     },
     {
       name: "Students",
@@ -76,22 +110,39 @@ export function Sidebar() {
         {navigation.map((item) => {
           if (item.teacherOnly && !isTeacher) return null;
           return (
-            <Button
-              key={item.name}
-              variant={item.current ? "secondary" : "ghost"}
-              className={cn(
-                "w-full justify-start",
-                item.current && "bg-gray-100"
+            <div key={item.name}>
+              <Button
+                variant={item.current ? "secondary" : "ghost"}
+                className={cn(
+                  "w-full justify-start",
+                  item.current && "bg-gray-100"
+                )}
+                onClick={() => router.push(item.href)}
+              >
+                <item.icon className="mr-2 h-5 w-5" />
+                {item.name}
+              </Button>
+              {item.subItems && item.current && (
+                <div className="ml-6 mt-1 space-y-1">
+                  {item.subItems.map((subItem) => (
+                    <Button
+                      key={subItem.name}
+                      variant="ghost"
+                      className="w-full justify-start text-sm"
+                      onClick={() => router.push(subItem.href)}
+                    >
+                      <subItem.icon className="mr-2 h-4 w-4" />
+                      {subItem.name}
+                    </Button>
+                  ))}
+                </div>
               )}
-              onClick={() => router.push(item.href)}
-            >
-              <item.icon className="mr-2 h-5 w-5" />
-              {item.name}
-            </Button>
+            </div>
           );
         })}
       </nav>
-      <div className="border-t p-4">
+      <div className="border-t p-4 flex flex-col gap-4">
+        <ModeToggle />
         <Button
           variant="ghost"
           className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"

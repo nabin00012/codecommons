@@ -41,16 +41,19 @@ export const register = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    console.log("Register request received:", req.body);
     const { name, email, password, role } = req.body;
 
     // Check if user already exists
     const userExists = await User.findOne({ email });
     if (userExists) {
+      console.log("User already exists:", email);
       res.status(400).json({ message: "User already exists" });
       return;
     }
 
     // Create new user
+    console.log("Creating new user:", { name, email, role });
     const user = await User.create({
       name,
       email,
@@ -60,6 +63,15 @@ export const register = async (
 
     // Generate token
     const token = generateToken(user._id.toString());
+    console.log("Token generated for user:", user._id);
+
+    // Set token as HTTP-only cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
 
     res.status(201).json({
       _id: user._id,
@@ -69,6 +81,7 @@ export const register = async (
       token,
     });
   } catch (error) {
+    console.error("Registration error:", error);
     const errorMessage =
       error instanceof Error ? error.message : "An error occurred";
     res.status(500).json({ message: errorMessage });
@@ -84,11 +97,13 @@ export const login = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    console.log("Login request received:", req.body);
     const { email, password } = req.body;
 
     // Find user and explicitly select password field
     const user = await User.findOne({ email }).select("+password");
     if (!user) {
+      console.log("User not found:", email);
       res.status(401).json({ message: "Invalid email or password" });
       return;
     }
@@ -96,12 +111,22 @@ export const login = async (
     // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      console.log("Invalid password for user:", email);
       res.status(401).json({ message: "Invalid email or password" });
       return;
     }
 
     // Generate token
     const token = generateToken(user._id.toString());
+    console.log("Token generated for user:", user._id);
+
+    // Set token as HTTP-only cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
 
     res.json({
       _id: user._id,
@@ -193,5 +218,71 @@ export const resetPassword = async (
     const errorMessage =
       error instanceof Error ? error.message : "An error occurred";
     res.status(500).json({ message: errorMessage });
+  }
+};
+
+// @desc    Verify token
+// @route   GET /api/auth/verify
+// @access  Private
+export const verifyToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    console.log("Verify token request received");
+    console.log("Auth header:", req.headers.authorization);
+    console.log("User from request:", req.user);
+
+    // The user is already attached to the request by the protect middleware
+    if (!req.user) {
+      console.log("No user found in request");
+      res.status(401).json({ message: "Not authorized" });
+      return;
+    }
+
+    console.log("Token verified successfully for user:", req.user._id);
+    res.json({
+      user: {
+        _id: req.user._id,
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role,
+      },
+    });
+  } catch (error) {
+    console.error("Token verification error:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "An error occurred";
+    res.status(500).json({ message: errorMessage });
+  }
+};
+
+/**
+ * @route   GET /api/auth/me
+ * @desc    Get current user
+ * @access  Private
+ */
+export const getCurrentUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: "Not authorized" });
+      return;
+    }
+
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error("Error in getCurrentUser:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };

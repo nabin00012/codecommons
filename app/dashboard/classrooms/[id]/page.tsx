@@ -73,6 +73,18 @@ export default function ClassroomDetailPage() {
           return;
         }
 
+        // Validate classroom ID
+        if (!classroomId) {
+          console.error("Missing classroom ID");
+          toast({
+            title: "Error",
+            description: "Invalid classroom ID",
+            variant: "destructive",
+          });
+          router.push("/dashboard/classrooms");
+          return;
+        }
+
         console.log("Fetching classroom data for ID:", classroomId);
         const classroomServiceInstance = new ClassroomService(token);
 
@@ -100,6 +112,8 @@ export default function ClassroomDetailPage() {
               : "Failed to load classroom data. Please try again.",
           variant: "destructive",
         });
+        // Redirect back to classrooms list on error
+        router.push("/dashboard/classrooms");
       } finally {
         setIsLoading(false);
       }

@@ -1,7 +1,11 @@
 import { UserRole } from "@/lib/context/user-context";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
-const TOKEN_KEY = "token";
+
+interface LoginCredentials {
+  email: string;
+  password: string;
+}
 
 interface LoginResponse {
   _id: string;
@@ -11,16 +15,10 @@ interface LoginResponse {
   token: string;
 }
 
-interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
 export const authService = {
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     const url = `${API_URL}/api/auth/login`;
     console.log("Making login request to:", url);
-    console.log("Request body:", JSON.stringify(credentials, null, 2));
 
     try {
       const response = await fetch(url, {
@@ -32,54 +30,23 @@ export const authService = {
         credentials: "include",
       });
 
-      // Log the raw response first
-      console.log("Raw response:", {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries()),
-      });
-
-      let data;
-      try {
-        data = await response.json();
-        console.log("Parsed response data:", data);
-      } catch (parseError) {
-        console.error("Failed to parse response as JSON:", parseError);
-        throw new Error("Invalid response from server");
-      }
+      const data = await response.json();
+      console.log("Login response:", data);
 
       if (!response.ok) {
-        console.error("Login failed:", {
-          status: response.status,
-          statusText: response.statusText,
-          data: data,
-        });
-        throw new Error(
-          data?.message ||
-            `Server error: ${response.status} ${response.statusText}`
-        );
+        throw new Error(data.message || "Login failed");
       }
 
-      // Validate the response data
-      if (!data._id || !data.name || !data.email || !data.role || !data.token) {
-        console.error("Invalid response format:", data);
+      if (!data.token || !data._id || !data.name || !data.email || !data.role) {
         throw new Error("Invalid response format from server");
       }
 
       // Store token in localStorage
       this.setToken(data.token);
-      console.log("Token stored successfully");
 
       return data;
     } catch (error) {
-      if (error instanceof Error) {
-        console.error("Login error:", {
-          message: error.message,
-          stack: error.stack,
-        });
-      } else {
-        console.error("Unknown error:", error);
-      }
+      console.error("Login error:", error);
       throw error;
     }
   },
@@ -88,11 +55,10 @@ export const authService = {
     name: string;
     email: string;
     password: string;
-    role?: UserRole;
+    role: UserRole;
   }): Promise<LoginResponse> {
     const url = `${API_URL}/api/auth/register`;
-    console.log("Making registration request to:", url);
-    console.log("Request body:", JSON.stringify(userData, null, 2));
+    console.log("Making register request to:", url);
 
     try {
       const response = await fetch(url, {
@@ -104,109 +70,115 @@ export const authService = {
         credentials: "include",
       });
 
-      let data;
-      try {
-        data = await response.json();
-        console.log("Registration response:", data);
-      } catch (parseError) {
-        console.error("Failed to parse response as JSON:", parseError);
-        throw new Error("Invalid response from server");
-      }
+      const data = await response.json();
+      console.log("Register response:", data);
 
       if (!response.ok) {
-        const errorMessage =
-          data?.message ||
-          data?.error ||
-          `Server error: ${response.status} ${response.statusText}`;
-        console.error("Registration failed:", {
-          status: response.status,
-          statusText: response.statusText,
-          data: data,
-          errorMessage,
-        });
-        throw new Error(errorMessage);
+        throw new Error(data.message || "Registration failed");
       }
 
-      // Validate the response data
-      if (!data._id || !data.name || !data.email || !data.role || !data.token) {
-        console.error("Invalid response format:", data);
+      if (!data.token || !data._id || !data.name || !data.email || !data.role) {
         throw new Error("Invalid response format from server");
       }
 
       // Store token in localStorage
       this.setToken(data.token);
-      console.log("Token stored successfully after registration");
 
       return data;
     } catch (error) {
-      console.error("Registration error details:", {
-        error,
-        message: error instanceof Error ? error.message : "Unknown error",
-        stack: error instanceof Error ? error.stack : undefined,
-      });
-
-      // Handle specific error cases
-      if (error instanceof Error) {
-        if (error.message.includes("already exists")) {
-          throw new Error(
-            "An account with this email already exists. Please try logging in instead."
-          );
-        } else if (error.message === "Failed to fetch") {
-          throw new Error(
-            "Unable to connect to the server. Please check your internet connection and try again."
-          );
-        }
-        throw new Error(`Registration failed: ${error.message}`);
-      } else {
-        throw new Error("Registration failed: Unknown error occurred");
-      }
+      console.error("Registration error:", error);
+      throw error;
     }
   },
 
   logout() {
-    localStorage.removeItem(TOKEN_KEY);
-    console.log("Token removed on logout");
-  },
-
-  getToken() {
-    const token = localStorage.getItem(TOKEN_KEY);
-    console.log("Getting token:", token ? "Token exists" : "No token found");
-    return token;
-  },
-
-  setToken(token: string) {
-    localStorage.setItem(TOKEN_KEY, token);
-    console.log("Token stored successfully");
-  },
-
-  isAuthenticated(): boolean {
-    const token = this.getToken();
-    const isAuth = !!token;
-    console.log(
-      "Authentication status:",
-      isAuth ? "Authenticated" : "Not authenticated"
-    );
-    return isAuth;
+    this.removeToken();
+    window.location.href = "/login";
   },
 
   async verifyToken(token: string) {
     try {
-      const response = await fetch(`${API_URL}/auth/verify`, {
-        method: "POST",
+      console.log("Verifying token...");
+      const response = await fetch(`${API_URL}/api/auth/verify`, {
+        method: "GET",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ token }),
+      });
+
+      console.log("Token verification response:", response.status);
+
+      if (!response.ok) {
+        console.error(
+          "Token verification failed with status:",
+          response.status
+        );
+        throw new Error("Token verification failed");
+      }
+
+      const data = await response.json();
+      console.log("Token verification data:", data);
+
+      if (
+        !data.user ||
+        !data.user._id ||
+        !data.user.name ||
+        !data.user.email ||
+        !data.user.role
+      ) {
+        throw new Error("Invalid user data in response");
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Token verification error:", error);
+      throw error;
+    }
+  },
+
+  getToken(): string | null {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("token");
+    }
+    return null;
+  },
+
+  setToken(token: string) {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("token", token);
+    }
+  },
+
+  removeToken() {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token");
+    }
+  },
+
+  async getCurrentUser() {
+    try {
+      const token = this.getToken();
+      if (!token) return null;
+
+      const response = await fetch(`${API_URL}/auth/verify`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          this.removeToken();
+        }
         return null;
       }
 
-      const result = await response.json();
-      return result.data;
+      const data = await response.json();
+      return data.user;
     } catch (error) {
-      console.error("Error verifying token:", error);
+      console.error("Error getting current user:", error);
       return null;
     }
   },

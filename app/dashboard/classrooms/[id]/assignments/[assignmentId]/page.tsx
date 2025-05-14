@@ -16,6 +16,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { authService } from "@/lib/services/auth";
 import ProtectedRoute from "@/lib/components/ProtectedRoute";
 import { Badge } from "@/components/ui/badge";
+import { API_URL } from "@/lib/constants";
+import { ClassroomService } from "@/lib/services/classroom";
 
 export default function AssignmentDetailPage() {
   const params = useParams();
@@ -43,16 +45,74 @@ export default function AssignmentDetailPage() {
   useEffect(() => {
     const fetchAssignment = async () => {
       try {
+        // Validate required parameters
+        if (!classroomId || !assignmentId) {
+          console.error("Missing required parameters:", {
+            classroomId,
+            assignmentId,
+          });
+          toast({
+            title: "Error",
+            description: "Invalid classroom or assignment ID",
+            variant: "destructive",
+          });
+          router.push("/dashboard");
+          return;
+        }
+
         const token = authService.getToken();
         if (!token) {
           router.push("/login");
           return;
         }
 
+        console.log("Fetching assignment details:", {
+          classroomId,
+          assignmentId,
+          url: `${API_URL}/api/classrooms/${classroomId}/assignments/${assignmentId}`,
+        });
+
+        // First verify we can access the classroom
+        const classroomServiceInstance = new ClassroomService(token);
+        try {
+          const classroomData = await classroomServiceInstance.getClassroom(
+            classroomId
+          );
+          console.log("Classroom access verified:", classroomData);
+        } catch (error) {
+          console.error("Error accessing classroom:", error);
+          toast({
+            title: "Error",
+            description: "You don't have access to this classroom",
+            variant: "destructive",
+          });
+          router.push("/dashboard/classrooms");
+          return;
+        }
+
+        // Then fetch the assignment
         const assignmentData = await assignmentService.getAssignment(
           classroomId,
           assignmentId
         );
+
+        console.log("Assignment data received:", assignmentData);
+
+        // Verify the assignment belongs to the correct classroom
+        if (assignmentData.classroom !== classroomId) {
+          console.error("Assignment classroom mismatch:", {
+            expected: classroomId,
+            actual: assignmentData.classroom,
+          });
+          toast({
+            title: "Error",
+            description: "Assignment not found in this classroom",
+            variant: "destructive",
+          });
+          router.push(`/dashboard/classrooms/${classroomId}`);
+          return;
+        }
+
         setAssignment(assignmentData);
         if (assignmentData.codeTemplate) {
           setCode(assignmentData.codeTemplate);
@@ -67,6 +127,8 @@ export default function AssignmentDetailPage() {
               : "Failed to load assignment. Please try again.",
           variant: "destructive",
         });
+        // Redirect back to classroom page on error
+        router.push(`/dashboard/classrooms/${classroomId}`);
       } finally {
         setIsLoading(false);
       }
@@ -240,7 +302,7 @@ export default function AssignmentDetailPage() {
         title: "Graded!",
         description: "Grade and feedback saved.",
       });
-      // Optionally, refresh assignment data
+      // Refresh assignment data
       const data = await assignmentService.getAssignment(
         classroomId,
         assignmentId
@@ -492,7 +554,7 @@ export default function AssignmentDetailPage() {
                         </div>
                         <div className="mt-4">
                           <div className="font-semibold mb-1">Submission:</div>
-                          <pre className="bg-muted p-2 rounded text-sm overflow-x-auto">
+                          <pre className="bg-muted/50 p-4 rounded-lg text-sm overflow-x-auto border border-border">
                             {submission.content || "(No content)"}
                           </pre>
                         </div>
@@ -667,7 +729,7 @@ export default function AssignmentDetailPage() {
                         {studentSubmission.feedback || "No feedback yet"}
                       </div>
                       <div className="font-semibold mb-1">Your Answer:</div>
-                      <pre className="bg-muted p-2 rounded text-sm overflow-x-auto">
+                      <pre className="bg-muted/50 p-4 rounded-lg text-sm overflow-x-auto border border-border">
                         {studentSubmission.content || "(No content)"}
                       </pre>
                     </CardContent>

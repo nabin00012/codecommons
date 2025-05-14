@@ -82,7 +82,7 @@
 
 /* Cosmic mode styles */
 .cosmic-text {
-  @apply relative;
+  @apply relative text-foreground;
 }
 
 .cosmic-text::after {
