@@ -41,6 +41,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProtectedRoute from "@/lib/components/ProtectedRoute";
 import { authService } from "@/lib/services/auth";
+import Link from "next/link";
 
 interface Question {
   _id: string;
@@ -76,6 +77,8 @@ export default function CodeCornerPage() {
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState<string>("all");
+  const [reply, setReply] = useState("");
+  const [points, setPoints] = useState(0);
 
   const languages = [
     "JavaScript",
@@ -156,6 +159,54 @@ export default function CodeCornerPage() {
       toast({
         title: "Error",
         description: "Failed to post question. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReply = async (
+    postId: string,
+    reply: string,
+    points?: number
+  ) => {
+    try {
+      const token = authService.getToken();
+      const response = await fetch(
+        `/api/codecorner/questions/${postId}/answers`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ content: reply, points }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.message ||
+            `Failed to submit reply: ${response.status} ${response.statusText}`
+        );
+      }
+
+      toast({
+        title: "Success",
+        description: "Reply posted successfully!",
+      });
+
+      setReply("");
+      setPoints(0);
+      fetchQuestions();
+    } catch (error) {
+      console.error("Error submitting reply:", error);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to post reply. Please try again.",
         variant: "destructive",
       });
     }
@@ -299,6 +350,76 @@ export default function CodeCornerPage() {
           </Select>
         </div>
 
+        <div className="mb-8 p-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg shadow-lg">
+          <h2 className="text-2xl font-bold text-white mb-2">Point System</h2>
+          <p className="text-white mb-4">
+            Build your reputation by contributing to the community. Points are
+            allocated by moderators based on your actions.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white p-4 rounded-lg shadow">
+              <h3 className="font-semibold text-blue-800">
+                Posting a question
+              </h3>
+              <p className="text-blue-600">+5 points</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow">
+              <h3 className="font-semibold text-blue-800">Question upvoted</h3>
+              <p className="text-blue-600">+2 points</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow">
+              <h3 className="font-semibold text-blue-800">
+                Question marked as solved
+              </h3>
+              <p className="text-blue-600">+3 points</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow">
+              <h3 className="font-semibold text-blue-800">Featured question</h3>
+              <p className="text-blue-600">+10 points</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow">
+              <h3 className="font-semibold text-blue-800">Posting an answer</h3>
+              <p className="text-blue-600">+5 points</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow">
+              <h3 className="font-semibold text-blue-800">Answer upvoted</h3>
+              <p className="text-blue-600">+5 points</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow">
+              <h3 className="font-semibold text-blue-800">Answer accepted</h3>
+              <p className="text-blue-600">+25 points</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow">
+              <h3 className="font-semibold text-blue-800">
+                Detailed explanation
+              </h3>
+              <p className="text-blue-600">+10 points</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow">
+              <h3 className="font-semibold text-blue-800">
+                Daily login streak
+              </h3>
+              <p className="text-blue-600">+1 point/day</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow">
+              <h3 className="font-semibold text-blue-800">
+                Weekly challenge completed
+              </h3>
+              <p className="text-blue-600">+20 points</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow">
+              <h3 className="font-semibold text-blue-800">
+                Editing/improving posts
+              </h3>
+              <p className="text-blue-600">+2 points</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow">
+              <h3 className="font-semibold text-blue-800">Receiving badges</h3>
+              <p className="text-blue-600">+5-50 points</p>
+            </div>
+          </div>
+        </div>
+
         <div className="space-y-6">
           {filteredQuestions.map((question, index) => (
             <motion.div
@@ -311,9 +432,11 @@ export default function CodeCornerPage() {
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle className="line-clamp-1">
-                        {question.title}
-                      </CardTitle>
+                      <Link href={`/dashboard/codecorner/${question._id}`}>
+                        <CardTitle className="line-clamp-1 cursor-pointer hover:text-blue-500">
+                          {question.title}
+                        </CardTitle>
+                      </Link>
                       <div className="flex items-center gap-2 mt-2">
                         <Badge variant="outline" className="capitalize">
                           {question.language}
@@ -352,7 +475,11 @@ export default function CodeCornerPage() {
                     </div>
                     <div className="flex items-center gap-1">
                       <MessageSquare className="h-4 w-4" />
-                      <span>{question.answers}</span>
+                      <span>
+                        {Array.isArray(question.answers)
+                          ? question.answers.length
+                          : 0}
+                      </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Eye className="h-4 w-4" />
@@ -364,6 +491,34 @@ export default function CodeCornerPage() {
                         {new Date(question.createdAt).toLocaleDateString()}
                       </span>
                     </div>
+                  </div>
+                  <div className="mt-4">
+                    <textarea
+                      className="w-full p-2 border rounded"
+                      placeholder="Write your reply..."
+                      value={reply}
+                      onChange={(e) => setReply(e.target.value)}
+                    />
+                    {user?.role === "teacher" && (
+                      <div className="mt-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Points
+                        </label>
+                        <input
+                          type="number"
+                          className="mt-1 block w-full p-2 border rounded"
+                          placeholder="Enter points"
+                          value={points}
+                          onChange={(e) => setPoints(Number(e.target.value))}
+                        />
+                      </div>
+                    )}
+                    <button
+                      className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
+                      onClick={() => handleReply(question._id, reply, points)}
+                    >
+                      Submit Reply
+                    </button>
                   </div>
                 </CardContent>
               </Card>

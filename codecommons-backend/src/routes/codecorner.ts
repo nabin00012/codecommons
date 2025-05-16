@@ -15,8 +15,8 @@ const router = express.Router();
 
 // Questions
 router.get("/questions", protect, getQuestions);
-router.post("/questions", protect, createQuestion);
 router.get("/questions/:id", protect, getQuestion);
+router.post("/questions", protect, createQuestion);
 router.delete("/questions/:id", protect, deleteQuestion);
 
 // Answers

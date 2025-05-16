@@ -1,5 +1,10 @@
 import { Request, Response } from "express";
-import Question, { IAnswer } from "../models/Question";
+import Question, {
+  IQuestion,
+  IAnswer,
+  Answer,
+  IPopulatedQuestion,
+} from "../models/Question";
 import User from "../models/User";
 import { Types } from "mongoose";
 
@@ -46,7 +51,6 @@ export const createQuestion = async (
       createdAt: new Date(),
       views: 0,
       votes: 0,
-      answers: [],
     });
 
     await question.save();
@@ -67,23 +71,92 @@ export const getQuestion = async (
   res: Response
 ): Promise<void> => {
   try {
-    const question = await Question.findById(req.params.id)
-      .populate("author", "name role semester department")
-      .populate("answers.author", "name role semester department");
+    console.log("Fetching question with ID:", req.params.id);
 
-    if (!question) {
-      res.status(404).json({ message: "Question not found" });
+    // Validate ID format
+    if (!Types.ObjectId.isValid(req.params.id)) {
+      console.error("Invalid question ID format:", req.params.id);
+      res.status(400).json({
+        message: "Invalid question ID format",
+        id: req.params.id,
+      });
       return;
     }
 
-    // Increment view count
-    question.views += 1;
-    await question.save();
+    console.log("Finding question in database...");
+    // First find the question
+    const question = await Question.findById(req.params.id);
 
-    res.json(question);
+    if (!question) {
+      console.error("Question not found with ID:", req.params.id);
+      res.status(404).json({
+        message: "Question not found",
+        id: req.params.id,
+      });
+      return;
+    }
+
+    // Then find all answers for this question
+    const answers = await Answer.find({ question: question._id })
+      .populate("author", "name role semester department email")
+      .sort({ createdAt: -1 }); // Sort by newest first
+
+    // Increment view count
+    await Question.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
+
+    // Get the populated question
+    const populatedQuestion = await Question.findById(req.params.id)
+      .populate("author", "name role semester department email")
+      .lean();
+
+    if (!populatedQuestion) {
+      console.error("Error: Question disappeared after initial fetch");
+      res.status(500).json({
+        message: "Error fetching question details",
+      });
+      return;
+    }
+
+    // Transform the data to ensure all ObjectIds are strings
+    const transformedQuestion = {
+      ...populatedQuestion,
+      _id: populatedQuestion._id.toString(),
+      author: populatedQuestion.author
+        ? {
+            ...populatedQuestion.author,
+            _id: populatedQuestion.author._id.toString(),
+          }
+        : null,
+      answers: answers.map((answer) => ({
+        ...answer.toObject(),
+        _id: answer._id.toString(),
+        author: answer.author
+          ? {
+              ...answer.author,
+              _id: answer.author._id.toString(),
+            }
+          : null,
+      })),
+    };
+
+    // Log the transformed data
+    console.log(
+      "Sending response with transformed question data:",
+      JSON.stringify(transformedQuestion, null, 2)
+    );
+
+    res.json(transformedQuestion);
   } catch (error) {
     console.error("Error fetching question:", error);
-    res.status(500).json({ message: "Failed to fetch question" });
+    // Log the full error stack trace
+    if (error instanceof Error) {
+      console.error("Error stack:", error.stack);
+    }
+    res.status(500).json({
+      message: "Failed to fetch question",
+      error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+    });
   }
 };
 
@@ -135,21 +208,27 @@ export const createAnswer = async (
       return;
     }
 
-    const answer = {
+    // Create a new answer
+    const answer = new Answer({
       content,
       author: userId,
+      question: questionId,
       createdAt: new Date(),
       votes: 0,
       isAccepted: false,
-    };
+    });
 
-    question.answers.push(answer);
-    await question.save();
+    await answer.save();
 
     // Add points to the user
     await User.findByIdAndUpdate(userId, { $inc: { points: 10 } });
 
-    res.status(201).json(answer);
+    // Fetch the populated answer to return
+    const populatedAnswer = await Answer.findById(answer._id)
+      .populate("author", "name role semester department email")
+      .lean();
+
+    res.status(201).json(populatedAnswer);
   } catch (error) {
     console.error("Error creating answer:", error);
     res.status(500).json({ message: "Failed to create answer" });
@@ -170,20 +249,14 @@ export const acceptAnswer = async (
       return;
     }
 
-    const question = await Question.findById(questionId);
-    if (!question) {
-      res.status(404).json({ message: "Question not found" });
-      return;
-    }
-
-    const answer = question.answers.find((a) => a._id.toString() === answerId);
+    const answer = await Answer.findById(answerId);
     if (!answer) {
       res.status(404).json({ message: "Answer not found" });
       return;
     }
 
     answer.isAccepted = true;
-    await question.save();
+    await answer.save();
 
     // Add points to the answer author
     await User.findByIdAndUpdate(answer.author, { $inc: { points: 15 } });
@@ -226,22 +299,14 @@ export const voteAnswer = async (
   res: Response
 ): Promise<void> => {
   try {
-    const question = await Question.findOne({ "answers._id": req.params.id });
-    if (!question) {
-      res.status(404).json({ message: "Answer not found" });
-      return;
-    }
-
-    const answer = question.answers.find(
-      (a) => a._id.toString() === req.params.id
-    );
+    const answer = await Answer.findById(req.params.id);
     if (!answer) {
       res.status(404).json({ message: "Answer not found" });
       return;
     }
 
     answer.votes += 1;
-    await question.save();
+    await answer.save();
 
     // Add points to the answer author
     await User.findByIdAndUpdate(answer.author, { $inc: { points: 2 } });

@@ -32,7 +32,13 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="system"
           enableSystem
-          disableTransitionOnChange
+          themes={["light", "dark", "cosmic"]}
+          value={{
+            light: "light",
+            dark: "dark",
+            cosmic: "cosmic",
+            system: "system",
+          }}
         >
           <AuthProvider>
             <UserProvider>

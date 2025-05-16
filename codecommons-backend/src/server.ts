@@ -17,6 +17,14 @@ dotenv.config();
 // Initialize express app
 const app = express();
 
+// Add request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  console.log("Headers:", req.headers);
+  console.log("Body:", req.body);
+  next();
+});
+
 // Connect to MongoDB
 connectDB();
 
@@ -72,8 +80,13 @@ app.use(
     res: express.Response,
     next: express.NextFunction
   ) => {
-    console.error(err.stack);
-    res.status(500).json({ message: "Something went wrong!" });
+    console.error("Error:", err);
+    console.error("Stack:", err.stack);
+    res.status(500).json({
+      message: "Internal server error",
+      error: err.message,
+      stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+    });
   }
 );
 

@@ -102,7 +102,7 @@ export function Sidebar() {
   ];
 
   return (
-    <div className="flex h-full w-64 flex-col bg-white border-r">
+    <div className="flex h-full w-64 flex-col bg-background border-border border-r">
       <div className="flex h-16 items-center border-b px-4">
         <h1 className="text-xl font-semibold">CodeCommons</h1>
       </div>
@@ -115,7 +115,7 @@ export function Sidebar() {
                 variant={item.current ? "secondary" : "ghost"}
                 className={cn(
                   "w-full justify-start",
-                  item.current && "bg-gray-100"
+                  item.current && "bg-muted"
                 )}
                 onClick={() => router.push(item.href)}
               >

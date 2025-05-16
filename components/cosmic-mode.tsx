@@ -2,6 +2,7 @@
 
 import { ReactNode, useEffect, useState } from "react";
 import { useTheme } from "next-themes";
+import { CosmicBackground } from "./cosmic-background";
 
 export function CosmicMode({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
@@ -16,5 +17,10 @@ export function CosmicMode({ children }: { children: ReactNode }) {
     return <>{children}</>;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {resolvedTheme === "cosmic" && <CosmicBackground />}
+      {children}
+    </>
+  );
 }

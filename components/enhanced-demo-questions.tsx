@@ -1,14 +1,27 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { MessageSquare, ThumbsUp, Eye, ChevronDown, ChevronUp, Award, HelpCircle } from "lucide-react"
-import Link from "next/link"
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  MessageSquare,
+  ThumbsUp,
+  Eye,
+  ChevronDown,
+  ChevronUp,
+  Award,
+  HelpCircle,
+} from "lucide-react";
+import Link from "next/link";
 
 // Demo questions data with answers
 const demoQuestions = [
@@ -215,281 +228,180 @@ const demoQuestions = [
       pointsEarned: 25, // Points earned for accepted answer
     },
   },
-]
+];
 
 export function EnhancedDemoQuestions() {
-  const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null)
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null)
-
-  const toggleExpand = (id: string) => {
-    setExpandedQuestion(expandedQuestion === id ? null : id)
-  }
-
   return (
-    <div className="space-y-8">
-      {demoQuestions.map((question, index) => (
-        <motion.div
-          key={question.id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: 0.5,
-            delay: index * 0.1,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-          className="relative"
-        >
-          <motion.div
-            whileHover={{
-              scale: 1.01,
-              transition: { duration: 0.2 },
-            }}
-            onHoverStart={() => setHoveredCard(question.id)}
-            onHoverEnd={() => setHoveredCard(null)}
-          >
-            <Card
-              className={`border-primary/10 overflow-hidden transition-shadow duration-200 ${
-                hoveredCard === question.id ? "shadow-md dark:shadow-primary/5" : ""
-              } cosmic-card`}
-            >
-              <CardContent className="p-5">
+    <div className="space-y-6">
+      {demoQuestions.map((question) => (
+        <Card key={question.id} className="overflow-hidden">
+          <CardContent className="p-6">
+            {/* Question header */}
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold mb-2">{question.title}</h3>
                 <div className="flex flex-wrap gap-2 mb-3">
-                  {question.tags.map((tag, i) => (
-                    <Badge key={tag} variant="outline" className={question.tagColors[i]}>
+                  {question.tags.map((tag, index) => (
+                    <Badge
+                      key={tag}
+                      variant="secondary"
+                      className={question.tagColors[index]}
+                    >
                       {tag}
                     </Badge>
                   ))}
                 </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <MessageSquare className="h-4 w-4" />
+                        {Array.isArray(question.answers)
+                          ? question.answers.length
+                          : 0}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Number of answers</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Eye className="h-4 w-4" />
+                        {question.views}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Number of views</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            </div>
 
-                <Link href="#" className="block group">
-                  <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
-                    {question.title}
-                  </h3>
-                </Link>
+            {/* Question content */}
+            <div className="prose dark:prose-invert max-w-none mb-6">
+              <p className="whitespace-pre-wrap">{question.content}</p>
+            </div>
 
-                <p className="text-muted-foreground text-sm mb-4 line-clamp-3">{question.content.split("\n")[0]}</p>
-
-                <div className="flex items-center justify-between mt-auto pt-3 border-t">
-                  <div className="flex items-center gap-3">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-7 w-7">
-                              <AvatarImage
-                                src={question.author.avatar || "/placeholder.svg"}
-                                alt={question.author.name}
-                              />
-                              <AvatarFallback>{question.author.initials}</AvatarFallback>
-                            </Avatar>
-                            <span className="text-xs text-muted-foreground">{question.timeAgo}</span>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom" className="p-3 max-w-xs">
-                          <div className="flex flex-col gap-1">
-                            <div className="font-medium">{question.author.name}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {question.author.role}, {question.author.department}
-                            </div>
-                            <div className="flex items-center gap-1 text-xs mt-1">
-                              <Award className="h-3.5 w-3.5 text-amber-500" />
-                              <span>{question.author.points} points</span>
-                            </div>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="flex items-center gap-1">
-                            <ThumbsUp className="h-3.5 w-3.5" />
-                            {question.upvotes}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom">
-                          <div className="text-xs">
-                            <span className="font-medium">{question.upvotes} upvotes</span>
-                            <div className="text-muted-foreground mt-1">Each upvote earns 2 points</div>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="flex items-center gap-1">
-                            <MessageSquare className="h-3.5 w-3.5" />
-                            {question.answers}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom">
-                          <div className="text-xs">
-                            <span className="font-medium">{question.answers} answers</span>
-                            <div className="text-muted-foreground mt-1">Posting an answer earns 5 points</div>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-
-                    <span className="flex items-center gap-1">
-                      <Eye className="h-3.5 w-3.5" />
-                      {question.views}
+            {/* Question footer */}
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage
+                      src={question.author.avatar}
+                      alt={question.author.name}
+                    />
+                    <AvatarFallback>{question.author.initials}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <span className="font-medium text-foreground">
+                      {question.author.name}
                     </span>
+                    <span className="ml-1">• {question.author.role}</span>
                   </div>
                 </div>
-              </CardContent>
-              <CardFooter className="px-5 py-3 bg-muted/30 flex justify-center border-t">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs w-full flex items-center justify-center gap-1"
-                  onClick={() => toggleExpand(question.id)}
-                >
-                  {expandedQuestion === question.id ? (
-                    <>
-                      Hide Answer <ChevronUp className="h-3.5 w-3.5" />
-                    </>
-                  ) : (
-                    <>
-                      Show Best Answer <ChevronDown className="h-3.5 w-3.5" />
-                    </>
-                  )}
-                </Button>
-              </CardFooter>
-            </Card>
-          </motion.div>
+                <span>• {question.timeAgo}</span>
+              </div>
+            </div>
+          </CardContent>
 
-          <AnimatePresence>
-            {expandedQuestion === question.id && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3 }}
-                className="overflow-hidden"
-              >
-                <Card className="mt-2 border-primary/10 border-t-green-500 dark:border-t-green-600 border-t-2">
-                  <CardContent className="p-5">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Badge
-                        variant="outline"
-                        className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-900"
+          {/* All Answers Section */}
+          <CardFooter className="bg-muted/50 p-6 border-t">
+            <div className="w-full space-y-6">
+              {/* Best Answer */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Award className="h-4 w-4 text-yellow-500" />
+                  <span className="font-medium">Best Answer</span>
+                  <Badge variant="secondary" className="ml-2">
+                    +{question.bestAnswer.pointsEarned} points
+                  </Badge>
+                </div>
+                <div className="prose dark:prose-invert max-w-none mb-4">
+                  <p className="whitespace-pre-wrap">
+                    {question.bestAnswer.content}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage
+                        src={question.bestAnswer.author.avatar}
+                        alt={question.bestAnswer.author.name}
+                      />
+                      <AvatarFallback>
+                        {question.bestAnswer.author.initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <span className="font-medium text-foreground">
+                        {question.bestAnswer.author.name}
+                      </span>
+                      <span className="ml-1">
+                        • {question.bestAnswer.author.role}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span>{question.bestAnswer.timeAgo}</span>
+                    <div className="flex items-center gap-1">
+                      <ThumbsUp className="h-4 w-4" />
+                      {question.bestAnswer.upvotes}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Other Answers */}
+              {Array.isArray(question.answers) &&
+                question.answers.length > 0 && (
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Other Answers</h4>
+                    {question.answers.map((answer, index) => (
+                      <div
+                        key={index}
+                        className="bg-background p-4 rounded-lg border"
                       >
-                        <Award className="h-3.5 w-3.5 mr-1" /> Best Answer
-                      </Badge>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <HelpCircle className="h-3.5 w-3.5" />
-                              <span>+{question.bestAnswer.pointsEarned} points</span>
+                        <div className="prose dark:prose-invert max-w-none mb-4">
+                          <p className="whitespace-pre-wrap">{answer.answer}</p>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage
+                                src={answer.user.avatar}
+                                alt={answer.user.name}
+                              />
+                              <AvatarFallback>
+                                {answer.user.initials}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <span className="font-medium text-foreground">
+                                {answer.user.name}
+                              </span>
+                              <span className="ml-1">• {answer.user.role}</span>
                             </div>
-                          </TooltipTrigger>
-                          <TooltipContent side="top">
-                            <div className="text-xs">
-                              <span className="font-medium">Accepted answers earn 25 points</span>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-
-                    <div className="prose prose-sm max-w-none dark:prose-invert">
-                      {question.bestAnswer.content.split("\n").map((paragraph, index) => {
-                        if (paragraph.startsWith("```") && paragraph.endsWith("```")) {
-                          // Code block
-                          const code = paragraph.slice(3, -3)
-                          return (
-                            <pre key={index} className="bg-muted p-3 rounded-md overflow-x-auto">
-                              <code className="text-xs font-mono">{code}</code>
-                            </pre>
-                          )
-                        } else if (paragraph.startsWith("```")) {
-                          // Start of multi-line code block
-                          const language = paragraph.slice(3)
-                          return (
-                            <div key={index} className="bg-muted p-3 rounded-md overflow-x-auto">
-                              <div className="text-xs text-muted-foreground mb-2">{language}</div>
-                            </div>
-                          )
-                        } else if (paragraph.endsWith("```")) {
-                          // End of multi-line code block
-                          const code = paragraph.slice(0, -3)
-                          return (
-                            <pre key={index} className="bg-muted p-3 rounded-md overflow-x-auto">
-                              <code className="text-xs font-mono">{code}</code>
-                            </pre>
-                          )
-                        } else if (paragraph.startsWith("**") && paragraph.endsWith("**")) {
-                          // Bold text
-                          const text = paragraph.slice(2, -2)
-                          return (
-                            <p key={index} className="font-bold">
-                              {text}
-                            </p>
-                          )
-                        } else {
-                          // Regular paragraph
-                          return <p key={index}>{paragraph}</p>
-                        }
-                      })}
-                    </div>
-
-                    <div className="flex items-center justify-between mt-4 pt-3 border-t">
-                      <div className="flex items-center gap-3">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="flex items-center gap-2">
-                                <Avatar className="h-7 w-7">
-                                  <AvatarImage
-                                    src={question.bestAnswer.author.avatar || "/placeholder.svg"}
-                                    alt={question.bestAnswer.author.name}
-                                  />
-                                  <AvatarFallback>{question.bestAnswer.author.initials}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <div className="text-xs font-medium">{question.bestAnswer.author.name}</div>
-                                  <div className="text-xs text-muted-foreground">{question.bestAnswer.author.role}</div>
-                                </div>
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" className="p-3 max-w-xs">
-                              <div className="flex flex-col gap-1">
-                                <div className="font-medium">{question.bestAnswer.author.name}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {question.bestAnswer.author.role}, {question.bestAnswer.author.department}
-                                </div>
-                                <div className="flex items-center gap-1 text-xs mt-1">
-                                  <Award className="h-3.5 w-3.5 text-amber-500" />
-                                  <span>{question.bestAnswer.author.points} points</span>
-                                </div>
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {new Date(answer.createdAt).toLocaleDateString()}
+                          </div>
+                        </div>
                       </div>
-
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-muted-foreground">{question.bestAnswer.timeAgo}</span>
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <ThumbsUp className="h-3.5 w-3.5" />
-                          {question.bestAnswer.upvotes}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
+                    ))}
+                  </div>
+                )}
+            </div>
+          </CardFooter>
+        </Card>
       ))}
     </div>
-  )
+  );
 }

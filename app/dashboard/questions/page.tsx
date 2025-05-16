@@ -1,16 +1,24 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import Link from "next/link"
-import { motion, AnimatePresence } from "framer-motion"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
-import { Code, Search, Filter, ArrowRight, Plus, MessageSquare, Eye } from "lucide-react"
+import { useState } from "react";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import {
+  Code,
+  Search,
+  Filter,
+  ArrowRight,
+  Plus,
+  MessageSquare,
+  Eye,
+} from "lucide-react";
 
 // Mock data for questions
 const initialQuestions = [
@@ -24,7 +32,10 @@ const initialQuestions = [
     },
     timeAgo: "2 hours ago",
     tags: ["Java", "Data Structures"],
-    tagColors: ["bg-green-50 text-green-700 border-green-200", "bg-blue-50 text-blue-700 border-blue-200"],
+    tagColors: [
+      "bg-green-50 text-green-700 border-green-200",
+      "bg-blue-50 text-blue-700 border-blue-200",
+    ],
     description:
       "I'm trying to implement a binary search tree in Java for my data structures assignment. I understand the concept but I'm having trouble with the insertion method. Can someone provide some guidance on how to properly implement the insert operation?",
     answers: 3,
@@ -40,7 +51,10 @@ const initialQuestions = [
     },
     timeAgo: "5 hours ago",
     tags: ["React", "JavaScript"],
-    tagColors: ["bg-cyan-50 text-cyan-700 border-cyan-200", "bg-yellow-50 text-yellow-700 border-yellow-200"],
+    tagColors: [
+      "bg-cyan-50 text-cyan-700 border-cyan-200",
+      "bg-yellow-50 text-yellow-700 border-yellow-200",
+    ],
     description:
       "I'm getting an infinite loop in my React component when using useEffect. I think it's related to the dependency array, but I'm not sure how to fix it. My component keeps re-rendering.",
     answers: 1,
@@ -56,7 +70,10 @@ const initialQuestions = [
     },
     timeAgo: "1 day ago",
     tags: ["Python", "Recursion"],
-    tagColors: ["bg-blue-50 text-blue-700 border-blue-200", "bg-purple-50 text-purple-700 border-purple-200"],
+    tagColors: [
+      "bg-blue-50 text-blue-700 border-blue-200",
+      "bg-purple-50 text-purple-700 border-purple-200",
+    ],
     description:
       "I'm implementing a recursive function to generate Fibonacci numbers in Python, but it's very slow for larger inputs. Is there a way to optimize this without changing to an iterative approach?",
     answers: 5,
@@ -73,7 +90,8 @@ const initialQuestions = [
     timeAgo: "1 week ago",
     tags: ["JavaScript"],
     tagColors: ["bg-yellow-50 text-yellow-700 border-yellow-200"],
-    description: "I'm confused about when to use == versus === in JavaScript. What's the difference between them?",
+    description:
+      "I'm confused about when to use == versus === in JavaScript. What's the difference between them?",
     answers: 12,
     views: 156,
   },
@@ -87,13 +105,16 @@ const initialQuestions = [
     },
     timeAgo: "3 hours ago",
     tags: ["Next.js", "Authentication"],
-    tagColors: ["bg-cyan-50 text-cyan-700 border-cyan-200", "bg-indigo-50 text-indigo-700 border-indigo-200"],
+    tagColors: [
+      "bg-cyan-50 text-cyan-700 border-cyan-200",
+      "bg-indigo-50 text-indigo-700 border-indigo-200",
+    ],
     description:
       "I'm building a Next.js application and need to implement user authentication. What's the best approach for implementing secure authentication in Next.js? Should I use JWT, NextAuth, or something else?",
     answers: 0,
     views: 5,
   },
-]
+];
 
 // Additional questions for load more functionality
 const additionalQuestions = [
@@ -107,7 +128,10 @@ const additionalQuestions = [
     },
     timeAgo: "2 days ago",
     tags: ["CSS", "Web Design"],
-    tagColors: ["bg-pink-50 text-pink-700 border-pink-200", "bg-purple-50 text-purple-700 border-purple-200"],
+    tagColors: [
+      "bg-pink-50 text-pink-700 border-pink-200",
+      "bg-purple-50 text-purple-700 border-purple-200",
+    ],
     description:
       "I'm working on a responsive layout using CSS Grid. What are some best practices for creating maintainable and responsive grid layouts? Are there any common pitfalls I should avoid?",
     answers: 4,
@@ -123,7 +147,10 @@ const additionalQuestions = [
     },
     timeAgo: "3 days ago",
     tags: ["Algorithms", "Computer Science"],
-    tagColors: ["bg-blue-50 text-blue-700 border-blue-200", "bg-indigo-50 text-indigo-700 border-indigo-200"],
+    tagColors: [
+      "bg-blue-50 text-blue-700 border-blue-200",
+      "bg-indigo-50 text-indigo-700 border-indigo-200",
+    ],
     description:
       "I'm struggling to understand Big O notation and how to analyze the time complexity of algorithms. Could someone explain the concept with some practical examples?",
     answers: 7,
@@ -189,7 +216,7 @@ const additionalQuestions = [
     answers: 8,
     views: 67,
   },
-]
+];
 
 // Available tags for filtering
 const availableTags = [
@@ -207,59 +234,63 @@ const availableTags = [
   "CSS",
   "MongoDB",
   "Express.js",
-]
+];
 
 export default function QuestionsPage() {
-  const [questions, setQuestions] = useState(initialQuestions)
-  const [loading, setLoading] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [activeTag, setActiveTag] = useState("All")
-  const [activeTab, setActiveTab] = useState("recent")
-  const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
+  const [questions, setQuestions] = useState(initialQuestions);
+  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTag, setActiveTag] = useState("All");
+  const [activeTab, setActiveTab] = useState("recent");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   // Filter questions based on search query and active tag
   const filteredQuestions = questions.filter((question) => {
     const matchesSearch =
       question.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      question.description.toLowerCase().includes(searchQuery.toLowerCase())
+      question.description.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesTag = activeTag === "All" || question.tags.some((tag) => tag.toLowerCase() === activeTag.toLowerCase())
+    const matchesTag =
+      activeTag === "All" ||
+      question.tags.some(
+        (tag) => tag.toLowerCase() === activeTag.toLowerCase()
+      );
 
-    return matchesSearch && matchesTag
-  })
+    return matchesSearch && matchesTag;
+  });
 
   // Sort questions based on active tab
   const sortedQuestions = [...filteredQuestions].sort((a, b) => {
     if (activeTab === "recent") {
       // Sort by recency (already in order in our mock data)
-      return a.id < b.id ? 1 : -1
+      return a.id < b.id ? 1 : -1;
     } else if (activeTab === "popular") {
       // Sort by views
-      return b.views - a.views
+      return b.views - a.views;
     } else if (activeTab === "unanswered") {
       // Sort by number of answers (ascending)
-      return a.answers - b.answers
+      return a.answers - b.answers;
     }
-    return 0
-  })
+    return 0;
+  });
 
   // Handle load more
   const handleLoadMore = () => {
-    setLoading(true)
+    setLoading(true);
 
     // Simulate API call delay
     setTimeout(() => {
       if (page === 1) {
-        setQuestions([...questions, ...additionalQuestions.slice(0, 5)])
-        setPage(2)
+        setQuestions([...questions, ...additionalQuestions.slice(0, 5)]);
+        setPage(2);
       } else {
-        setQuestions([...questions, ...additionalQuestions.slice(5)])
-        setHasMore(false)
+        setQuestions([...questions, ...additionalQuestions.slice(5)]);
+        setHasMore(false);
       }
-      setLoading(false)
-    }, 1000)
-  }
+      setLoading(false);
+    }, 1000);
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -272,13 +303,22 @@ export default function QuestionsPage() {
             </Link>
           </div>
           <nav className="hidden md:flex gap-6">
-            <Link href="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
+            <Link
+              href="/dashboard"
+              className="text-sm font-medium hover:text-primary transition-colors"
+            >
               Dashboard
             </Link>
-            <Link href="/dashboard/questions" className="text-sm font-medium text-primary">
+            <Link
+              href="/dashboard/questions"
+              className="text-sm font-medium text-primary"
+            >
               Questions
             </Link>
-            <Link href="/leaderboard" className="text-sm font-medium hover:text-primary transition-colors">
+            <Link
+              href="/leaderboard"
+              className="text-sm font-medium hover:text-primary transition-colors"
+            >
               Leaderboard
             </Link>
           </nav>
@@ -287,7 +327,10 @@ export default function QuestionsPage() {
               <Button size="sm">Ask Question</Button>
             </Link>
             <Avatar className="h-8 w-8 cursor-pointer">
-              <AvatarImage src="/placeholder.svg?height=32&width=32" alt="@user" />
+              <AvatarImage
+                src="/placeholder.svg?height=32&width=32"
+                alt="@user"
+              />
               <AvatarFallback>NC</AvatarFallback>
             </Avatar>
           </div>
@@ -303,7 +346,10 @@ export default function QuestionsPage() {
             className="flex flex-col gap-2"
           >
             <h1 className="text-3xl font-bold tracking-tight">Questions</h1>
-            <p className="text-muted-foreground">Browse, search, and filter questions from the CodeCommons community</p>
+            <p className="text-muted-foreground">
+              Browse, search, and filter questions from the CodeCommons
+              community
+            </p>
           </motion.div>
 
           <motion.div
@@ -352,7 +398,11 @@ export default function QuestionsPage() {
               </div>
             </div>
 
-            <Tabs defaultValue="recent" className="w-full" onValueChange={setActiveTab}>
+            <Tabs
+              defaultValue="recent"
+              className="w-full"
+              onValueChange={setActiveTab}
+            >
               <TabsList className="mb-6">
                 <TabsTrigger value="recent">Recent Questions</TabsTrigger>
                 <TabsTrigger value="popular">Most Popular</TabsTrigger>
@@ -379,8 +429,13 @@ export default function QuestionsPage() {
                           </Link>
                           <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                             <Avatar className="h-5 w-5">
-                              <AvatarImage src={question.author.avatar} alt={question.author.name} />
-                              <AvatarFallback>{question.author.initials}</AvatarFallback>
+                              <AvatarImage
+                                src={question.author.avatar}
+                                alt={question.author.name}
+                              />
+                              <AvatarFallback>
+                                {question.author.initials}
+                              </AvatarFallback>
                             </Avatar>
                             <span>
                               {question.author.name} • {question.timeAgo}
@@ -389,18 +444,29 @@ export default function QuestionsPage() {
                         </div>
                         <div className="flex gap-2">
                           {question.tags.map((tag, tagIndex) => (
-                            <Badge key={tagIndex} variant="outline" className={question.tagColors[tagIndex]}>
+                            <Badge
+                              key={tagIndex}
+                              variant="outline"
+                              className={question.tagColors[tagIndex]}
+                            >
                               {tag}
                             </Badge>
                           ))}
                         </div>
                       </div>
-                      <p className="mt-3 text-muted-foreground line-clamp-2">{question.description}</p>
+                      <p className="mt-3 text-muted-foreground line-clamp-2">
+                        {question.description}
+                      </p>
                       <div className="flex justify-between items-center mt-4 pt-3 border-t">
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <MessageSquare className="h-4 w-4" />
-                            <span>{question.answers} answers</span>
+                            <span>
+                              {Array.isArray(question.answers)
+                                ? question.answers.length
+                                : 0}{" "}
+                              answers
+                            </span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Eye className="h-4 w-4" />
@@ -419,9 +485,12 @@ export default function QuestionsPage() {
 
                 {sortedQuestions.length === 0 && (
                   <div className="bg-background rounded-xl p-8 shadow-sm border border-border/50 text-center">
-                    <h3 className="font-semibold text-lg mb-2">No questions found</h3>
+                    <h3 className="font-semibold text-lg mb-2">
+                      No questions found
+                    </h3>
                     <p className="text-muted-foreground mb-4">
-                      Try adjusting your search or filters to find what you're looking for.
+                      Try adjusting your search or filters to find what you're
+                      looking for.
                     </p>
                     <Link href="/dashboard/ask">
                       <Button>Ask a Question</Button>
@@ -431,7 +500,12 @@ export default function QuestionsPage() {
 
                 {hasMore && sortedQuestions.length > 0 && (
                   <div className="mt-6 text-center">
-                    <Button variant="outline" className="gap-1" onClick={handleLoadMore} disabled={loading}>
+                    <Button
+                      variant="outline"
+                      className="gap-1"
+                      onClick={handleLoadMore}
+                      disabled={loading}
+                    >
                       {loading ? (
                         <>
                           <Spinner className="h-4 w-4 animate-spin" />
@@ -467,8 +541,13 @@ export default function QuestionsPage() {
                           </Link>
                           <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                             <Avatar className="h-5 w-5">
-                              <AvatarImage src={question.author.avatar} alt={question.author.name} />
-                              <AvatarFallback>{question.author.initials}</AvatarFallback>
+                              <AvatarImage
+                                src={question.author.avatar}
+                                alt={question.author.name}
+                              />
+                              <AvatarFallback>
+                                {question.author.initials}
+                              </AvatarFallback>
                             </Avatar>
                             <span>
                               {question.author.name} • {question.timeAgo}
@@ -477,18 +556,29 @@ export default function QuestionsPage() {
                         </div>
                         <div className="flex gap-2">
                           {question.tags.map((tag, tagIndex) => (
-                            <Badge key={tagIndex} variant="outline" className={question.tagColors[tagIndex]}>
+                            <Badge
+                              key={tagIndex}
+                              variant="outline"
+                              className={question.tagColors[tagIndex]}
+                            >
                               {tag}
                             </Badge>
                           ))}
                         </div>
                       </div>
-                      <p className="mt-3 text-muted-foreground line-clamp-2">{question.description}</p>
+                      <p className="mt-3 text-muted-foreground line-clamp-2">
+                        {question.description}
+                      </p>
                       <div className="flex justify-between items-center mt-4 pt-3 border-t">
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <MessageSquare className="h-4 w-4" />
-                            <span>{question.answers} answers</span>
+                            <span>
+                              {Array.isArray(question.answers)
+                                ? question.answers.length
+                                : 0}{" "}
+                              answers
+                            </span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Eye className="h-4 w-4" />
@@ -528,8 +618,13 @@ export default function QuestionsPage() {
                             </Link>
                             <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                               <Avatar className="h-5 w-5">
-                                <AvatarImage src={question.author.avatar} alt={question.author.name} />
-                                <AvatarFallback>{question.author.initials}</AvatarFallback>
+                                <AvatarImage
+                                  src={question.author.avatar}
+                                  alt={question.author.name}
+                                />
+                                <AvatarFallback>
+                                  {question.author.initials}
+                                </AvatarFallback>
                               </Avatar>
                               <span>
                                 {question.author.name} • {question.timeAgo}
@@ -538,16 +633,25 @@ export default function QuestionsPage() {
                           </div>
                           <div className="flex gap-2">
                             {question.tags.map((tag, tagIndex) => (
-                              <Badge key={tagIndex} variant="outline" className={question.tagColors[tagIndex]}>
+                              <Badge
+                                key={tagIndex}
+                                variant="outline"
+                                className={question.tagColors[tagIndex]}
+                              >
                                 {tag}
                               </Badge>
                             ))}
                           </div>
                         </div>
-                        <p className="mt-3 text-muted-foreground line-clamp-2">{question.description}</p>
+                        <p className="mt-3 text-muted-foreground line-clamp-2">
+                          {question.description}
+                        </p>
                         <div className="flex justify-between items-center mt-4 pt-3 border-t">
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                            <Badge
+                              variant="outline"
+                              className="bg-amber-50 text-amber-700 border-amber-200"
+                            >
                               Needs Answer
                             </Badge>
                             <div className="flex items-center gap-1">
@@ -565,11 +669,15 @@ export default function QuestionsPage() {
                     ))}
                 </AnimatePresence>
 
-                {sortedQuestions.filter((q) => q.answers === 0).length === 0 && (
+                {sortedQuestions.filter((q) => q.answers === 0).length ===
+                  0 && (
                   <div className="bg-background rounded-xl p-8 shadow-sm border border-border/50 text-center">
-                    <h3 className="font-semibold text-lg mb-2">No unanswered questions found</h3>
+                    <h3 className="font-semibold text-lg mb-2">
+                      No unanswered questions found
+                    </h3>
                     <p className="text-muted-foreground mb-4">
-                      Great job! All questions matching your criteria have been answered.
+                      Great job! All questions matching your criteria have been
+                      answered.
                     </p>
                     <Link href="/dashboard/ask">
                       <Button>Ask a Question</Button>
@@ -582,7 +690,7 @@ export default function QuestionsPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function Spinner(props: React.SVGProps<SVGSVGElement>) {
@@ -601,5 +709,5 @@ function Spinner(props: React.SVGProps<SVGSVGElement>) {
     >
       <path d="M21 12a9 9 0 1 1-6.219-8.56" />
     </svg>
-  )
+  );
 }

@@ -1,13 +1,27 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { motion } from "framer-motion"
-import { ThumbsUp, MessageSquare, Eye, CheckCircle2, HelpCircle, Award, Star, ArrowRight } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  ThumbsUp,
+  MessageSquare,
+  Eye,
+  CheckCircle2,
+  HelpCircle,
+  Award,
+  Star,
+  ArrowRight,
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Mock data for demo questions
 const demoQuestions = [
@@ -245,15 +259,15 @@ const demoQuestions = [
       upvote: 2,
     },
   },
-]
+];
 
 export function DemoQuestions() {
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null)
-  const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null)
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
 
   const toggleExpand = (id: string) => {
-    setExpandedQuestion(expandedQuestion === id ? null : id)
-  }
+    setExpandedQuestion(expandedQuestion === id ? null : id);
+  };
 
   return (
     <div className="space-y-8">
@@ -276,13 +290,19 @@ export function DemoQuestions() {
         >
           <Card
             className={`border-primary/10 overflow-hidden transition-shadow duration-200 ${
-              hoveredCard === question.id ? "shadow-md dark:shadow-primary/5" : ""
+              hoveredCard === question.id
+                ? "shadow-md dark:shadow-primary/5"
+                : ""
             } cosmic-card`}
           >
             <CardContent className="p-5">
               <div className="flex flex-wrap gap-2 mb-3">
                 {question.tags.map((tag, i) => (
-                  <Badge key={tag} variant="outline" className={question.tagColors[i]}>
+                  <Badge
+                    key={tag}
+                    variant="outline"
+                    className={question.tagColors[i]}
+                  >
                     {tag}
                   </Badge>
                 ))}
@@ -292,7 +312,9 @@ export function DemoQuestions() {
                 {question.title}
               </h3>
 
-              <p className="text-muted-foreground text-sm mb-4 line-clamp-3">{question.content.split("\n")[0]}</p>
+              <p className="text-muted-foreground text-sm mb-4 line-clamp-3">
+                {question.content.split("\n")[0]}
+              </p>
 
               <div className="flex items-center justify-between mt-auto pt-3 border-t">
                 <div className="flex items-center gap-3">
@@ -305,13 +327,19 @@ export function DemoQuestions() {
                               src={question.author.avatar || "/placeholder.svg"}
                               alt={question.author.name}
                             />
-                            <AvatarFallback>{question.author.initials}</AvatarFallback>
+                            <AvatarFallback>
+                              {question.author.initials}
+                            </AvatarFallback>
                           </Avatar>
                           <div className="flex flex-col">
-                            <span className="text-xs font-medium">{question.author.name}</span>
+                            <span className="text-xs font-medium">
+                              {question.author.name}
+                            </span>
                             <div className="flex items-center gap-1">
                               <Star className="h-3 w-3 text-amber-500" />
-                              <span className="text-xs text-muted-foreground">{question.author.points} points</span>
+                              <span className="text-xs text-muted-foreground">
+                                {question.author.points} points
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -320,17 +348,22 @@ export function DemoQuestions() {
                         <div className="text-xs">
                           <p className="font-medium">{question.author.name}</p>
                           <p>
-                            {question.author.department}, {question.author.semester}
+                            {question.author.department},{" "}
+                            {question.author.semester}
                           </p>
                           <p className="flex items-center gap-1 mt-1">
                             <Star className="h-3 w-3 text-amber-500" />
-                            <span>{question.author.points} reputation points</span>
+                            <span>
+                              {question.author.points} reputation points
+                            </span>
                           </p>
                         </div>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                  <div className="text-xs text-muted-foreground">{question.timeAgo}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {question.timeAgo}
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -344,7 +377,8 @@ export function DemoQuestions() {
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
                         <p className="text-xs">
-                          Upvotes: Each upvote earns the author {question.pointsAllocated.upvote} points
+                          Upvotes: Each upvote earns the author{" "}
+                          {question.pointsAllocated.upvote} points
                         </p>
                       </TooltipContent>
                     </Tooltip>
@@ -355,11 +389,19 @@ export function DemoQuestions() {
                       <TooltipTrigger asChild>
                         <span className="flex items-center gap-1">
                           <MessageSquare className="h-3.5 w-3.5" />
-                          {question.answers}
+                          {Array.isArray(question.answers)
+                            ? question.answers.length
+                            : 0}
                         </span>
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
-                        <p className="text-xs">Answers: {question.answers} responses to this question</p>
+                        <p className="text-xs">
+                          Answers:{" "}
+                          {Array.isArray(question.answers)
+                            ? question.answers.length
+                            : 0}{" "}
+                          responses to this question
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -378,25 +420,46 @@ export function DemoQuestions() {
                   <TooltipTrigger asChild>
                     <div className="flex items-center gap-1.5">
                       <HelpCircle className="h-4 w-4 text-primary" />
-                      <span className="text-xs font-medium">Question Points: {question.pointsAllocated.question}</span>
+                      <span className="text-xs font-medium">
+                        Question Points: {question.pointsAllocated.question}
+                      </span>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
                     <div className="text-xs space-y-1">
                       <p>Point Allocation System:</p>
                       <ul className="list-disc pl-4 space-y-0.5">
-                        <li>Asking a question: {question.pointsAllocated.question} points</li>
-                        <li>Posting an answer: {question.pointsAllocated.answer} points</li>
-                        <li>Getting answer accepted: {question.pointsAllocated.acceptedAnswer} points</li>
-                        <li>Receiving an upvote: {question.pointsAllocated.upvote} points</li>
+                        <li>
+                          Asking a question: {question.pointsAllocated.question}{" "}
+                          points
+                        </li>
+                        <li>
+                          Posting an answer: {question.pointsAllocated.answer}{" "}
+                          points
+                        </li>
+                        <li>
+                          Getting answer accepted:{" "}
+                          {question.pointsAllocated.acceptedAnswer} points
+                        </li>
+                        <li>
+                          Receiving an upvote: {question.pointsAllocated.upvote}{" "}
+                          points
+                        </li>
                       </ul>
                     </div>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
 
-              <Button variant="ghost" size="sm" className="text-xs gap-1" onClick={() => toggleExpand(question.id)}>
-                {expandedQuestion === question.id ? "Hide Answer" : "Show Best Answer"}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs gap-1"
+                onClick={() => toggleExpand(question.id)}
+              >
+                {expandedQuestion === question.id
+                  ? "Hide Answer"
+                  : "Show Best Answer"}
                 <ArrowRight className="h-3 w-3" />
               </Button>
             </div>
@@ -414,14 +477,21 @@ export function DemoQuestions() {
                     <div className="flex items-center gap-2">
                       <Avatar className="h-8 w-8">
                         <AvatarImage
-                          src={question.bestAnswer.author.avatar || "/placeholder.svg"}
+                          src={
+                            question.bestAnswer.author.avatar ||
+                            "/placeholder.svg"
+                          }
                           alt={question.bestAnswer.author.name}
                         />
-                        <AvatarFallback>{question.bestAnswer.author.initials}</AvatarFallback>
+                        <AvatarFallback>
+                          {question.bestAnswer.author.initials}
+                        </AvatarFallback>
                       </Avatar>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium">{question.bestAnswer.author.name}</span>
+                          <span className="text-sm font-medium">
+                            {question.bestAnswer.author.name}
+                          </span>
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -433,34 +503,48 @@ export function DemoQuestions() {
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent side="bottom">
-                                <p className="text-xs">{question.bestAnswer.author.points} reputation points</p>
+                                <p className="text-xs">
+                                  {question.bestAnswer.author.points} reputation
+                                  points
+                                </p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {question.bestAnswer.author.role
-                            ? question.bestAnswer.author.role + ", " + question.bestAnswer.author.department
-                            : question.bestAnswer.author.department + ", " + question.bestAnswer.author.semester}
+                            ? question.bestAnswer.author.role +
+                              ", " +
+                              question.bestAnswer.author.department
+                            : question.bestAnswer.author.department +
+                              ", " +
+                              question.bestAnswer.author.semester}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">{question.bestAnswer.timeAgo}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {question.bestAnswer.timeAgo}
+                      </span>
                       {question.bestAnswer.isAccepted && (
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400">
                                 <CheckCircle2 className="h-3.5 w-3.5" />
-                                <span className="text-xs font-medium">Accepted</span>
+                                <span className="text-xs font-medium">
+                                  Accepted
+                                </span>
                               </div>
                             </TooltipTrigger>
                             <TooltipContent side="bottom">
                               <p className="text-xs">
                                 This answer was accepted by the question author.
                                 <br />
-                                Earned {question.pointsAllocated.acceptedAnswer} additional points.
+                                Earned {
+                                  question.pointsAllocated.acceptedAnswer
+                                }{" "}
+                                additional points.
                               </p>
                             </TooltipContent>
                           </Tooltip>
@@ -470,36 +554,52 @@ export function DemoQuestions() {
                   </div>
 
                   <div className="prose prose-sm max-w-none dark:prose-invert mb-4">
-                    {question.bestAnswer.content.split("\n").map((paragraph, idx) => {
-                      if (paragraph.startsWith("```") && paragraph.endsWith("```")) {
-                        // Code block
-                        const code = paragraph.slice(3, -3)
-                        return (
-                          <pre key={idx} className="bg-muted p-3 rounded-md overflow-x-auto">
-                            <code className="text-xs font-mono">{code}</code>
-                          </pre>
-                        )
-                      } else if (paragraph.startsWith("```")) {
-                        // Start of multi-line code block
-                        const language = paragraph.slice(3)
-                        return (
-                          <div key={idx} className="bg-muted p-3 rounded-md overflow-x-auto">
-                            <div className="text-xs text-muted-foreground mb-2">{language}</div>
-                          </div>
-                        )
-                      } else if (paragraph.endsWith("```")) {
-                        // End of multi-line code block
-                        const code = paragraph.slice(0, -3)
-                        return (
-                          <pre key={idx} className="bg-muted p-3 rounded-md overflow-x-auto">
-                            <code className="text-xs font-mono">{code}</code>
-                          </pre>
-                        )
-                      } else {
-                        // Regular paragraph
-                        return <p key={idx}>{paragraph}</p>
-                      }
-                    })}
+                    {question.bestAnswer.content
+                      .split("\n")
+                      .map((paragraph, idx) => {
+                        if (
+                          paragraph.startsWith("```") &&
+                          paragraph.endsWith("```")
+                        ) {
+                          // Code block
+                          const code = paragraph.slice(3, -3);
+                          return (
+                            <pre
+                              key={idx}
+                              className="bg-muted p-3 rounded-md overflow-x-auto"
+                            >
+                              <code className="text-xs font-mono">{code}</code>
+                            </pre>
+                          );
+                        } else if (paragraph.startsWith("```")) {
+                          // Start of multi-line code block
+                          const language = paragraph.slice(3);
+                          return (
+                            <div
+                              key={idx}
+                              className="bg-muted p-3 rounded-md overflow-x-auto"
+                            >
+                              <div className="text-xs text-muted-foreground mb-2">
+                                {language}
+                              </div>
+                            </div>
+                          );
+                        } else if (paragraph.endsWith("```")) {
+                          // End of multi-line code block
+                          const code = paragraph.slice(0, -3);
+                          return (
+                            <pre
+                              key={idx}
+                              className="bg-muted p-3 rounded-md overflow-x-auto"
+                            >
+                              <code className="text-xs font-mono">{code}</code>
+                            </pre>
+                          );
+                        } else {
+                          // Regular paragraph
+                          return <p key={idx}>{paragraph}</p>;
+                        }
+                      })}
                   </div>
 
                   <div className="flex items-center justify-between pt-3 border-t">
@@ -509,13 +609,18 @@ export function DemoQuestions() {
                           <TooltipTrigger asChild>
                             <div className="flex items-center gap-1.5">
                               <ThumbsUp className="h-4 w-4 text-primary" />
-                              <span className="text-sm">{question.bestAnswer.upvotes}</span>
+                              <span className="text-sm">
+                                {question.bestAnswer.upvotes}
+                              </span>
                             </div>
                           </TooltipTrigger>
                           <TooltipContent side="bottom">
                             <p className="text-xs">
-                              {question.bestAnswer.upvotes} upvotes × {question.pointsAllocated.upvote} points ={" "}
-                              {question.bestAnswer.upvotes * question.pointsAllocated.upvote} points earned
+                              {question.bestAnswer.upvotes} upvotes ×{" "}
+                              {question.pointsAllocated.upvote} points ={" "}
+                              {question.bestAnswer.upvotes *
+                                question.pointsAllocated.upvote}{" "}
+                              points earned
                             </p>
                           </TooltipContent>
                         </Tooltip>
@@ -527,23 +632,35 @@ export function DemoQuestions() {
                         <TooltipTrigger asChild>
                           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                             <Award className="h-4 w-4 text-amber-500" />
-                            <span>Points earned: {question.bestAnswer.pointsEarned}</span>
+                            <span>
+                              Points earned: {question.bestAnswer.pointsEarned}
+                            </span>
                           </div>
                         </TooltipTrigger>
                         <TooltipContent side="bottom">
                           <div className="text-xs space-y-1">
                             <p>Points breakdown:</p>
                             <ul className="list-disc pl-4 space-y-0.5">
-                              <li>Base answer: {question.pointsAllocated.answer} points</li>
-                              <li>Accepted answer: {question.pointsAllocated.acceptedAnswer} points</li>
                               <li>
-                                Upvotes: {question.bestAnswer.upvotes} × {question.pointsAllocated.upvote} ={" "}
-                                {question.bestAnswer.upvotes * question.pointsAllocated.upvote} points
+                                Base answer: {question.pointsAllocated.answer}{" "}
+                                points
+                              </li>
+                              <li>
+                                Accepted answer:{" "}
+                                {question.pointsAllocated.acceptedAnswer} points
+                              </li>
+                              <li>
+                                Upvotes: {question.bestAnswer.upvotes} ×{" "}
+                                {question.pointsAllocated.upvote} ={" "}
+                                {question.bestAnswer.upvotes *
+                                  question.pointsAllocated.upvote}{" "}
+                                points
                               </li>
                               <li>
                                 Total:{" "}
                                 {question.bestAnswer.pointsEarned +
-                                  question.bestAnswer.upvotes * question.pointsAllocated.upvote}{" "}
+                                  question.bestAnswer.upvotes *
+                                    question.pointsAllocated.upvote}{" "}
                                 points
                               </li>
                             </ul>
@@ -559,5 +676,5 @@ export function DemoQuestions() {
         </motion.div>
       ))}
     </div>
-  )
+  );
 }

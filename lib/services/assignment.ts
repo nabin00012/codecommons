@@ -449,20 +449,50 @@ class AssignmentService {
     questionIdx: number,
     answer: string
   ): Promise<Assignment> {
-    const response = await fetch(
-      `${API_URL}/classrooms/${classroomId}/assignments/${assignmentId}/questions/${questionIdx}/answers`,
-      {
-        method: "POST",
-        headers: this.getAuthHeader(),
-        body: JSON.stringify({ answer }),
+    try {
+      const response = await fetch(
+        `${API_URL}/classrooms/${classroomId}/assignments/${assignmentId}/questions/${questionIdx}/answers`,
+        {
+          method: "POST",
+          headers: this.getAuthHeader(),
+          body: JSON.stringify({
+            answer,
+            createdAt: new Date().toISOString(),
+            isPublic: true, // Ensure answer is public by default
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to post answer");
       }
-    );
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Failed to post answer");
+
+      const data = await response.json();
+
+      // Validate that the answer was properly added and is visible
+      if (!data.success || !data.data) {
+        throw new Error("Failed to post answer - server response invalid");
+      }
+
+      // Ensure the answer is included in the response and is public
+      if (!data.data.questions || !data.data.questions[questionIdx]?.answers) {
+        throw new Error("Answer was not properly added to the question");
+      }
+
+      // Verify the answer is public
+      const postedAnswer = data.data.questions[questionIdx].answers.find(
+        (a: Answer) => a.answer === answer
+      );
+      if (!postedAnswer) {
+        throw new Error("Answer was not properly saved");
+      }
+
+      return data.data;
+    } catch (error) {
+      console.error("Error posting answer:", error);
+      throw error;
     }
-    const result = await response.json();
-    return result.data;
   }
 }
 

@@ -31,49 +31,33 @@ export default function LoginPage() {
 
   // Check if user is already logged in
   useEffect(() => {
-    if (user && !userLoading && !authLoading) {
-      console.log("User already logged in, redirecting to dashboard");
-      const redirectPath = redirectTo || "/dashboard";
-      router.replace(redirectPath);
-    }
-  }, [user, userLoading, authLoading, router, redirectTo]);
+    const checkAuth = async () => {
+      if (user && !userLoading && !authLoading) {
+        const token = authService.getToken();
+        if (token) {
+          try {
+            const response = await authService.verifyToken(token);
+            if (response.user) {
+              console.log("User already logged in, redirecting to dashboard");
+              const redirectPath = redirectTo || "/dashboard";
+              router.replace(redirectPath);
+            }
+          } catch (error) {
+            console.error("Token verification failed:", error);
+            // Clear invalid token
+            setToken(null);
+          }
+        }
+      }
+    };
 
-  const validateForm = () => {
-    let isValid = true;
-    const newErrors = { ...errors };
-
-    // Validate email
-    const emailRegex = /^[^\s@]+@jainuniversity\.ac\.in$/;
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-      isValid = false;
-    } else if (!emailRegex.test(formData.email)) {
-      newErrors.email =
-        "Please use your Jain University email (@jainuniversity.ac.in)";
-      isValid = false;
-    }
-
-    // Validate password
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
-  };
+    checkAuth();
+  }, [user, userLoading, authLoading, router, redirectTo, setToken]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login form submitted");
-
-    if (!validateForm()) {
-      console.log("Form validation failed");
-      return;
-    }
-
     setIsLoading(true);
-    console.log("Attempting login with:", formData.email);
+    setErrors({ email: "", password: "" });
 
     try {
       const response = await authService.login({
@@ -81,12 +65,14 @@ export default function LoginPage() {
         password: formData.password,
       });
 
-      console.log("Login successful, response:", response);
+      if (!response.token) {
+        throw new Error("No token received from server");
+      }
 
-      // Store the token using auth context
+      // Set the token in auth context
       setToken(response.token);
 
-      // Login the user with the response data
+      // Set the user in user context
       login({
         id: response._id,
         name: response.name,
@@ -96,32 +82,21 @@ export default function LoginPage() {
       });
 
       toast({
-        title: "Login successful!",
-        description: `Welcome back, ${response.name}!`,
+        title: "Success",
+        description: "Logged in successfully!",
       });
 
-      // Use replace instead of push to avoid back button issues
+      // Redirect to the appropriate page
       const redirectPath = redirectTo || "/dashboard";
-      console.log("Redirecting to:", redirectPath);
       router.replace(redirectPath);
     } catch (error) {
       console.error("Login error:", error);
-      let errorMessage = "Login failed. Please try again.";
-
-      if (error instanceof Error) {
-        if (error.message.includes("Invalid email or password")) {
-          errorMessage = "Invalid email or password. Please try again.";
-        } else if (error.message.includes("Failed to fetch")) {
-          errorMessage =
-            "Unable to connect to the server. Please try again later.";
-        } else {
-          errorMessage = error.message;
-        }
-      }
-
       toast({
-        title: "Login failed",
-        description: errorMessage,
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to login. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -129,89 +104,101 @@ export default function LoginPage() {
     }
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    // Clear error when user starts typing
+    setErrors((prev) => ({
+      ...prev,
+      [name]: "",
+    }));
+  };
+
   // Show loading state while checking authentication
   if (userLoading || authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin" />
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Use your Jain University email
+    <div className="container flex items-center justify-center min-h-screen py-12">
+      <div className="w-full max-w-md space-y-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold">Welcome back</h1>
+          <p className="text-muted-foreground mt-2">
+            Sign in to your account to continue
           </p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4">
             <div>
-              <Label htmlFor="email">Email address</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                autoComplete="email"
-                required
                 value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="name@jainuniversity.ac.in"
+                onChange={handleChange}
+                placeholder="Enter your email"
+                required
+                className={errors.email ? "border-red-500" : ""}
               />
               {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                <p className="text-sm text-red-500 mt-1">{errors.email}</p>
               )}
             </div>
+
             <div>
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 name="password"
                 type="password"
-                autoComplete="current-password"
-                required
                 value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
+                onChange={handleChange}
+                placeholder="Enter your password"
+                required
+                className={errors.password ? "border-red-500" : ""}
               />
               {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                <p className="text-sm text-red-500 mt-1">{errors.password}</p>
               )}
             </div>
           </div>
 
-          <div>
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Signing in...
+              </>
+            ) : (
+              "Sign in"
+            )}
+          </Button>
+
+          <div className="text-center text-sm">
+            <Link
+              href="/forgot-password"
+              className="text-primary hover:underline"
             >
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : null}
-              Sign in
-            </Button>
+              Forgot your password?
+            </Link>
           </div>
         </form>
 
-        <div className="text-center">
-          <p className="text-sm text-gray-600">
-            Don't have an account?{" "}
-            <Link href="/signup" className="text-blue-600 hover:text-blue-500">
-              Sign up
-            </Link>
-          </p>
+        <div className="text-center text-sm">
+          <span className="text-muted-foreground">Don't have an account? </span>
+          <Link href="/register" className="text-primary hover:underline">
+            Sign up
+          </Link>
         </div>
       </div>
     </div>

@@ -135,84 +135,35 @@ export default function AssignmentsPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-6">
-                  <div className="grid gap-4">
-                    {subjectGroup.assignments.map((assignment) => {
-                      const status = getAssignmentStatus(assignment);
-                      const progress = getAssignmentProgress(assignment);
+                  {subjectGroup.assignments.length === 0 ? (
+                    <Card className="cosmic-card">
+                      <CardContent className="flex flex-col items-center justify-center py-8">
+                        <p className="text-muted-foreground">
+                          No assignments till now.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {subjectGroup.assignments.map((assignment) => {
+                        const status = getAssignmentStatus(assignment);
+                        const progress = getAssignmentProgress(assignment);
 
-                      return (
-                        <motion.div
-                          key={assignment._id}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <Card className="hover:shadow-md transition-shadow">
-                            <CardContent className="p-4">
-                              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                <div className="space-y-1">
-                                  <h3 className="font-semibold text-lg">
-                                    {assignment.title}
-                                  </h3>
-                                  <p className="text-sm text-muted-foreground line-clamp-2">
-                                    {assignment.description}
-                                  </p>
-                                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-1">
-                                      <Calendar className="h-4 w-4" />
-                                      <span>
-                                        Due{" "}
-                                        {new Date(
-                                          assignment.dueDate
-                                        ).toLocaleDateString()}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                      <Clock className="h-4 w-4" />
-                                      <span>{assignment.points} points</span>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                      <FileText className="h-4 w-4" />
-                                      <span>{assignment.submissionType}</span>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="flex flex-col items-end gap-2">
-                                  <Badge
-                                    variant={
-                                      status === "completed"
-                                        ? "default"
-                                        : status === "in-progress"
-                                        ? "secondary"
-                                        : "outline"
-                                    }
-                                  >
-                                    {status === "completed"
-                                      ? "Completed"
-                                      : status === "in-progress"
-                                      ? "In Progress"
-                                      : "Not Started"}
-                                  </Badge>
-                                  <Progress value={progress} className="w-24" />
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                      router.push(
-                                        `/dashboard/classrooms/${subjectGroup.subject._id}/assignments/${assignment._id}`
-                                      )
-                                    }
-                                  >
-                                    View Assignment
-                                  </Button>
-                                </div>
-                              </div>
+                        return (
+                          <Card key={assignment._id} className="cosmic-card">
+                            <CardHeader>
+                              <CardTitle>{assignment.title}</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <p className="text-muted-foreground">
+                                {assignment.description}
+                              </p>
                             </CardContent>
                           </Card>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
