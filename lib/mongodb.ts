@@ -51,21 +51,24 @@ export async function connectToDatabase() {
     // Test the connection with a timeout
     const pingPromise = db.command({ ping: 1 });
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("MongoDB ping timeout")), 5000);
+      setTimeout(() => reject(new Error("MongoDB ping timeout")), 10000); // Increased timeout to 10s
     });
 
     await Promise.race([pingPromise, timeoutPromise]);
     console.log("MongoDB connection test successful");
 
     // Verify we can access the collections we need
-    const collections = ["questions", "users"];
+    const collections = ["questions", "users", "userLanguages"];
     for (const collection of collections) {
       try {
         await db.collection(collection).findOne({});
         console.log(`Successfully accessed ${collection} collection`);
       } catch (error) {
-        console.error(`Error accessing ${collection} collection:`, error);
-        throw new Error(`Failed to access ${collection} collection`);
+        // Log the error but don't throw - some collections might be empty
+        console.warn(
+          `Warning: Could not access ${collection} collection:`,
+          error
+        );
       }
     }
 

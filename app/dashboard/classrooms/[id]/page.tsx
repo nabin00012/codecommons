@@ -29,6 +29,7 @@ import {
   Plus,
   Loader2,
   School,
+  Eye,
 } from "lucide-react";
 import Link from "next/link";
 import { ClassroomService, type Classroom } from "@/lib/services/classroom";
@@ -525,6 +526,68 @@ export default function ClassroomDetailPage() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="students" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Students</h2>
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={() =>
+                  router.push(`/dashboard/classrooms/${params.id}/students`)
+                }
+              >
+                <Eye className="h-4 w-4" />
+                View All Students
+              </Button>
+            </div>
+
+            <div className="grid gap-4">
+              {classroom.students.slice(0, 5).map((student) => (
+                <Card key={student._id} className="overflow-hidden">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-lg font-semibold text-primary">
+                            {student.name[0]}
+                          </span>
+                        </div>
+                        <div>
+                          <h4 className="font-medium">{student.name}</h4>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() =>
+                          router.push(
+                            `/dashboard/classrooms/${params.id}/students/${student._id}`
+                          )
+                        }
+                      >
+                        <Eye className="h-4 w-4" />
+                        Inspect
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {classroom.students.length > 5 && (
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={() =>
+                    router.push(`/dashboard/classrooms/${params.id}/students`)
+                  }
+                >
+                  <Plus className="h-4 w-4" />
+                  View {classroom.students.length - 5} More Students
+                </Button>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
 

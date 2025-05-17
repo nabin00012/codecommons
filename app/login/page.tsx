@@ -32,27 +32,25 @@ export default function LoginPage() {
   // Check if user is already logged in
   useEffect(() => {
     const checkAuth = async () => {
-      if (user && !userLoading && !authLoading) {
-        const token = authService.getToken();
-        if (token) {
-          try {
-            const response = await authService.verifyToken(token);
-            if (response.user) {
-              console.log("User already logged in, redirecting to dashboard");
-              const redirectPath = redirectTo || "/dashboard";
-              router.replace(redirectPath);
+      const token = authService.getToken();
+      if (token) {
+        try {
+          const response = await authService.verifyToken(token);
+          if (response.user) {
+            // Only redirect if explicitly requested (e.g., from protected route)
+            if (redirectTo) {
+              router.replace(redirectTo);
             }
-          } catch (error) {
-            console.error("Token verification failed:", error);
-            // Clear invalid token
-            setToken(null);
           }
+        } catch (error) {
+          console.error("Token verification failed:", error);
+          setToken(null);
         }
       }
     };
 
     checkAuth();
-  }, [user, userLoading, authLoading, router, redirectTo, setToken]);
+  }, [router, redirectTo, setToken]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -445,8 +445,11 @@ export default function AssignmentDetailPage() {
                     Student Submissions
                   </h2>
                   <div className="space-y-4">
-                    {assignment.submissions.map((submission, idx) => (
-                      <Card key={idx} className="p-4">
+                    {assignment.submissions.map((submission) => (
+                      <Card
+                        key={submission._id || submission.id}
+                        className="p-4"
+                      >
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                           <div>
                             <div className="font-medium">
@@ -471,8 +474,8 @@ export default function AssignmentDetailPage() {
                               onSubmit={async (e) => {
                                 e.preventDefault();
                                 await handleGrade(
-                                  idx,
-                                  submission._id || idx.toString()
+                                  submission._id,
+                                  submission._id || submission.id
                                 );
                               }}
                             >

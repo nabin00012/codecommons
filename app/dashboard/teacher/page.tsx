@@ -487,9 +487,13 @@ export default function TeacherDashboardPage() {
                           </span>{" "}
                           completed
                         </div>
-                        <Button variant="outline" size="sm">
-                          View Details
-                        </Button>
+                        <Link
+                          href={`/dashboard/classrooms/${assignment.classroomId}/assignments/${assignment._id}`}
+                        >
+                          <Button variant="outline" size="sm">
+                            View Details
+                          </Button>
+                        </Link>
                       </div>
                     </div>
                     <div className="mt-4 space-y-2">

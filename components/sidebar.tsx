@@ -15,6 +15,7 @@ import {
   Calendar,
   Users2,
   Code,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { authService } from "@/lib/services/auth";
@@ -33,6 +34,12 @@ export function Sidebar() {
   const isTeacher = user?.role === "teacher";
 
   const navigation = [
+    {
+      name: "Profile",
+      href: "/dashboard/profile",
+      icon: User,
+      current: pathname.includes("/profile"),
+    },
     {
       name: "Classrooms",
       href: "/dashboard/classrooms",
@@ -79,13 +86,6 @@ export function Sidebar() {
           icon: Users2,
         },
       ],
-    },
-    {
-      name: "Students",
-      href: "/dashboard/students",
-      icon: Users,
-      current: pathname.includes("/students"),
-      teacherOnly: true,
     },
     {
       name: "Settings",

@@ -54,6 +54,7 @@ interface Project {
   createdAt: string;
   stars: number;
   contributors: number;
+  thumbnail?: string;
 }
 
 export default function ProjectsPage() {
@@ -68,6 +69,7 @@ export default function ProjectsPage() {
     description: "",
     githubLink: "",
     tags: [] as string[],
+    longDescription: "",
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string>("all");
@@ -131,6 +133,7 @@ export default function ProjectsPage() {
         description: "",
         githubLink: "",
         tags: [],
+        longDescription: "",
       });
       fetchProjects();
     } catch (error) {
@@ -243,6 +246,20 @@ export default function ProjectsPage() {
                     placeholder="Enter tags separated by commas"
                   />
                 </div>
+                <div className="grid gap-2">
+                  <label htmlFor="longDescription">Long Description</label>
+                  <Textarea
+                    id="longDescription"
+                    value={newProject.longDescription}
+                    onChange={(e) =>
+                      setNewProject({
+                        ...newProject,
+                        longDescription: e.target.value,
+                      })
+                    }
+                    placeholder="Write a detailed description of your project"
+                  />
+                </div>
               </div>
               <DialogFooter>
                 <Button onClick={handleCreateProject}>Create Project</Button>
@@ -276,7 +293,7 @@ export default function ProjectsPage() {
           </Select>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredProjects.map((project, index) => (
             <motion.div
               key={project._id}
@@ -284,37 +301,56 @@ export default function ProjectsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
             >
-              <Card className="h-full hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="line-clamp-1">
-                        {project.title}
-                      </CardTitle>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        by {project.author.name}
-                      </p>
-                    </div>
-                    <Badge variant="outline" className="capitalize">
-                      {project.author.role}
-                    </Badge>
+              <div
+                className="relative group rounded-2xl overflow-hidden shadow-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 cursor-pointer transition-transform hover:scale-[1.03] hover:shadow-2xl"
+                onClick={() => router.push(`/projects/${project._id}`)}
+              >
+                {/* Thumbnail */}
+                <div className="relative h-40 w-full bg-gradient-to-br from-purple-500/30 to-blue-500/20 flex items-center justify-center">
+                  <img
+                    src={
+                      project.thumbnail ||
+                      "/placeholder.svg?height=160&width=320"
+                    }
+                    alt={project.title}
+                    className="object-cover w-full h-full transition-transform group-hover:scale-105 duration-300"
+                  />
+                  {/* Gradient overlay on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center">
+                    <button className="mb-4 px-4 py-2 bg-white/90 dark:bg-zinc-800/90 text-primary font-semibold rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors">
+                      View Details
+                    </button>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+                </div>
+                {/* Card Content */}
+                <div className="p-5 flex flex-col gap-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <h2 className="text-xl font-bold truncate text-zinc-900 dark:text-zinc-100">
+                      {project.title}
+                    </h2>
+                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow">
+                      {project.author.role}
+                    </span>
+                  </div>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-300 line-clamp-2 mb-1">
                     {project.description}
                   </p>
-                  <div className="flex flex-wrap gap-2 mb-4">
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-2 mb-2">
                     {project.tags.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="gap-1">
-                        <Tag className="h-3 w-3" />
+                      <span
+                        key={tag}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs text-zinc-700 dark:text-zinc-300 font-medium"
+                      >
+                        <Tag className="h-3 w-3 text-purple-500" />
                         {tag}
-                      </Badge>
+                      </span>
                     ))}
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                  {/* Stats */}
+                  <div className="flex items-center gap-4 text-xs text-zinc-500 dark:text-zinc-400 mb-2">
                     <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4" />
+                      <Star className="h-4 w-4 text-yellow-400" />
                       <span>{project.stars}</span>
                     </div>
                     <div className="flex items-center gap-1">
@@ -328,17 +364,21 @@ export default function ProjectsPage() {
                       </span>
                     </div>
                   </div>
+                  {/* GitHub Button */}
                   <Button
                     variant="outline"
-                    className="w-full gap-2"
-                    onClick={() => window.open(project.githubLink, "_blank")}
+                    className="w-full gap-2 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(project.githubLink, "_blank");
+                    }}
                   >
                     <Github className="h-4 w-4" />
                     View on GitHub
                     <ExternalLink className="h-4 w-4" />
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </motion.div>
           ))}
         </div>

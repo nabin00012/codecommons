@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server";
 import { authService } from "@/lib/services/auth";
 import { headers } from "next/headers";
+import Project from "@/lib/models/Project";
+import { connectDB } from "@/lib/db";
 
-// Temporary in-memory storage
-let projects: any[] = [];
+// Connect to MongoDB
+connectDB();
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const headersList = headers();
+    const headersList = await headers();
     const token = headersList.get("authorization")?.split(" ")[1];
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
 
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -20,6 +24,20 @@ export async function GET() {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
+    // If ID is provided, get specific project
+    if (id) {
+      const project = await Project.findById(id);
+      if (!project) {
+        return NextResponse.json(
+          { error: "Project not found" },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json(project);
+    }
+
+    // Otherwise get all projects
+    const projects = await Project.find().sort({ createdAt: -1 });
     return NextResponse.json(projects);
   } catch (error) {
     console.error("Error fetching projects:", error);
@@ -32,7 +50,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const headersList = headers();
+    const headersList = await headers();
     const token = headersList.get("authorization")?.split(" ")[1];
 
     if (!token) {
@@ -46,32 +64,41 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { title, description, githubLink, tags } = body;
+    const {
+      title,
+      description,
+      longDescription,
+      githubLink,
+      demoLink,
+      tags,
+      media,
+      screenshots,
+      screenRecordings,
+    } = body;
 
-    if (!title || !description || !githubLink) {
+    if (!title || !description || !longDescription || !githubLink) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    const project = {
-      _id: Math.random().toString(36).substr(2, 9),
+    const project = await Project.create({
       title,
       description,
+      longDescription,
       githubLink,
+      demoLink,
       tags: tags || [],
+      media: media || [],
+      screenshots: screenshots || [],
+      screenRecordings: screenRecordings || [],
       author: {
         _id: user.user._id,
         name: user.user.name,
         role: user.user.role,
       },
-      createdAt: new Date().toISOString(),
-      stars: 0,
-      contributors: 1,
-    };
-
-    projects.push(project);
+    });
 
     return NextResponse.json(project);
   } catch (error) {
