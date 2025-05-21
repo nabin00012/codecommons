@@ -20,6 +20,9 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Discussions from "./components/Discussions";
+import Events from "./components/Events";
+import Groups from "./components/Groups";
 
 export default function CommunityPage() {
   const [activeTab, setActiveTab] = useState("discussions");
@@ -181,262 +184,26 @@ export default function CommunityPage() {
   ];
 
   return (
-    <div className="container py-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold mb-2 cosmic-text">Community</h1>
-          <p className="text-muted-foreground">
-            Connect with fellow students, join discussions, and participate in
-            events
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search community..."
-              className="pl-9 w-[200px] md:w-[300px]"
-            />
-          </div>
-          <Button variant="outline" className="gap-2">
-            <Filter className="h-4 w-4" /> Filter
-          </Button>
-        </div>
-      </div>
+    <div className="container mx-auto py-8">
+      <h1 className="text-3xl font-bold mb-8">Community</h1>
 
-      <Tabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        className="space-y-6"
-      >
-        <TabsList>
-          <TabsTrigger value="discussions" className="gap-2">
-            <MessageSquare className="h-4 w-4" />
-            Discussions
-          </TabsTrigger>
-          <TabsTrigger value="events" className="gap-2">
-            <Calendar className="h-4 w-4" />
-            Events
-          </TabsTrigger>
-          <TabsTrigger value="groups" className="gap-2">
-            <Users className="h-4 w-4" />
-            Groups
-          </TabsTrigger>
+      <Tabs defaultValue="discussions" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="discussions">Discussions</TabsTrigger>
+          <TabsTrigger value="events">Events</TabsTrigger>
+          <TabsTrigger value="groups">Groups</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="discussions" className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">Discussions</h2>
-            <Button className="cosmic-button">Start Discussion</Button>
-          </div>
-
-          <div className="grid gap-6">
-            {discussions.map((discussion, index) => (
-              <motion.div
-                key={discussion.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-              >
-                <Card className="cosmic-card">
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage
-                          src={discussion.author.avatar}
-                          alt={discussion.author.name}
-                        />
-                        <AvatarFallback>
-                          {discussion.author.name[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <div>
-                            <h3 className="font-semibold text-lg">
-                              {discussion.title}
-                            </h3>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <span>{discussion.author.name}</span>
-                              <span>•</span>
-                              <span>{discussion.author.department}</span>
-                              <span>•</span>
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-3.5 w-3.5" />
-                                {discussion.timeAgo}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <p className="text-muted-foreground mb-4">
-                          {discussion.content}
-                        </p>
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {discussion.tags.map((tag) => (
-                            <Badge
-                              key={tag}
-                              variant="outline"
-                              className="bg-muted/50"
-                            >
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <Button variant="ghost" size="sm" className="gap-2">
-                            <ThumbsUp className="h-4 w-4" />
-                            {discussion.likes}
-                          </Button>
-                          <Button variant="ghost" size="sm" className="gap-2">
-                            <MessageCircle className="h-4 w-4" />
-                            {discussion.comments}
-                          </Button>
-                          <Button variant="ghost" size="sm" className="gap-2">
-                            <ArrowRight className="h-4 w-4" />
-                            View Discussion
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+        <TabsContent value="discussions">
+          <Discussions />
         </TabsContent>
 
-        <TabsContent value="events" className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">Events</h2>
-            <Button className="cosmic-button">Create Event</Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events.map((event, index) => (
-              <motion.div
-                key={event.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-              >
-                <Card className="cosmic-card h-full">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <Calendar className="h-6 w-6 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-lg">{event.title}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {event.organizer}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>{event.date}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <span>{event.time}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span>{event.location}</span>
-                      </div>
-                    </div>
-
-                    <p className="text-sm text-muted-foreground mb-4">
-                      {event.description}
-                    </p>
-
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm text-muted-foreground">
-                        {event.attendees} / {event.maxAttendees} attendees
-                      </div>
-                      <Button
-                        variant={event.isRegistered ? "outline" : "default"}
-                      >
-                        {event.isRegistered ? "Registered" : "Register"}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+        <TabsContent value="events">
+          <Events />
         </TabsContent>
 
-        <TabsContent value="groups" className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">Study Groups</h2>
-            <Button className="cosmic-button">Create Group</Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {groups.map((group, index) => (
-              <motion.div
-                key={group.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-              >
-                <Card className="cosmic-card h-full">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-4 mb-4">
-                      <Avatar className="h-14 w-14">
-                        <AvatarImage src={group.avatar} alt={group.name} />
-                        <AvatarFallback>{group.name[0]}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h3 className="font-semibold text-lg">{group.name}</h3>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Users className="h-3.5 w-3.5" />
-                          <span>{group.members} members</span>
-                          <span>•</span>
-                          <Badge
-                            variant="outline"
-                            className={
-                              group.activity === "High"
-                                ? "bg-green-50 text-green-700 border-green-200"
-                                : "bg-amber-50 text-amber-700 border-amber-200"
-                            }
-                          >
-                            {group.activity} Activity
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-
-                    <p className="text-sm text-muted-foreground mb-4">
-                      {group.description}
-                    </p>
-
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {group.tags.map((tag) => (
-                        <Badge
-                          key={tag}
-                          variant="outline"
-                          className="bg-muted/50"
-                        >
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-
-                    <Button
-                      className="w-full"
-                      variant={group.isMember ? "outline" : "default"}
-                    >
-                      {group.isMember ? "View Group" : "Join Group"}
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+        <TabsContent value="groups">
+          <Groups />
         </TabsContent>
       </Tabs>
     </div>

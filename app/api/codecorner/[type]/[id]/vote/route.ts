@@ -26,6 +26,13 @@ export async function POST(
 
     const { db } = await connectToDatabase();
     const { type, id } = params;
+    const body = await request.json();
+    const voteType = body.type || "up"; // Default to upvote if not specified
+
+    // Validate ID format
+    if (!ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
+    }
 
     if (type === "question") {
       const question = await db.collection("questions").findOne({
@@ -39,32 +46,101 @@ export async function POST(
         );
       }
 
-      // Update question votes
-      await db
-        .collection("questions")
-        .updateOne({ _id: new ObjectId(id) }, { $inc: { votes: 1 } });
-
-      // Add points to the question author
-      await db
-        .collection("users")
-        .updateOne(
-          { _id: new ObjectId(question.author._id) },
-          { $inc: { points: 2 } }
-        );
-    } else if (type === "answer") {
-      const question = await db.collection("questions").findOne({
-        "answers._id": new ObjectId(id),
+      // Check if user has already voted
+      const userVote = await db.collection("votes").findOne({
+        userId: new ObjectId(user.id),
+        contentId: new ObjectId(id),
+        contentType: "question",
       });
 
-      if (!question) {
+      if (userVote) {
+        // If user is voting the same way, remove the vote
+        if (userVote.voteType === voteType) {
+          await db.collection("votes").deleteOne({
+            userId: new ObjectId(user.id),
+            contentId: new ObjectId(id),
+            contentType: "question",
+          });
+
+          // Update question votes
+          const updateFields: any = {};
+          if (voteType === "up") {
+            updateFields.$inc = { likes: -1 };
+          } else {
+            updateFields.$inc = { dislikes: -1 };
+          }
+
+          await db
+            .collection("questions")
+            .updateOne({ _id: new ObjectId(id) }, updateFields);
+        } else {
+          // If user is changing their vote
+          await db.collection("votes").updateOne(
+            {
+              userId: new ObjectId(user.id),
+              contentId: new ObjectId(id),
+              contentType: "question",
+            },
+            { $set: { voteType } }
+          );
+
+          // Update question votes
+          const updateFields: any = {};
+          if (voteType === "up") {
+            updateFields.$inc = { likes: 1, dislikes: -1 };
+          } else {
+            updateFields.$inc = { likes: -1, dislikes: 1 };
+          }
+
+          await db
+            .collection("questions")
+            .updateOne({ _id: new ObjectId(id) }, updateFields);
+        }
+      } else {
+        // New vote
+        await db.collection("votes").insertOne({
+          userId: new ObjectId(user.id),
+          contentId: new ObjectId(id),
+          contentType: "question",
+          voteType,
+          createdAt: new Date(),
+        });
+
+        // Update question votes
+        const updateFields: any = {};
+        if (voteType === "up") {
+          updateFields.$inc = { likes: 1 };
+        } else {
+          updateFields.$inc = { dislikes: 1 };
+        }
+
+        await db
+          .collection("questions")
+          .updateOne({ _id: new ObjectId(id) }, updateFields);
+      }
+
+      // Get updated question
+      const updatedQuestion = await db.collection("questions").findOne({
+        _id: new ObjectId(id),
+      });
+
+      if (!updatedQuestion) {
         return NextResponse.json(
-          { error: "Answer not found" },
-          { status: 404 }
+          { error: "Failed to fetch updated question" },
+          { status: 500 }
         );
       }
 
-      // Find the answer
-      const answer = question.answers.find((a: any) => a._id.toString() === id);
+      return NextResponse.json({
+        success: true,
+        message: "Vote recorded successfully",
+        likes: updatedQuestion.likes || 0,
+        dislikes: updatedQuestion.dislikes || 0,
+      });
+    } else if (type === "answer") {
+      const answer = await db.collection("answers").findOne({
+        _id: new ObjectId(id),
+      });
 
       if (!answer) {
         return NextResponse.json(
@@ -73,33 +149,107 @@ export async function POST(
         );
       }
 
-      // Update answer votes
-      await db.collection("questions").updateOne(
-        {
-          _id: question._id,
-          "answers._id": new ObjectId(id),
-        },
-        {
-          $inc: { "answers.$.votes": 1 },
+      // Check if user has already voted
+      const userVote = await db.collection("votes").findOne({
+        userId: new ObjectId(user.id),
+        contentId: new ObjectId(id),
+        contentType: "answer",
+      });
+
+      if (userVote) {
+        // If user is voting the same way, remove the vote
+        if (userVote.voteType === voteType) {
+          await db.collection("votes").deleteOne({
+            userId: new ObjectId(user.id),
+            contentId: new ObjectId(id),
+            contentType: "answer",
+          });
+
+          // Update answer votes
+          const updateFields: any = {};
+          if (voteType === "up") {
+            updateFields.$inc = { likes: -1 };
+          } else {
+            updateFields.$inc = { dislikes: -1 };
+          }
+
+          await db
+            .collection("answers")
+            .updateOne({ _id: new ObjectId(id) }, updateFields);
+        } else {
+          // If user is changing their vote
+          await db.collection("votes").updateOne(
+            {
+              userId: new ObjectId(user.id),
+              contentId: new ObjectId(id),
+              contentType: "answer",
+            },
+            { $set: { voteType } }
+          );
+
+          // Update answer votes
+          const updateFields: any = {};
+          if (voteType === "up") {
+            updateFields.$inc = { likes: 1, dislikes: -1 };
+          } else {
+            updateFields.$inc = { likes: -1, dislikes: 1 };
+          }
+
+          await db
+            .collection("answers")
+            .updateOne({ _id: new ObjectId(id) }, updateFields);
         }
-      );
+      } else {
+        // New vote
+        await db.collection("votes").insertOne({
+          userId: new ObjectId(user.id),
+          contentId: new ObjectId(id),
+          contentType: "answer",
+          voteType,
+          createdAt: new Date(),
+        });
 
-      // Add points to the answer author
-      await db
-        .collection("users")
-        .updateOne(
-          { _id: new ObjectId(answer.author._id) },
-          { $inc: { points: 2 } }
+        // Update answer votes
+        const updateFields: any = {};
+        if (voteType === "up") {
+          updateFields.$inc = { likes: 1 };
+        } else {
+          updateFields.$inc = { dislikes: 1 };
+        }
+
+        await db
+          .collection("answers")
+          .updateOne({ _id: new ObjectId(id) }, updateFields);
+      }
+
+      // Get updated answer
+      const updatedAnswer = await db.collection("answers").findOne({
+        _id: new ObjectId(id),
+      });
+
+      if (!updatedAnswer) {
+        return NextResponse.json(
+          { error: "Failed to fetch updated answer" },
+          { status: 500 }
         );
-    } else {
-      return NextResponse.json({ error: "Invalid type" }, { status: 400 });
-    }
+      }
 
-    return NextResponse.json({ message: "Vote recorded successfully" });
+      return NextResponse.json({
+        success: true,
+        message: "Vote recorded successfully",
+        likes: updatedAnswer.likes || 0,
+        dislikes: updatedAnswer.dislikes || 0,
+      });
+    } else {
+      return NextResponse.json(
+        { error: "Invalid type parameter" },
+        { status: 400 }
+      );
+    }
   } catch (error) {
-    console.error("Error recording vote:", error);
+    console.error("Error in vote operation:", error);
     return NextResponse.json(
-      { error: "Failed to record vote" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

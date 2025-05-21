@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId, WithId, Document } from "mongodb";
-import jwt from "jsonwebtoken";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 interface Language extends Document {
   language: string;
@@ -11,41 +12,47 @@ interface Language extends Document {
   updatedAt: Date;
 }
 
-function getTokenFromHeader(request: Request): string | null {
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return null;
-  }
-  return authHeader.split(" ")[1];
-}
-
-function verifyToken(token: string): { id: string } {
-  try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || "your-secret-key"
-    ) as { id: string };
-    console.log("Token verification successful:", decoded);
-    return decoded;
-  } catch (error) {
-    console.error("Token verification error:", error);
-    throw new Error("Invalid token");
-  }
-}
-
 export async function GET(request: Request) {
   let db;
   try {
     console.log("Starting profile GET request...");
 
-    const token = getTokenFromHeader(request);
-    if (!token) {
-      console.log("No token found in request");
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Get the authorization header
+    const authHeader = request.headers.get("authorization");
+    let userId: string | undefined;
 
-    const decoded = verifyToken(token);
-    console.log("Token decoded:", decoded);
+    if (authHeader?.startsWith("Bearer ")) {
+      // Token-based authentication
+      const token = authHeader.split(" ")[1];
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const data = await response.json();
+        userId = data.user._id;
+      } catch (error) {
+        console.error("Token verification error:", error);
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+    } else {
+      // Session-based authentication
+      const session = await getServerSession(authOptions);
+      if (!session?.user?.id) {
+        console.log("No session found");
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      userId = session.user.id;
+    }
 
     try {
       console.log("Attempting to connect to database...");
@@ -65,18 +72,17 @@ export async function GET(request: Request) {
 
     let user;
     try {
-      console.log("Querying user with ID:", decoded.id);
-      const userId = new ObjectId(decoded.id);
-      console.log("Converted ID to ObjectId:", userId);
+      console.log("Querying user with ID:", userId);
+      const userObjectId = new ObjectId(userId);
+      console.log("Converted ID to ObjectId:", userObjectId);
 
-      user = await db.collection("users").findOne({ _id: userId });
+      user = await db.collection("users").findOne({ _id: userObjectId });
       console.log("User query result:", user ? "User found" : "User not found");
       if (user) {
         console.log("User data:", {
           _id: user._id,
           name: user.name,
           email: user.email,
-          // Don't log sensitive data
         });
       }
     } catch (queryError) {
@@ -104,11 +110,11 @@ export async function GET(request: Request) {
 
     let languages: WithId<Language>[] = [];
     try {
-      console.log("Querying languages for user:", decoded.id);
-      const userId = new ObjectId(decoded.id);
+      console.log("Querying languages for user:", userId);
+      const userObjectId = new ObjectId(userId);
       languages = await db
         .collection<Language>("userLanguages")
-        .find({ userId })
+        .find({ userId: userObjectId })
         .toArray();
       console.log("Languages found:", languages.length);
     } catch (langError) {
@@ -162,14 +168,42 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
   let db;
   try {
-    const token = getTokenFromHeader(request);
-    if (!token) {
-      console.log("No token found in request");
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Get the authorization header
+    const authHeader = request.headers.get("authorization");
+    let userId: string | undefined;
 
-    const decoded = verifyToken(token);
-    console.log("Token decoded:", decoded);
+    if (authHeader?.startsWith("Bearer ")) {
+      // Token-based authentication
+      const token = authHeader.split(" ")[1];
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const data = await response.json();
+        userId = data.user._id;
+      } catch (error) {
+        console.error("Token verification error:", error);
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+    } else {
+      // Session-based authentication
+      const session = await getServerSession(authOptions);
+      if (!session?.user?.id) {
+        console.log("No session found");
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      userId = session.user.id;
+    }
 
     try {
       const connection = await connectToDatabase();
@@ -198,7 +232,7 @@ export async function PUT(request: Request) {
     let updateResult;
     try {
       updateResult = await db.collection("users").updateOne(
-        { _id: new ObjectId(decoded.id) },
+        { _id: new ObjectId(userId) },
         {
           $set: {
             name: data.name,
@@ -242,21 +276,24 @@ export async function PUT(request: Request) {
         // Remove existing language proficiencies
         const deleteResult = await db
           .collection("userLanguages")
-          .deleteMany({ userId: new ObjectId(decoded.id) });
+          .deleteMany({ userId: new ObjectId(userId) });
 
         console.log("Deleted existing languages:", deleteResult.deletedCount);
 
         // Insert new language proficiencies
         if (data.languages.length > 0) {
-          const insertResult = await db.collection("userLanguages").insertMany(
-            data.languages.map((lang: any) => ({
-              userId: new ObjectId(decoded.id),
-              language: lang.name,
-              proficiency: lang.proficiency,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            }))
-          );
+          const languageDocs = data.languages.map((lang: any) => ({
+            language: lang.name,
+            proficiency: lang.proficiency,
+            userId: new ObjectId(userId),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }));
+
+          const insertResult = await db
+            .collection("userLanguages")
+            .insertMany(languageDocs);
+
           console.log("Inserted new languages:", insertResult.insertedCount);
         }
       } catch (langError) {
@@ -265,15 +302,35 @@ export async function PUT(request: Request) {
       }
     }
 
-    return NextResponse.json({ message: "Profile updated successfully" });
+    // Fetch the updated user data
+    const updatedUser = await db
+      .collection("users")
+      .findOne({ _id: new ObjectId(userId) });
+    const updatedLanguages = await db
+      .collection("userLanguages")
+      .find({ userId: new ObjectId(userId) })
+      .toArray();
+
+    const responseData = {
+      name: updatedUser?.name || "",
+      email: updatedUser?.email || "",
+      location: updatedUser?.location || "",
+      course: updatedUser?.course || "",
+      semester: updatedUser?.semester || "",
+      bio: updatedUser?.bio || "",
+      githubUrl: updatedUser?.githubUrl || "",
+      linkedinUrl: updatedUser?.linkedinUrl || "",
+      portfolioUrl: updatedUser?.portfolioUrl || "",
+      skills: updatedUser?.skills || [],
+      languages: updatedLanguages.map((lang) => ({
+        name: lang.language,
+        proficiency: lang.proficiency,
+      })),
+    };
+
+    return NextResponse.json(responseData);
   } catch (error) {
-    console.error("Error in profile update API:", error);
-    if (error instanceof Error) {
-      console.error("Error details:", {
-        message: error.message,
-        stack: error.stack,
-      });
-    }
+    console.error("Error in profile update:", error);
     return NextResponse.json(
       {
         error: "Internal server error",

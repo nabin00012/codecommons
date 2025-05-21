@@ -6,6 +6,9 @@ import authRoutes from "./routes/auth";
 import assignmentRoutes from "./routes/assignment";
 import submissionRoutes from "./routes/submission";
 import courseRoutes from "./routes/course";
+import discussionRoutes from "./routes/discussionRoutes";
+import eventRoutes from "./routes/eventRoutes";
+import groupRoutes from "./routes/groupRoutes";
 
 const app = express();
 
@@ -24,6 +27,11 @@ app.use("/api/classrooms", classroomRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/submissions", submissionRoutes);
 app.use("/api/courses", courseRoutes);
+
+// Community routes
+app.use("/api/discussions", discussionRoutes);
+app.use("/api/events", eventRoutes);
+app.use("/api/groups", groupRoutes);
 
 // Error handling middleware
 app.use(

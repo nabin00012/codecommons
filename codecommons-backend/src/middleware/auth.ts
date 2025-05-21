@@ -13,6 +13,14 @@ declare global {
   }
 }
 
+interface AuthRequest extends Request {
+  user?: {
+    _id: string;
+    email: string;
+    role: string;
+  };
+}
+
 export const protect: Middleware = async (
   req: Request,
   res: Response,
@@ -80,5 +88,37 @@ export const teacherOnly: Middleware = (
     next();
   } else {
     next({ status: 403, message: "Not authorized as a teacher" });
+  }
+};
+
+export const authenticateToken = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ message: "No token provided" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
+      _id: string;
+      email: string;
+      role: string;
+    };
+
+    req.user = decoded;
+    next();
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      return res.status(401).json({ message: "Token expired" });
+    }
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+    return res.status(500).json({ message: "Error verifying token" });
   }
 };

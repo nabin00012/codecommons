@@ -4,17 +4,10 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 
 interface Settings {
-  theme: "light" | "dark" | "cosmic" | "system";
-  editor: {
-    fontSize: number;
-    tabSize: number;
-    wordWrap: boolean;
-    minimap: boolean;
-  };
-  notifications: {
-    enabled: boolean;
-    sound: boolean;
-  };
+  theme: "light" | "dark" | "system";
+  notifications: boolean;
+  emailNotifications: boolean;
+  language: string;
 }
 
 interface SettingsContextType {
@@ -24,16 +17,9 @@ interface SettingsContextType {
 
 const defaultSettings: Settings = {
   theme: "system",
-  editor: {
-    fontSize: 14,
-    tabSize: 2,
-    wordWrap: true,
-    minimap: true,
-  },
-  notifications: {
-    enabled: true,
-    sound: true,
-  },
+  notifications: true,
+  emailNotifications: true,
+  language: "en",
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(
@@ -44,26 +30,28 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const { setTheme } = useTheme();
 
+  // Load settings from localStorage on mount
   useEffect(() => {
-    // Load settings from localStorage
     const savedSettings = localStorage.getItem("settings");
     if (savedSettings) {
-      setSettings(JSON.parse(savedSettings));
+      const parsedSettings = JSON.parse(savedSettings);
+      setSettings(parsedSettings);
+      // Set theme after loading settings
+      if (parsedSettings.theme) {
+        setTheme(parsedSettings.theme);
+      }
     }
-  }, []);
+  }, [setTheme]);
 
   const updateSettings = (newSettings: Partial<Settings>) => {
-    setSettings((prevSettings) => {
-      const updatedSettings = { ...prevSettings, ...newSettings };
-      localStorage.setItem("settings", JSON.stringify(updatedSettings));
+    const updatedSettings = { ...settings, ...newSettings };
+    setSettings(updatedSettings);
+    localStorage.setItem("settings", JSON.stringify(updatedSettings));
 
-      // Update theme if it's changed
-      if (newSettings.theme) {
-        setTheme(newSettings.theme);
-      }
-
-      return updatedSettings;
-    });
+    // Update theme if it's changed
+    if (newSettings.theme) {
+      setTheme(newSettings.theme);
+    }
   };
 
   return (

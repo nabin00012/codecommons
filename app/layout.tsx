@@ -9,6 +9,7 @@ import { HelpProvider } from "@/lib/context/help-context";
 import { Toaster } from "@/components/ui/toaster";
 import { CosmicMode } from "@/components/cosmic-mode";
 import { AuthProvider } from "@/lib/context/AuthContext";
+import { SessionProvider } from "@/components/providers/session-provider";
 import "@/lib/monaco-config";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -40,17 +41,19 @@ export default function RootLayout({
             system: "system",
           }}
         >
-          <AuthProvider>
-            <UserProvider>
-              <SettingsProvider>
-                <HelpProvider>
-                  {children}
-                  <Toaster />
-                  <CosmicMode />
-                </HelpProvider>
-              </SettingsProvider>
-            </UserProvider>
-          </AuthProvider>
+          <SessionProvider>
+            <AuthProvider>
+              <UserProvider>
+                <SettingsProvider>
+                  <HelpProvider>
+                    {children}
+                    <Toaster />
+                    <CosmicMode />
+                  </HelpProvider>
+                </SettingsProvider>
+              </UserProvider>
+            </AuthProvider>
+          </SessionProvider>
         </ThemeProvider>
       </body>
     </html>

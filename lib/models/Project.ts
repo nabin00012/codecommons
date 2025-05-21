@@ -29,6 +29,7 @@ export interface IProject extends Document {
   contributors: number;
   createdAt: Date;
   updatedAt: Date;
+  isPublic: boolean;
 }
 
 const projectSchema = new Schema<IProject>(
@@ -125,6 +126,10 @@ const projectSchema = new Schema<IProject>(
     contributors: {
       type: Number,
       default: 1,
+    },
+    isPublic: {
+      type: Boolean,
+      default: false,
     },
   },
   {

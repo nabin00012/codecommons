@@ -32,12 +32,18 @@ if (!process.env.MONGODB_DB) {
   throw new Error('Invalid/Missing environment variable: "MONGODB_DB"');
 }
 
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error('Invalid/Missing environment variable: "NEXTAUTH_SECRET"');
+}
+
 const client = new MongoClient(process.env.MONGODB_URI);
 
 export const authOptions: NextAuthOptions = {
   adapter: MongoDBAdapter(client),
+  secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
     signIn: "/login",
@@ -93,14 +99,12 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      return {
-        ...session,
-        user: {
-          ...session.user,
-          id: token.id,
-          role: token.role,
-        },
-      };
+      if (token) {
+        session.user.id = token.id;
+        session.user.role = token.role;
+      }
+      return session;
     },
   },
+  debug: process.env.NODE_ENV === "development",
 };

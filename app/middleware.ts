@@ -29,7 +29,7 @@ const publicPaths = [
   "/contact",
 ];
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // Allow access to public paths
@@ -45,15 +45,13 @@ export function middleware(request: NextRequest) {
   });
 
   if (isProtectedPath) {
-    // Check for token in cookies or localStorage
-    const token =
-      request.cookies.get("token")?.value ||
-      request.headers.get("Authorization")?.split(" ")[1];
+    // Check for token in cookies
+    const token = request.cookies.get("token")?.value;
 
     if (!token) {
       // Redirect to login if no token is found
       const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("redirectTo", path);
+      loginUrl.searchParams.set("callbackUrl", path);
       return NextResponse.redirect(loginUrl);
     }
   }

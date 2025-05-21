@@ -1,4 +1,6 @@
 import { UserRole } from "@/lib/context/user-context";
+import { getToken } from "next-auth/jwt";
+import { NextRequest } from "next/server";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
 
@@ -101,7 +103,6 @@ export const authService = {
       console.log("Verifying token...");
       const response = await fetch(`${API_URL}/api/auth/verify`, {
         method: "GET",
-        credentials: "include",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -111,11 +112,14 @@ export const authService = {
       console.log("Token verification response:", response.status);
 
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
         console.error(
           "Token verification failed with status:",
-          response.status
+          response.status,
+          "Error:",
+          errorData.error || "Unknown error"
         );
-        throw new Error("Token verification failed");
+        throw new Error(errorData.error || "Token verification failed");
       }
 
       const data = await response.json();
@@ -162,8 +166,10 @@ export const authService = {
       const token = this.getToken();
       if (!token) return null;
 
-      const response = await fetch(`${API_URL}/auth/verify`, {
+      const response = await fetch(`${API_URL}/api/auth/verify`, {
+        method: "GET",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });

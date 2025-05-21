@@ -19,6 +19,7 @@ import {
   ArrowUpIcon,
   ArrowDownIcon,
   CheckCircleIcon,
+  ThumbsDown,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -46,6 +47,9 @@ interface Answer {
   createdAt: string;
   votes: number;
   isAccepted: boolean;
+  likes?: number;
+  dislikes?: number;
+  userVote?: "like" | "dislike" | null;
 }
 
 interface Question {
@@ -61,6 +65,9 @@ interface Question {
   votes: number;
   answers: Answer[];
   isSolved: boolean;
+  likes?: number;
+  dislikes?: number;
+  userVote?: "like" | "dislike" | null;
 }
 
 interface CodeProps {
@@ -117,6 +124,9 @@ export default function QuestionPage({ params }: { params: { id: string } }) {
   const [newAnswer, setNewAnswer] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [questionId, setQuestionId] = useState<string | null>(null);
+  const [votingStates, setVotingStates] = useState<
+    Record<string, "up" | "down" | null>
+  >({});
 
   useEffect(() => {
     const initParams = async () => {
@@ -207,27 +217,25 @@ export default function QuestionPage({ params }: { params: { id: string } }) {
     });
   }, [question, isLoading, questionId]);
 
-  // Add a utility function to safely convert any value to string
-  const safeToString = (value: any): string => {
-    if (value === null || value === undefined) return "";
-    if (typeof value === "string") return value;
-    if (typeof value === "object") {
-      try {
-        return JSON.stringify(value);
-      } catch (error) {
-        console.warn("Error converting object to string:", error);
-        return "[Object]";
-      }
-    }
-    return String(value);
-  };
-
-  // Add a utility function to safely render markdown content
-  const safeRenderMarkdown = (content: any): string => {
-    if (!content) return "";
+  // Update the processContent function to better handle object content
+  const processContent = (content: any): string => {
+    if (content === null || content === undefined) return "";
+    if (typeof content === "string") return content;
     if (typeof content === "object") {
       try {
-        return JSON.stringify(content);
+        // If it's an object with a content property, use that
+        if (content.content) {
+          return processContent(content.content);
+        }
+        // If it's an array, join its elements
+        if (Array.isArray(content)) {
+          return content.map((item) => processContent(item)).join("\n");
+        }
+        // For other objects, try to stringify them
+        const stringified = JSON.stringify(content);
+        // If the stringified result is just an empty object or array, return empty string
+        if (stringified === "{}" || stringified === "[]") return "";
+        return stringified;
       } catch (error) {
         console.warn("Error converting content to string:", error);
         return "[Object]";
@@ -236,47 +244,16 @@ export default function QuestionPage({ params }: { params: { id: string } }) {
     return String(content);
   };
 
-  // Add a utility function to safely render ReactMarkdown children
-  const safeRenderMarkdownChildren = (children: any): string => {
-    if (!children) return "";
-    if (Array.isArray(children)) {
-      return children
-        .map((child) => {
-          if (typeof child === "object") {
-            try {
-              return JSON.stringify(child);
-            } catch (error) {
-              console.warn("Error converting child to string:", error);
-              return "[Object]";
-            }
-          }
-          return String(child);
-        })
-        .join("");
-    }
-    if (typeof children === "object") {
-      try {
-        return JSON.stringify(children);
-      } catch (error) {
-        console.warn("Error converting children to string:", error);
-        return "[Object]";
-      }
-    }
-    return String(children);
-  };
-
-  // Add a custom component for ReactMarkdown
+  // Update the MarkdownContent component to ensure content is properly processed
   const MarkdownContent = ({ content }: { content: string }) => {
-    const safeContent = safeRenderMarkdown(content);
+    const safeContent = processContent(content);
+
     return (
       <ReactMarkdown
         components={{
           code({ node, inline, className, children, ...props }: CodeProps) {
             const match = /language-(\w+)/.exec(className || "");
-            const codeContent = safeRenderMarkdownChildren(children).replace(
-              /\n$/,
-              ""
-            );
+            const codeContent = processContent(children).replace(/\n$/, "");
 
             return !inline && match ? (
               <SyntaxHighlighter
@@ -300,41 +277,44 @@ export default function QuestionPage({ params }: { params: { id: string } }) {
     );
   };
 
+  // Update the QuestionContent component to ensure content is properly processed
+  const QuestionContent = ({ question }: { question: Question }) => {
+    if (!question) return null;
+
+    const processedContent = processContent(question.content);
+
+    return (
+      <div className="prose prose-sm max-w-none dark:prose-invert">
+        <MarkdownContent content={processedContent} />
+      </div>
+    );
+  };
+
+  // Update the AnswerContent component to ensure content is properly processed
+  const AnswerContent = ({ answer }: { answer: Answer }) => {
+    if (!answer) return null;
+
+    const processedContent = processContent(answer.content);
+
+    return (
+      <div className="prose prose-sm max-w-none dark:prose-invert">
+        <MarkdownContent content={processedContent} />
+      </div>
+    );
+  };
+
   // Add a utility function to safely process question data
   const processQuestionData = (data: any): Question | null => {
     if (!data) return null;
 
     try {
       // Process content first
-      let content = data.content;
-      if (typeof content === "object") {
-        try {
-          content = JSON.stringify(content);
-        } catch (error) {
-          console.warn("Error converting content to string:", error);
-          content = "[Object]";
-        }
-      } else {
-        content = String(content || "");
-      }
+      const content = processContent(data.content);
 
       // Process answers
       const answers = Array.isArray(data.answers)
         ? data.answers.map((answer: any) => {
-            let answerContent = answer.content;
-            if (typeof answerContent === "object") {
-              try {
-                answerContent = JSON.stringify(answerContent);
-              } catch (error) {
-                console.warn(
-                  "Error converting answer content to string:",
-                  error
-                );
-                answerContent = "[Object]";
-              }
-            } else {
-              answerContent = String(answerContent || "");
-            }
+            const answerContent = processContent(answer.content);
 
             return {
               _id: String(answer._id || ""),
@@ -356,6 +336,8 @@ export default function QuestionPage({ params }: { params: { id: string } }) {
               createdAt: String(answer.createdAt || new Date().toISOString()),
               votes: Number(answer.votes || 0),
               isAccepted: Boolean(answer.isAccepted),
+              likes: Number(answer.likes || 0),
+              dislikes: Number(answer.dislikes || 0),
             };
           })
         : [];
@@ -384,6 +366,9 @@ export default function QuestionPage({ params }: { params: { id: string } }) {
         votes: Number(data.votes || 0),
         answers: answers,
         isSolved: Boolean(data.isSolved),
+        likes: Number(data.likes || 0),
+        dislikes: Number(data.dislikes || 0),
+        userVote: data.userVote,
       };
     } catch (error) {
       console.error("Error processing question data:", error);
@@ -496,6 +481,8 @@ export default function QuestionPage({ params }: { params: { id: string } }) {
         createdAt: new Date().toISOString(),
         votes: 0,
         isAccepted: false,
+        likes: 0,
+        dislikes: 0,
       };
 
       // Update the question state with the new answer
@@ -529,31 +516,139 @@ export default function QuestionPage({ params }: { params: { id: string } }) {
     }
   };
 
-  const handleVote = async (answerId: string, type: "up" | "down") => {
+  const handleVote = async (answerId: string, type: "like" | "dislike") => {
     try {
       const token = authService.getToken();
-      const response = await fetch(`/api/codecorner/answers/${answerId}/vote`, {
+      if (!token) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to vote",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // First update the UI optimistically
+      if (question) {
+        setQuestion((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            answers: prev.answers.map((answer) => {
+              if (answer._id === answerId) {
+                // Get current vote state
+                const currentVote = answer.userVote;
+                let newLikes = answer.likes || 0;
+                let newDislikes = answer.dislikes || 0;
+
+                // Handle vote changes
+                if (currentVote === type) {
+                  // If clicking the same vote type, remove it
+                  if (type === "like") newLikes--;
+                  else newDislikes--;
+                } else if (currentVote === null) {
+                  // If no previous vote, add new vote
+                  if (type === "like") newLikes++;
+                  else newDislikes++;
+                } else {
+                  // If changing vote type, remove old and add new
+                  if (type === "like") {
+                    newLikes++;
+                    newDislikes--;
+                  } else {
+                    newLikes--;
+                    newDislikes++;
+                  }
+                }
+
+                return {
+                  ...answer,
+                  likes: newLikes,
+                  dislikes: newDislikes,
+                  userVote: currentVote === type ? null : type,
+                };
+              }
+              return answer;
+            }),
+          };
+        });
+      }
+
+      // Then make the API call
+      const response = await fetch(`/api/codecorner/answer/${answerId}/vote`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ type }),
+        body: JSON.stringify({ type: type === "like" ? "up" : "down" }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to vote");
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.error || errorData?.message || "Failed to vote"
+        );
       }
 
-      // Refresh the question to get updated votes
-      await fetchQuestion();
+      const data = await response.json();
+
+      // Update with server response
+      if (question) {
+        setQuestion((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            answers: prev.answers.map((answer) => {
+              if (answer._id === answerId) {
+                return {
+                  ...answer,
+                  likes: data.likes,
+                  dislikes: data.dislikes,
+                  userVote: type,
+                };
+              }
+              return answer;
+            }),
+          };
+        });
+      }
+
+      toast({
+        title: "Success",
+        description: "Vote recorded successfully!",
+      });
     } catch (error) {
       console.error("Error voting:", error);
       toast({
         title: "Error",
-        description: "Failed to vote. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to vote. Please try again.",
         variant: "destructive",
       });
+
+      // Revert the optimistic update on error
+      if (question) {
+        setQuestion((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            answers: prev.answers.map((answer) => {
+              if (answer._id === answerId) {
+                return {
+                  ...answer,
+                  likes: answer.likes,
+                  dislikes: answer.dislikes,
+                  userVote: answer.userVote,
+                };
+              }
+              return answer;
+            }),
+          };
+        });
+      }
     }
   };
 
@@ -640,6 +735,8 @@ export default function QuestionPage({ params }: { params: { id: string } }) {
         createdAt: String(answer.createdAt || new Date().toISOString()),
         votes: Number(answer.votes || 0),
         isAccepted: Boolean(answer.isAccepted),
+        likes: Number(answer.likes || 0),
+        dislikes: Number(answer.dislikes || 0),
       };
     } catch (error) {
       console.error("Error processing answer data:", error);
@@ -647,108 +744,115 @@ export default function QuestionPage({ params }: { params: { id: string } }) {
     }
   };
 
-  // Add a custom component for question content
-  const QuestionContent = ({ question }: { question: Question }) => {
-    const content = safeRenderMarkdown(question.content);
-    return (
-      <div className="prose prose-sm max-w-none dark:prose-invert">
-        <MarkdownContent content={content} />
-      </div>
-    );
+  // Add a utility function to safely process answer content
+  const processAnswerContent = (content: any): string => {
+    if (content === null || content === undefined) return "";
+    if (typeof content === "string") return content;
+    if (typeof content === "object") {
+      try {
+        return JSON.stringify(content);
+      } catch (error) {
+        console.warn("Error converting content to string:", error);
+        return "[Object]";
+      }
+    }
+    return String(content);
   };
 
-  // Add a custom component for answer content
-  const AnswerContent = ({ answer }: { answer: Answer }) => {
-    const content = safeRenderMarkdown(answer.content);
-    return (
-      <div className="prose max-w-none">
-        <MarkdownContent content={content} />
-      </div>
-    );
-  };
-
-  // Modify the renderAnswers function to show all answers
+  // Update the renderAnswers function
   const renderAnswers = () => {
-    if (!question || !Array.isArray(question.answers)) {
+    if (!question?.answers?.length) {
       return (
-        <div className="text-center py-8 text-muted-foreground">
-          Loading answers...
+        <div className="text-center py-12">
+          <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">No answers yet</h3>
+          <p className="text-muted-foreground">
+            Be the first to answer this question!
+          </p>
         </div>
       );
     }
 
-    // Sort answers: accepted first, then by votes, then by date
     const sortedAnswers = [...question.answers].sort((a, b) => {
-      if (a.isAccepted && !b.isAccepted) return -1;
-      if (!a.isAccepted && b.isAccepted) return 1;
-      if (a.votes !== b.votes) return b.votes - a.votes;
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (a.isAccepted) return -1;
+      if (b.isAccepted) return 1;
+      return b.votes - a.votes;
     });
-
-    if (sortedAnswers.length === 0) {
-      return (
-        <div className="text-center py-8 text-muted-foreground">
-          No answers yet. Be the first to answer!
-        </div>
-      );
-    }
 
     return (
       <div className="space-y-6">
-        {sortedAnswers.map((answer) => (
-          <div key={answer._id} className="border-t border-gray-200 pt-6">
-            <div className="flex items-start space-x-4">
-              <div className="flex-shrink-0">
-                <div className="flex flex-col items-center space-y-2">
-                  <button
-                    onClick={() => handleVote(answer._id, "up")}
-                    className="text-gray-400 hover:text-blue-500"
-                  >
-                    <ArrowUpIcon className="h-6 w-6" />
-                  </button>
-                  <span className="text-sm font-medium text-gray-900">
-                    {answer.votes}
-                  </span>
-                  <button
-                    onClick={() => handleVote(answer._id, "down")}
-                    className="text-gray-400 hover:text-blue-500"
-                  >
-                    <ArrowDownIcon className="h-6 w-6" />
-                  </button>
-                  {question?.author?._id === user?.id &&
-                    !question?.isSolved && (
-                      <button
-                        onClick={() => handleAcceptAnswer(answer._id)}
-                        className="mt-2 text-gray-400 hover:text-green-500"
-                        title="Accept this answer"
-                      >
-                        <CheckCircleIcon className="h-6 w-6" />
-                      </button>
-                    )}
-                </div>
-              </div>
-              <div className="flex-1">
-                <div className="prose max-w-none">
-                  <MarkdownContent content={answer.content} />
-                </div>
-                <div className="mt-4 flex items-center justify-between">
-                  <div className="flex items-center space-x-2 text-sm text-gray-500">
-                    <span>Answered by {answer.author.name}</span>
-                    <span>•</span>
-                    <time dateTime={answer.createdAt}>
-                      {new Date(answer.createdAt).toLocaleString()}
-                    </time>
+        {sortedAnswers.map((answer) => {
+          const answerId = String(answer._id || "");
+          const authorName = String(answer.author?.name || "Anonymous");
+          const createdAt = String(
+            answer.createdAt || new Date().toISOString()
+          );
+          const votes = Number(answer.votes || 0);
+          const isAccepted = Boolean(answer.isAccepted);
+
+          return (
+            <div key={answerId} className="border-t border-gray-200 pt-6">
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0">
+                  <div className="flex flex-col items-center space-y-2">
+                    <button
+                      onClick={() => handleVote(answerId, "like")}
+                      className="text-gray-400 hover:text-blue-500 transition-colors"
+                      disabled={!user}
+                      title={!user ? "Please login to vote" : "Like"}
+                    >
+                      <ThumbsUp className="h-6 w-6" />
+                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-green-600">
+                        {answer.likes || 0}
+                      </span>
+                      <span className="text-muted-foreground">/</span>
+                      <span className="text-sm font-medium text-red-600">
+                        {answer.dislikes || 0}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleVote(answerId, "dislike")}
+                      className="text-gray-400 hover:text-blue-500 transition-colors"
+                      disabled={!user}
+                      title={!user ? "Please login to vote" : "Dislike"}
+                    >
+                      <ThumbsDown className="h-6 w-6" />
+                    </button>
+                    {question?.author?._id === user?.id &&
+                      !question?.isSolved && (
+                        <button
+                          onClick={() => handleAcceptAnswer(answerId)}
+                          className="mt-2 text-gray-400 hover:text-green-500 transition-colors"
+                          title="Accept this answer"
+                        >
+                          <CheckCircleIcon className="h-6 w-6" />
+                        </button>
+                      )}
                   </div>
-                  {answer.isAccepted && (
-                    <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                      Accepted
-                    </span>
-                  )}
+                </div>
+                <div className="flex-1">
+                  <AnswerContent answer={answer} />
+                  <div className="mt-4 flex items-center justify-between">
+                    <div className="flex items-center space-x-2 text-sm text-gray-500">
+                      <span>Answered by {authorName}</span>
+                      <span>•</span>
+                      <time dateTime={createdAt}>
+                        {new Date(createdAt).toLocaleString()}
+                      </time>
+                    </div>
+                    {isAccepted && (
+                      <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                        Accepted
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
@@ -861,18 +965,18 @@ export default function QuestionPage({ params }: { params: { id: string } }) {
   }
 
   // Safely access question properties
-  const currentQuestionId = safeToString(question._id);
-  const questionTitle = safeToString(question.title);
-  const questionContent = safeToString(question.content);
-  const authorName = safeToString(question.author?.name);
-  const authorRole = safeToString(question.author?.role);
-  const authorSemester = safeToString(question.author?.semester);
-  const language = safeToString(question.language);
-  const views = Number(safeToString(question.views));
-  const votes = Number(safeToString(question.votes));
-  const createdAt = safeToString(question.createdAt);
+  const currentQuestionId = processContent(question._id);
+  const questionTitle = processContent(question.title);
+  const questionContent = processContent(question.content);
+  const authorName = processContent(question.author?.name);
+  const authorRole = processContent(question.author?.role);
+  const authorSemester = processContent(question.author?.semester);
+  const language = processContent(question.language);
+  const views = Number(processContent(question.views));
+  const votes = Number(processContent(question.votes));
+  const createdAt = processContent(question.createdAt);
   const tags = Array.isArray(question.tags)
-    ? question.tags.map((tag) => safeToString(tag))
+    ? question.tags.map((tag) => processContent(tag))
     : [];
   const answersCount = Array.isArray(question.answers)
     ? question.answers.length
@@ -890,7 +994,7 @@ export default function QuestionPage({ params }: { params: { id: string } }) {
         <div className="container py-8">
           <Button
             variant="ghost"
-            className="mb-6"
+            className="mb-6 hover:bg-primary/10"
             onClick={() => router.push("/dashboard/codecorner")}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -899,15 +1003,18 @@ export default function QuestionPage({ params }: { params: { id: string } }) {
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <div className="lg:col-span-3 space-y-6">
-              <Card>
-                <CardHeader>
+              <Card className="overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/50 dark:to-purple-950/50">
                   <div className="flex justify-between items-start">
                     <div>
                       <CardTitle className="text-2xl mb-2">
                         {questionTitle}
                       </CardTitle>
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="capitalize">
+                        <Badge
+                          variant="outline"
+                          className="capitalize bg-primary/10"
+                        >
                           {language}
                         </Badge>
                         <span className="text-sm text-muted-foreground">
@@ -920,85 +1027,96 @@ export default function QuestionPage({ params }: { params: { id: string } }) {
                         )}
                       </div>
                     </div>
-                    <Badge variant="outline" className="capitalize">
+                    <Badge
+                      variant="outline"
+                      className="capitalize bg-primary/10"
+                    >
                       {authorRole}
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  {question && <QuestionContent question={question} />}
-
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {tags.map((tag, index) => (
-                      <Badge
-                        key={`${tag}-${index}`}
-                        variant="secondary"
-                        className="gap-1"
-                      >
-                        <Tag className="h-3 w-3" />
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="gap-1"
-                      onClick={async () => {
-                        try {
-                          const token = authService.getToken();
-                          const response = await fetch(
-                            `/api/codecorner/questions/${currentQuestionId}/vote`,
-                            {
-                              method: "POST",
-                              headers: {
-                                "Content-Type": "application/json",
-                                Authorization: `Bearer ${token}`,
-                              },
-                            }
-                          );
-
-                          if (!response.ok) {
-                            throw new Error("Failed to vote");
-                          }
-
-                          // Refresh the question to get updated votes
-                          await fetchQuestion();
-                        } catch (error) {
-                          console.error("Error voting:", error);
-                          toast({
-                            title: "Error",
-                            description: "Failed to vote. Please try again.",
-                            variant: "destructive",
-                          });
+                <CardContent className="p-6">
+                  <div className="flex gap-6">
+                    <div className="flex flex-col items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`h-8 w-8 p-0 ${
+                          question?.userVote === "like"
+                            ? "text-green-500"
+                            : "text-muted-foreground"
+                        }`}
+                        onClick={() =>
+                          question?._id && handleVote(question._id, "like")
                         }
-                      }}
-                    >
-                      <ThumbsUp className="h-4 w-4" />
-                      <span>{votes}</span>
-                    </Button>
-                    <div className="flex items-center gap-1">
-                      <MessageSquare className="h-4 w-4" />
-                      <span>{answersCount}</span>
+                      >
+                        <ThumbsUp className="h-4 w-4" />
+                      </Button>
+                      <span className="text-sm font-medium">
+                        {question?.likes || 0}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`h-8 w-8 p-0 ${
+                          question?.userVote === "dislike"
+                            ? "text-red-500"
+                            : "text-muted-foreground"
+                        }`}
+                        onClick={() =>
+                          question?._id && handleVote(question._id, "dislike")
+                        }
+                      >
+                        <ThumbsDown className="h-4 w-4" />
+                      </Button>
+                      <span className="text-sm font-medium">
+                        {question?.dislikes || 0}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Eye className="h-4 w-4" />
-                      <span>{views}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      <span>{formattedDate}</span>
+                    <div className="flex-1">
+                      <div className="prose prose-sm max-w-none dark:prose-invert mb-6">
+                        <MarkdownContent content={questionContent} />
+                      </div>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {tags.map((tag) => (
+                          <Badge
+                            key={tag}
+                            variant="secondary"
+                            className="gap-1 bg-primary/5"
+                          >
+                            <Tag className="h-3 w-3" />
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <MessageSquare className="h-4 w-4" />
+                          <span>{answersCount}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Eye className="h-4 w-4" />
+                          <span>{views}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          <span>{formattedDate}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               <div className="space-y-4">
-                <h2 className="text-xl font-semibold">
-                  {answersCount} Answers
-                </h2>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold">
+                    {answersCount} Answers
+                  </h2>
+                  <Badge variant="outline" className="capitalize">
+                    {answersCount === 0 ? "No answers yet" : "Answered"}
+                  </Badge>
+                </div>
                 {renderAnswers()}
               </div>
 

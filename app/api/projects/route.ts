@@ -37,7 +37,12 @@ export async function GET(request: Request) {
     }
 
     // Otherwise get all projects
-    const projects = await Project.find().sort({ createdAt: -1 });
+    const projects = await Project.find({
+      $or: [
+        { "author._id": user.user._id }, // User's own projects
+        { isPublic: true }, // Public projects
+      ],
+    }).sort({ createdAt: -1 });
     return NextResponse.json(projects);
   } catch (error) {
     console.error("Error fetching projects:", error);
