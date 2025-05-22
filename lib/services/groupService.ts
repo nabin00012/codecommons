@@ -1,30 +1,26 @@
 import { authService } from "./auth";
 
-interface Group {
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
+
+export interface Group {
   id: string;
   name: string;
   description: string;
+  memberCount: number;
+  activityLevel: "High" | "Medium" | "Low";
+  tags: string[];
+  isJoined?: boolean;
   creator: {
     name: string;
-    department: string;
     avatar?: string;
   };
-  members: {
-    name: string;
-    department: string;
-    avatar?: string;
-  }[];
-  tags: string[];
-  activityLevel: "low" | "medium" | "high";
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 export const groupService = {
   // Get all groups
   async getAllGroups(page = 1, limit = 10) {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/groups?page=${page}&limit=${limit}`
+      `${API_URL}/api/groups?page=${page}&limit=${limit}`
     );
     if (!response.ok) {
       throw new Error("Failed to fetch groups");
@@ -39,17 +35,14 @@ export const groupService = {
     tags: string[];
   }) {
     const token = await authService.getToken();
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/groups`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      }
-    );
+    const response = await fetch(`${API_URL}/api/groups`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
     if (!response.ok) {
       throw new Error("Failed to create group");
     }
@@ -66,17 +59,14 @@ export const groupService = {
     }
   ) {
     const token = await authService.getToken();
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/groups/${groupId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      }
-    );
+    const response = await fetch(`${API_URL}/api/groups/${groupId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
     if (!response.ok) {
       throw new Error("Failed to update group");
     }
@@ -86,15 +76,12 @@ export const groupService = {
   // Delete a group
   async deleteGroup(groupId: string) {
     const token = await authService.getToken();
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/groups/${groupId}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await fetch(`${API_URL}/api/groups/${groupId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     if (!response.ok) {
       throw new Error("Failed to delete group");
     }
@@ -104,15 +91,12 @@ export const groupService = {
   // Join a group
   async joinGroup(groupId: string) {
     const token = await authService.getToken();
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/groups/${groupId}/join`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await fetch(`${API_URL}/api/groups/${groupId}/join`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     if (!response.ok) {
       throw new Error("Failed to join group");
     }
@@ -122,15 +106,12 @@ export const groupService = {
   // Leave a group
   async leaveGroup(groupId: string) {
     const token = await authService.getToken();
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/groups/${groupId}/leave`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await fetch(`${API_URL}/api/groups/${groupId}/leave`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     if (!response.ok) {
       throw new Error("Failed to leave group");
     }
@@ -157,9 +138,7 @@ export const groupService = {
       params.append("activityLevel", activityLevel);
     }
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/groups/search?${params}`
-    );
+    const response = await fetch(`${API_URL}/api/groups/search?${params}`);
     if (!response.ok) {
       throw new Error("Failed to search groups");
     }

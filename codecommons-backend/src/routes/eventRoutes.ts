@@ -1,19 +1,19 @@
-import express from "express";
+import express, { RequestHandler } from "express";
 import { eventController } from "../controllers/eventController";
 import { authenticateToken } from "../middleware/auth";
 
 const router = express.Router();
 
 // Public routes
-router.get("/", eventController.getAll);
-router.get("/search", eventController.search);
-router.get("/:id", eventController.getById);
+router.get("/", eventController.getAll as RequestHandler);
+router.get("/search", eventController.search as RequestHandler);
+router.get("/:id", eventController.getById as RequestHandler);
 
 // Protected routes
-router.use(authenticateToken);
-router.post("/", eventController.create);
-router.put("/:id", eventController.update);
-router.delete("/:id", eventController.delete);
-router.post("/:id/attend", eventController.toggleAttendance);
+router.use(authenticateToken as RequestHandler);
+router.post("/", eventController.create as RequestHandler);
+router.put("/:id", eventController.update as RequestHandler);
+router.delete("/:id", eventController.delete as RequestHandler);
+router.post("/:id/attend", eventController.toggleAttendance as RequestHandler);
 
 export default router;

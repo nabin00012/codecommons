@@ -1,18 +1,18 @@
-import express from "express";
+import express, { RequestHandler } from "express";
 import { discussionController } from "../controllers/discussionController";
 import { authenticateToken } from "../middleware/auth";
 
 const router = express.Router();
 
 // Public routes
-router.get("/", discussionController.getAll);
-router.get("/search", discussionController.search);
-router.get("/:id", discussionController.getById);
+router.get("/", discussionController.getAll as RequestHandler);
+router.get("/search", discussionController.search as RequestHandler);
+router.get("/:id", discussionController.getById as RequestHandler);
 
 // Protected routes
-router.use(authenticateToken);
-router.post("/", discussionController.create);
-router.post("/:id/comments", discussionController.addComment);
-router.post("/:id/like", discussionController.toggleLike);
+router.use(authenticateToken as RequestHandler);
+router.post("/", discussionController.create as RequestHandler);
+router.post("/:id/comments", discussionController.addComment as RequestHandler);
+router.post("/:id/like", discussionController.toggleLike as RequestHandler);
 
 export default router;

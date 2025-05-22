@@ -1,6 +1,8 @@
 import { getToken } from "./auth";
 
-interface Discussion {
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
+
+export interface Discussion {
   id: string;
   title: string;
   content: string;
@@ -28,7 +30,7 @@ export const discussionService = {
   // Get all discussions
   async getAllDiscussions(page = 1, limit = 10) {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/discussions?page=${page}&limit=${limit}`
+      `${API_URL}/api/discussions?page=${page}&limit=${limit}`
     );
     if (!response.ok) {
       throw new Error("Failed to fetch discussions");
@@ -43,17 +45,14 @@ export const discussionService = {
     tags: string[];
   }) {
     const token = await getToken();
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/discussions`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      }
-    );
+    const response = await fetch(`${API_URL}/api/discussions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
     if (!response.ok) {
       throw new Error("Failed to create discussion");
     }
@@ -64,7 +63,7 @@ export const discussionService = {
   async addComment(discussionId: string, content: string) {
     const token = await getToken();
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/discussions/${discussionId}/comments`,
+      `${API_URL}/api/discussions/${discussionId}/comments`,
       {
         method: "POST",
         headers: {
@@ -84,7 +83,7 @@ export const discussionService = {
   async toggleLike(discussionId: string) {
     const token = await getToken();
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/discussions/${discussionId}/like`,
+      `${API_URL}/api/discussions/${discussionId}/like`,
       {
         method: "POST",
         headers: {
@@ -114,11 +113,19 @@ export const discussionService = {
       params.append("tags", tags.join(","));
     }
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/discussions/search?${params}`
-    );
+    const response = await fetch(`${API_URL}/api/discussions/search?${params}`);
     if (!response.ok) {
       throw new Error("Failed to search discussions");
+    }
+    return response.json();
+  },
+
+  async getComments(discussionId: string) {
+    const response = await fetch(
+      `${API_URL}/api/discussions/${discussionId}/comments`
+    );
+    if (!response.ok) {
+      throw new Error("Failed to fetch comments");
     }
     return response.json();
   },

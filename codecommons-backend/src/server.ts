@@ -10,6 +10,9 @@ import assignmentRoutes from "./routes/assignment";
 import submissionRoutes from "./routes/submission";
 import classroomRoutes from "./routes/classroom";
 import codecornerRoutes from "./routes/codecorner";
+import discussionRoutes from "./routes/discussionRoutes";
+import eventRoutes from "./routes/eventRoutes";
+import groupRoutes from "./routes/groupRoutes";
 
 // Load environment variables
 dotenv.config();
@@ -71,6 +74,9 @@ app.use("/api/classrooms/:classroomId/assignments", assignmentRoutes);
 app.use("/api/submissions", submissionRoutes);
 app.use("/api/classrooms", classroomRoutes);
 app.use("/api/codecorner", codecornerRoutes);
+app.use("/api/discussions", discussionRoutes);
+app.use("/api/events", eventRoutes);
+app.use("/api/groups", groupRoutes);
 
 // Error handling middleware
 app.use(

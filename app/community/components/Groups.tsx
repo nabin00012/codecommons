@@ -1,7 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { groupService } from "@/lib/services/groupService";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
 
 interface Group {
   id: string;
@@ -11,38 +24,168 @@ interface Group {
   activityLevel: "High" | "Medium" | "Low";
   tags: string[];
   isJoined?: boolean;
+  creator: {
+    name: string;
+    avatar?: string;
+  };
 }
 
-const mockGroups: Group[] = [
-  {
-    id: "1",
-    name: "Web Development Club",
-    description:
-      "A community of web developers sharing knowledge and building projects together.",
-    memberCount: 124,
-    activityLevel: "High",
-    tags: ["JavaScript", "React", "CSS"],
-    isJoined: false,
-  },
-  // Add more mock groups here
-];
-
 export default function Groups() {
-  const [groups, setGroups] = useState<Group[]>(mockGroups);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newGroup, setNewGroup] = useState({
+    name: "",
+    description: "",
+    tags: "",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
-  const handleJoinGroup = (groupId: string) => {
-    setGroups(
-      groups.map((group) =>
-        group.id === groupId ? { ...group, isJoined: !group.isJoined } : group
-      )
-    );
+  useEffect(() => {
+    fetchGroups();
+  }, []);
+
+  const fetchGroups = async () => {
+    try {
+      setLoading(true);
+      const response = await groupService.getAllGroups();
+      setGroups(response.groups);
+      setError(null);
+    } catch (err) {
+      setError("Failed to fetch groups");
+      toast({
+        title: "Error",
+        description: "Failed to fetch groups",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleCreateGroup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setIsSubmitting(true);
+      const tags = newGroup.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean);
+
+      const response = await groupService.createGroup({
+        name: newGroup.name,
+        description: newGroup.description,
+        tags,
+      });
+
+      setGroups([response, ...groups]);
+      setIsCreateDialogOpen(false);
+      setNewGroup({ name: "", description: "", tags: "" });
+      toast({
+        title: "Success",
+        description: "Group created successfully",
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to create group",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleJoinGroup = async (groupId: string) => {
+    try {
+      await groupService.joinGroup(groupId);
+      fetchGroups(); // Refresh to get updated member status
+      toast({
+        title: "Success",
+        description: "Successfully joined group",
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to join group",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-40">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-red-500 text-center">{error}</div>;
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Study Groups</h2>
-        <Button>Create Group</Button>
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>Create Group</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Group</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleCreateGroup} className="space-y-4">
+              <div>
+                <Label htmlFor="name">Group Name</Label>
+                <Input
+                  id="name"
+                  value={newGroup.name}
+                  onChange={(e) =>
+                    setNewGroup({ ...newGroup, name: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={newGroup.description}
+                  onChange={(e) =>
+                    setNewGroup({ ...newGroup, description: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="tags">Tags (comma-separated)</Label>
+                <Input
+                  id="tags"
+                  value={newGroup.tags}
+                  onChange={(e) =>
+                    setNewGroup({ ...newGroup, tags: e.target.value })
+                  }
+                  placeholder="e.g., JavaScript, React, Web Development"
+                />
+              </div>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  "Create Group"
+                )}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

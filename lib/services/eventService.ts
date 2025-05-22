@@ -1,32 +1,27 @@
 import { authService } from "./auth";
 
-interface Event {
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
+
+export interface Event {
   id: string;
   title: string;
   description: string;
   date: Date;
   location: string;
+  tags: string[];
   organizer: {
     name: string;
-    department: string;
     avatar?: string;
   };
-  tags: string[];
-  attendees: {
-    name: string;
-    department: string;
-    avatar?: string;
-  }[];
   maxAttendees: number;
-  createdAt: Date;
-  updatedAt: Date;
+  attendees: string[];
 }
 
 export const eventService = {
   // Get all events
   async getAllEvents(page = 1, limit = 10) {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/events?page=${page}&limit=${limit}`
+      `${API_URL}/api/events?page=${page}&limit=${limit}`
     );
     if (!response.ok) {
       throw new Error("Failed to fetch events");
@@ -43,18 +38,13 @@ export const eventService = {
     tags: string[];
     maxAttendees: number;
   }) {
-    const token = await authService.getToken();
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/events`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      }
-    );
+    const response = await fetch(`${API_URL}/api/events`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
     if (!response.ok) {
       throw new Error("Failed to create event");
     }
@@ -74,17 +64,14 @@ export const eventService = {
     }
   ) {
     const token = await authService.getToken();
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/events/${eventId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      }
-    );
+    const response = await fetch(`${API_URL}/api/events/${eventId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
     if (!response.ok) {
       throw new Error("Failed to update event");
     }
@@ -94,15 +81,12 @@ export const eventService = {
   // Delete an event
   async deleteEvent(eventId: string) {
     const token = await authService.getToken();
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/events/${eventId}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await fetch(`${API_URL}/api/events/${eventId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     if (!response.ok) {
       throw new Error("Failed to delete event");
     }
@@ -112,15 +96,12 @@ export const eventService = {
   // Toggle attendance for an event
   async toggleAttendance(eventId: string) {
     const token = await authService.getToken();
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/events/${eventId}/attend`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await fetch(`${API_URL}/api/events/${eventId}/attend`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     if (!response.ok) {
       throw new Error("Failed to toggle attendance");
     }
@@ -128,33 +109,29 @@ export const eventService = {
   },
 
   // Search events
-  async searchEvents(
-    query: string,
-    tags?: string[],
-    dateRange?: { start: Date; end: Date },
-    page = 1,
-    limit = 10
-  ) {
+  async searchEvents(query: string, tags?: string[], page = 1, limit = 10) {
     const params = new URLSearchParams({
       query,
       page: page.toString(),
       limit: limit.toString(),
     });
-    if (tags) {
+    if (tags && tags.length > 0) {
       params.append("tags", tags.join(","));
     }
-    if (dateRange) {
-      params.append(
-        "dateRange",
-        `${dateRange.start.toISOString()},${dateRange.end.toISOString()}`
-      );
-    }
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/events/search?${params}`
-    );
+    const response = await fetch(`${API_URL}/api/events/search?${params}`);
     if (!response.ok) {
       throw new Error("Failed to search events");
+    }
+    return response.json();
+  },
+
+  async registerForEvent(eventId: string) {
+    const response = await fetch(`${API_URL}/api/events/${eventId}/attend`, {
+      method: "POST",
+    });
+    if (!response.ok) {
+      throw new Error("Failed to register for event");
     }
     return response.json();
   },
