@@ -10,8 +10,9 @@ import React, {
 import { authService } from "@/lib/services/auth";
 import { useAuth } from "./AuthContext";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 
-export type UserRole = "student" | "teacher";
+export type UserRole = "student" | "teacher" | "user" | "admin";
 
 export interface User {
   id: string;
@@ -19,6 +20,11 @@ export interface User {
   email: string;
   role: UserRole;
   avatar?: string;
+  preferences: {
+    theme: string;
+    notifications: boolean;
+    language: string;
+  };
 }
 
 interface UserContextType {
@@ -29,23 +35,18 @@ interface UserContextType {
   logout: () => void;
   isLoading: boolean;
   switchRole: (newRole: UserRole) => void;
+  updateUser: (updates: Partial<User>) => void;
+  updatePreferences: (preferences: Partial<User["preferences"]>) => void;
 }
 
-const UserContext = createContext<UserContextType>({
-  user: null,
-  loading: true,
-  setUser: () => {},
-  login: () => {},
-  logout: () => {},
-  isLoading: true,
-  switchRole: () => {},
-});
+const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { token, setToken } = useAuth();
+  const { resolvedTheme, setTheme } = useTheme();
 
   useEffect(() => {
     let mounted = true;
@@ -73,6 +74,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             role: response.user.role,
             avatar:
               response.user.avatar || "/placeholder.svg?height=40&width=40",
+            preferences: response.user.preferences,
           });
         } else if (mounted) {
           console.log("No user data in response");
@@ -103,6 +105,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
     };
   }, [token, router, setToken]);
 
+  useEffect(() => {
+    console.log("UserProvider - Theme changed:", resolvedTheme);
+    if (user?.preferences.theme && user.preferences.theme !== resolvedTheme) {
+      setTheme(user.preferences.theme);
+    }
+  }, [resolvedTheme, user?.preferences.theme, setTheme]);
+
   const login = (userData: User) => {
     setUser(userData);
   };
@@ -119,6 +128,21 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const updatedUser = { ...user, role: newRole };
       setUser(updatedUser);
     }
+  };
+
+  const updateUser = (updates: Partial<User>) => {
+    setUser((prev) => (prev ? { ...prev, ...updates } : null));
+  };
+
+  const updatePreferences = (preferences: Partial<User["preferences"]>) => {
+    setUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            preferences: { ...prev.preferences, ...preferences },
+          }
+        : null
+    );
   };
 
   if (loading) {
@@ -139,6 +163,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
         logout,
         isLoading: loading,
         switchRole,
+        updateUser,
+        updatePreferences,
       }}
     >
       {children}
@@ -146,4 +172,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export const useUser = () => useContext(UserContext);
+export function useUser() {
+  const context = useContext(UserContext);
+  if (context === undefined) {
+    throw new Error("useUser must be used within a UserProvider");
+  }
+  return context;
+}

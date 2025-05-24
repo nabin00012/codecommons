@@ -2,103 +2,62 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { authService } from "@/lib/services/auth";
+import { useTheme } from "next-themes";
 
 interface AuthContextType {
   token: string | null;
   setToken: (token: string | null) => void;
   isAuthenticated: boolean;
-  isLoading: boolean;
-  verifyToken: () => Promise<boolean>;
+  login: (token: string) => void;
+  logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType>({
-  token: null,
-  setToken: () => {},
-  isAuthenticated: false,
-  isLoading: true,
-  verifyToken: async () => false,
-});
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const useAuth = () => useContext(AuthContext);
-
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const [token, setTokenState] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const verifyToken = async () => {
-    try {
-      if (!token) return false;
-
-      const response = await authService.verifyToken(token);
-      return !!response.user;
-    } catch (error) {
-      console.error("Token verification failed:", error);
-      setTokenState(null);
-      setIsAuthenticated(false);
-      localStorage.removeItem("token");
-      return false;
-    }
-  };
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [token, setToken] = useState<string | null>(null);
+  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const storedToken = localStorage.getItem("token");
-        if (storedToken) {
-          // Verify the token before setting it
-          const response = await authService.verifyToken(storedToken);
-          if (response.user) {
-            setTokenState(storedToken);
-            setIsAuthenticated(true);
-          } else {
-            setTokenState(null);
-            setIsAuthenticated(false);
-            localStorage.removeItem("token");
-          }
-        }
-      } catch (error) {
-        console.error("Auth initialization error:", error);
-        setTokenState(null);
-        setIsAuthenticated(false);
-        localStorage.removeItem("token");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    console.log("AuthProvider - Theme changed:", resolvedTheme);
+  }, [resolvedTheme]);
 
-    initializeAuth();
+  useEffect(() => {
+    const storedToken = localStorage.getItem("token");
+    if (storedToken) {
+      setToken(storedToken);
+    }
   }, []);
 
-  const setToken = (newToken: string | null) => {
-    if (newToken) {
-      setTokenState(newToken);
-      setIsAuthenticated(true);
-      localStorage.setItem("token", newToken);
-    } else {
-      setTokenState(null);
-      setIsAuthenticated(false);
-      localStorage.removeItem("token");
-    }
+  const login = (newToken: string) => {
+    setToken(newToken);
+    localStorage.setItem("token", newToken);
   };
 
-  if (isLoading) {
-    return null; // or a loading spinner
-  }
+  const logout = () => {
+    setToken(null);
+    localStorage.removeItem("token");
+  };
 
   return (
     <AuthContext.Provider
       value={{
         token,
         setToken,
-        isAuthenticated,
-        isLoading,
-        verifyToken,
+        isAuthenticated: !!token,
+        login,
+        logout,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
-};
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+}

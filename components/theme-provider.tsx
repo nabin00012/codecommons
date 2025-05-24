@@ -1,32 +1,38 @@
 "use client";
+
+import * as React from "react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import type { ThemeProviderProps } from "next-themes";
-import { useEffect } from "react";
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-  useEffect(() => {
+  React.useEffect(() => {
     console.log("ThemeProvider - Initializing");
 
-    // Force a re-render when the theme changes
-    const root = document.documentElement;
+    // Set up a MutationObserver to watch for changes to the data-theme attribute
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.attributeName === "data-theme") {
-          const newTheme = root.getAttribute("data-theme");
+          const newTheme = document.documentElement.getAttribute("data-theme");
           console.log("ThemeProvider - Theme changed to:", newTheme);
 
-          // Force update classes
+          // Add cosmic-mode class to body when in cosmic mode
           if (newTheme === "cosmic") {
             document.body.classList.add("cosmic-mode");
+            document.body.style.backgroundColor = "transparent";
           } else {
             document.body.classList.remove("cosmic-mode");
+            document.body.style.backgroundColor = "";
           }
         }
       });
     });
 
-    observer.observe(root, { attributes: true });
-    return () => observer.disconnect();
+    // Start observing the document with the configured parameters
+    observer.observe(document.documentElement, { attributes: true });
+
+    return () => {
+      observer.disconnect();
+    };
   }, []);
 
   return (
@@ -34,14 +40,6 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
       attribute="data-theme"
       defaultTheme="system"
       enableSystem
-      disableTransitionOnChange={false}
-      themes={["light", "dark", "cosmic"]}
-      value={{
-        light: "light",
-        dark: "dark",
-        cosmic: "cosmic",
-        system: "system",
-      }}
       {...props}
     >
       {children}

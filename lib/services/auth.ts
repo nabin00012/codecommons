@@ -9,183 +9,131 @@ interface LoginCredentials {
   password: string;
 }
 
-interface LoginResponse {
-  _id: string;
+interface RegisterData {
   name: string;
   email: string;
+  password: string;
   role: UserRole;
-  token: string;
 }
 
-export const authService = {
-  async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    const url = `${API_URL}/api/auth/login`;
-    console.log("Making login request to:", url);
+interface AuthResponse {
+  token: string;
+  user: {
+    _id: string;
+    name: string;
+    email: string;
+    role: UserRole;
+    avatar?: string;
+    theme?: string;
+  };
+}
 
+class AuthService {
+  private token: string | null = null;
+
+  constructor() {
+    if (typeof window !== "undefined") {
+      this.token = localStorage.getItem("token");
+    }
+  }
+
+  getToken(): string | null {
+    return this.token;
+  }
+
+  async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      const response = await fetch(url, {
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(credentials),
-        credentials: "include",
       });
 
-      const data = await response.json();
-      console.log("Login response:", data);
-
       if (!response.ok) {
-        throw new Error(data.message || "Login failed");
+        throw new Error("Login failed");
       }
 
-      if (!data.token || !data._id || !data.name || !data.email || !data.role) {
-        throw new Error("Invalid response format from server");
-      }
-
-      // Store token in localStorage
-      this.setToken(data.token);
-
+      const data = await response.json();
+      this.token = data.token;
+      localStorage.setItem("token", data.token);
       return data;
     } catch (error) {
       console.error("Login error:", error);
       throw error;
     }
-  },
+  }
 
-  async register(userData: {
-    name: string;
-    email: string;
-    password: string;
-    role: UserRole;
-  }): Promise<LoginResponse> {
-    const url = `${API_URL}/api/auth/register`;
-    console.log("Making register request to:", url);
-
+  async register(data: RegisterData): Promise<AuthResponse> {
     try {
-      const response = await fetch(url, {
+      const response = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(userData),
-        credentials: "include",
+        body: JSON.stringify(data),
       });
 
-      const data = await response.json();
-      console.log("Register response:", data);
-
       if (!response.ok) {
-        throw new Error(data.message || "Registration failed");
+        throw new Error("Registration failed");
       }
 
-      if (!data.token || !data._id || !data.name || !data.email || !data.role) {
-        throw new Error("Invalid response format from server");
-      }
-
-      // Store token in localStorage
-      this.setToken(data.token);
-
-      return data;
+      const responseData = await response.json();
+      this.token = responseData.token;
+      localStorage.setItem("token", responseData.token);
+      return responseData;
     } catch (error) {
       console.error("Registration error:", error);
       throw error;
     }
-  },
+  }
 
-  logout() {
-    this.removeToken();
-    window.location.href = "/login";
-  },
-
-  async verifyToken(token: string) {
+  async verifyToken(token: string): Promise<AuthResponse> {
     try {
-      console.log("Verifying token...");
-      const response = await fetch(`${API_URL}/api/auth/verify`, {
+      const response = await fetch(`${API_URL}/auth/verify`, {
         method: "GET",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });
 
-      console.log("Token verification response:", response.status);
-
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error(
-          "Token verification failed with status:",
-          response.status,
-          "Error:",
-          errorData.error || "Unknown error"
-        );
-        throw new Error(errorData.error || "Token verification failed");
+        throw new Error("Token verification failed");
       }
 
       const data = await response.json();
-      console.log("Token verification data:", data);
-
-      if (
-        !data.user ||
-        !data.user._id ||
-        !data.user.name ||
-        !data.user.email ||
-        !data.user.role
-      ) {
-        throw new Error("Invalid user data in response");
-      }
-
       return data;
     } catch (error) {
       console.error("Token verification error:", error);
       throw error;
     }
-  },
+  }
 
-  getToken(): string | null {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("token");
-    }
-    return null;
-  },
-
-  setToken(token: string) {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("token", token);
-    }
-  },
-
-  removeToken() {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("token");
-    }
-  },
-
-  async getCurrentUser() {
+  async updateTheme(theme: string): Promise<void> {
     try {
-      const token = this.getToken();
-      if (!token) return null;
-
-      const response = await fetch(`${API_URL}/api/auth/verify`, {
-        method: "GET",
+      const response = await fetch(`${API_URL}/users/theme`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${this.token}`,
         },
+        body: JSON.stringify({ theme }),
       });
 
       if (!response.ok) {
-        if (response.status === 401) {
-          this.removeToken();
-        }
-        return null;
+        throw new Error("Failed to update theme");
       }
-
-      const data = await response.json();
-      return data.user;
     } catch (error) {
-      console.error("Error getting current user:", error);
-      return null;
+      console.error("Theme update error:", error);
+      throw error;
     }
-  },
-};
+  }
+
+  logout(): void {
+    this.token = null;
+    localStorage.removeItem("token");
+  }
+}
+
+export const authService = new AuthService();

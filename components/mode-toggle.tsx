@@ -15,13 +15,29 @@ export function ModeToggle() {
   const { setTheme, theme, resolvedTheme } = useTheme();
 
   useEffect(() => {
-    console.log("Current theme:", theme);
-    console.log("Resolved theme:", resolvedTheme);
+    console.log("ModeToggle - Current theme:", theme);
+    console.log("ModeToggle - Resolved theme:", resolvedTheme);
+    console.log(
+      "ModeToggle - HTML theme:",
+      document.documentElement.getAttribute("data-theme")
+    );
   }, [theme, resolvedTheme]);
 
   const handleThemeChange = (newTheme: string) => {
-    console.log("Changing theme to:", newTheme);
+    console.log("ModeToggle - Changing theme to:", newTheme);
     setTheme(newTheme);
+
+    // Force update the theme attribute
+    document.documentElement.setAttribute("data-theme", newTheme);
+
+    // Add cosmic-mode class to body when in cosmic mode
+    if (newTheme === "cosmic") {
+      document.body.classList.add("cosmic-mode");
+      document.body.style.backgroundColor = "transparent";
+    } else {
+      document.body.classList.remove("cosmic-mode");
+      document.body.style.backgroundColor = "";
+    }
   };
 
   return (

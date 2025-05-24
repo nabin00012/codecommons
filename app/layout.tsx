@@ -2,23 +2,25 @@ import type React from "react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "next-themes";
+import { AuthProvider } from "@/lib/context/AuthContext";
 import { UserProvider } from "@/lib/context/user-context";
 import { SettingsProvider } from "@/lib/context/settings-context";
+import { NotificationProvider } from "@/lib/context/notification-context";
+import { ProjectProvider } from "@/lib/context/project-context";
+import { ChatProvider } from "@/lib/context/chat-context";
 import { HelpProvider } from "@/lib/context/help-context";
+import { ThemeProvider as CustomThemeProvider } from "@/lib/context/theme-context";
 import { Toaster } from "@/components/ui/toaster";
 import { CosmicMode } from "@/components/cosmic-mode";
-import { AuthProvider } from "@/lib/context/AuthContext";
 import { SessionProvider } from "@/components/providers/session-provider";
 import "@/lib/monaco-config";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "CodeCommons - Jain University Q&A Platform",
-  description:
-    "A collaborative platform for students and teachers to ask and answer coding questions.",
-  generator: "v0.dev",
+  title: "Code Commons",
+  description: "A platform for collaborative coding and learning",
 };
 
 export default function RootLayout({
@@ -38,23 +40,30 @@ export default function RootLayout({
             light: "light",
             dark: "dark",
             cosmic: "cosmic",
-            system: "system",
           }}
+          forcedTheme={undefined}
+          disableTransitionOnChange={false}
         >
-          <SessionProvider>
+          <CustomThemeProvider>
             <AuthProvider>
               <UserProvider>
                 <SettingsProvider>
-                  <HelpProvider>
-                    <CosmicMode>
-                      {children}
-                      <Toaster />
-                    </CosmicMode>
-                  </HelpProvider>
+                  <NotificationProvider>
+                    <ProjectProvider>
+                      <ChatProvider>
+                        <HelpProvider>
+                          <CosmicMode>
+                            {children}
+                            <Toaster />
+                          </CosmicMode>
+                        </HelpProvider>
+                      </ChatProvider>
+                    </ProjectProvider>
+                  </NotificationProvider>
                 </SettingsProvider>
               </UserProvider>
             </AuthProvider>
-          </SessionProvider>
+          </CustomThemeProvider>
         </ThemeProvider>
       </body>
     </html>

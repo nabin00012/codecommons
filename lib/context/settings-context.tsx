@@ -1,25 +1,28 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 
 interface Settings {
-  theme: "light" | "dark" | "cosmic" | "system";
-  notifications: boolean;
-  emailNotifications: boolean;
+  theme: string;
   language: string;
+  notifications: boolean;
+  sound: boolean;
+  fontSize: number;
 }
 
 interface SettingsContextType {
   settings: Settings;
-  updateSettings: (newSettings: Partial<Settings>) => void;
+  updateSettings: (updates: Partial<Settings>) => void;
+  resetSettings: () => void;
 }
 
 const defaultSettings: Settings = {
   theme: "system",
-  notifications: true,
-  emailNotifications: true,
   language: "en",
+  notifications: true,
+  sound: true,
+  fontSize: 16,
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(
@@ -28,34 +31,48 @@ const SettingsContext = createContext<SettingsContextType | undefined>(
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
-  const { setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
 
-  // Load settings from localStorage on mount
   useEffect(() => {
-    const savedSettings = localStorage.getItem("settings");
-    if (savedSettings) {
-      const parsedSettings = JSON.parse(savedSettings);
-      setSettings(parsedSettings);
-      // Set theme after loading settings
-      if (parsedSettings.theme) {
-        setTheme(parsedSettings.theme);
+    console.log("SettingsProvider - Theme changed:", resolvedTheme);
+    if (settings.theme !== resolvedTheme) {
+      setTheme(settings.theme);
+    }
+  }, [resolvedTheme, settings.theme, setTheme]);
+
+  useEffect(() => {
+    const storedSettings = localStorage.getItem("settings");
+    if (storedSettings) {
+      try {
+        const parsedSettings = JSON.parse(storedSettings);
+        setSettings((prev) => ({ ...prev, ...parsedSettings }));
+      } catch (error) {
+        console.error("Failed to parse stored settings:", error);
       }
     }
-  }, [setTheme]);
+  }, []);
 
-  const updateSettings = (newSettings: Partial<Settings>) => {
-    const updatedSettings = { ...settings, ...newSettings };
-    setSettings(updatedSettings);
-    localStorage.setItem("settings", JSON.stringify(updatedSettings));
+  const updateSettings = (updates: Partial<Settings>) => {
+    setSettings((prev) => {
+      const newSettings = { ...prev, ...updates };
+      localStorage.setItem("settings", JSON.stringify(newSettings));
+      return newSettings;
+    });
+  };
 
-    // Update theme if it's changed
-    if (newSettings.theme) {
-      setTheme(newSettings.theme);
-    }
+  const resetSettings = () => {
+    setSettings(defaultSettings);
+    localStorage.removeItem("settings");
   };
 
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings }}>
+    <SettingsContext.Provider
+      value={{
+        settings,
+        updateSettings,
+        resetSettings,
+      }}
+    >
       {children}
     </SettingsContext.Provider>
   );

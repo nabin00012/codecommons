@@ -1,62 +1,44 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useTheme } from "next-themes";
-import { CosmicBackground } from "./cosmic-background";
+import dynamic from "next/dynamic";
 
-export function CosmicMode({ children }: { children: ReactNode }) {
-  const [mounted, setMounted] = useState(false);
-  const { resolvedTheme, theme } = useTheme();
+const CosmicBackground = dynamic(
+  () =>
+    import("@/components/cosmic-background").then(
+      (mod) => mod.CosmicBackground
+    ),
+  { ssr: false }
+);
+
+export function CosmicMode({ children }: { children: React.ReactNode }) {
+  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
-    console.log("CosmicMode - Component mounted");
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-
-    console.log("CosmicMode - Theme changed:", {
-      theme,
-      resolvedTheme,
-      htmlTheme: document.documentElement.getAttribute("data-theme"),
-    });
-
-    // Force update the theme
-    document.documentElement.setAttribute(
-      "data-theme",
-      resolvedTheme || "light"
-    );
-
-    // Add cosmic-mode class to body when in cosmic mode
+    console.log("CosmicMode - Theme changed:", resolvedTheme);
     if (resolvedTheme === "cosmic") {
+      document.documentElement.setAttribute("data-theme", "cosmic");
       document.body.classList.add("cosmic-mode");
       document.body.style.backgroundColor = "transparent";
     } else {
+      document.documentElement.setAttribute(
+        "data-theme",
+        resolvedTheme || "light"
+      );
       document.body.classList.remove("cosmic-mode");
       document.body.style.backgroundColor = "";
     }
-  }, [theme, resolvedTheme, mounted]);
-
-  // Don't render anything during SSR
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
-  const isCosmic = resolvedTheme === "cosmic";
-  console.log("CosmicMode - Rendering with cosmic:", isCosmic);
+  }, [resolvedTheme]);
 
   return (
-    <div
-      data-theme={resolvedTheme}
-      className={`theme-container ${isCosmic ? "cosmic-mode" : ""}`}
-    >
-      {isCosmic && (
-        <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+    <div className="relative min-h-screen">
+      {resolvedTheme === "cosmic" && (
+        <div className="fixed inset-0 pointer-events-none">
           <CosmicBackground />
         </div>
       )}
-      <div className="relative z-10 min-h-screen">{children}</div>
+      <div className="relative z-10">{children}</div>
     </div>
   );
 }

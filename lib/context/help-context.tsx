@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState } from "react";
+import { useTheme } from "next-themes";
 
 interface HelpTicket {
   id: string;
@@ -24,6 +25,7 @@ const HelpContext = createContext<HelpContextType | undefined>(undefined);
 
 export function HelpProvider({ children }: { children: React.ReactNode }) {
   const [tickets, setTickets] = useState<HelpTicket[]>([]);
+  const { resolvedTheme } = useTheme();
 
   const createTicket = (title: string, description: string) => {
     const newTicket: HelpTicket = {
