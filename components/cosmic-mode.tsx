@@ -9,19 +9,32 @@ export function CosmicMode({ children }: { children: ReactNode }) {
   const { resolvedTheme, theme } = useTheme();
 
   useEffect(() => {
+    console.log("CosmicMode - Component mounted");
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    console.log("CosmicMode - Theme:", theme);
-    console.log("CosmicMode - Resolved Theme:", resolvedTheme);
+    if (!mounted) return;
 
-    // Update the document's data-theme attribute
-    if (mounted) {
-      document.documentElement.setAttribute(
-        "data-theme",
-        resolvedTheme || "light"
-      );
+    console.log("CosmicMode - Theme changed:", {
+      theme,
+      resolvedTheme,
+      htmlTheme: document.documentElement.getAttribute("data-theme"),
+    });
+
+    // Force update the theme
+    document.documentElement.setAttribute(
+      "data-theme",
+      resolvedTheme || "light"
+    );
+
+    // Add cosmic-mode class to body when in cosmic mode
+    if (resolvedTheme === "cosmic") {
+      document.body.classList.add("cosmic-mode");
+      document.body.style.backgroundColor = "transparent";
+    } else {
+      document.body.classList.remove("cosmic-mode");
+      document.body.style.backgroundColor = "";
     }
   }, [theme, resolvedTheme, mounted]);
 
@@ -31,12 +44,19 @@ export function CosmicMode({ children }: { children: ReactNode }) {
   }
 
   const isCosmic = resolvedTheme === "cosmic";
-  console.log("Is cosmic mode:", isCosmic);
+  console.log("CosmicMode - Rendering with cosmic:", isCosmic);
 
   return (
-    <div data-theme={resolvedTheme}>
-      {isCosmic && <CosmicBackground />}
-      {children}
+    <div
+      data-theme={resolvedTheme}
+      className={`theme-container ${isCosmic ? "cosmic-mode" : ""}`}
+    >
+      {isCosmic && (
+        <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+          <CosmicBackground />
+        </div>
+      )}
+      <div className="relative z-10 min-h-screen">{children}</div>
     </div>
   );
 }

@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
-import { CosmicBackground } from "@/components/cosmic-background";
 import { useToast } from "@/components/ui/use-toast";
 import {
   Code,
@@ -68,8 +67,6 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <CosmicBackground />
-
       <header
         className={`sticky top-0 z-50 w-full border-b transition-all duration-300 ${
           scrolled
