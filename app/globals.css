@@ -26,7 +26,7 @@
     --radius: 0.5rem;
   }
 
-  .dark {
+  [data-theme="dark"] {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
     --card: 222.2 84% 4.9%;
@@ -48,7 +48,7 @@
     --ring: 224.3 76.3% 48%;
   }
 
-  .cosmic {
+  [data-theme="cosmic"] {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
     --card: 240 10% 3.9%;
@@ -81,57 +81,37 @@
 }
 
 /* Cosmic mode styles */
-.cosmic-text {
+[data-theme="cosmic"] .cosmic-text {
   @apply relative text-foreground;
 }
 
-.cosmic-text::after {
+[data-theme="cosmic"] .cosmic-text::after {
   content: "";
-  @apply absolute inset-0 bg-gradient-to-r from-primary/50 to-purple-500/50 opacity-0 transition-opacity duration-300;
+  @apply absolute inset-0 bg-gradient-to-r from-primary/50 to-purple-500/50 opacity-100 transition-opacity duration-300;
   -webkit-background-clip: text;
   background-clip: text;
 }
 
-.cosmic .cosmic-text::after {
-  @apply opacity-100;
-}
-
-.cosmic-glow {
-  @apply transition-all duration-300;
-}
-
-.cosmic .cosmic-glow {
+[data-theme="cosmic"] .cosmic-glow {
   @apply relative;
   filter: drop-shadow(0 0 5px hsl(var(--primary)));
 }
 
-.cosmic-card {
-  @apply transition-all duration-300;
-}
-
-.cosmic .cosmic-card {
+[data-theme="cosmic"] .cosmic-card {
   @apply border-primary/20 bg-gradient-to-b from-background to-background/95;
   box-shadow: 0 0 20px -10px hsl(var(--primary) / 0.2);
 }
 
-.cosmic .cosmic-card:hover {
+[data-theme="cosmic"] .cosmic-card:hover {
   box-shadow: 0 0 25px -5px hsl(var(--primary) / 0.3);
 }
 
-.cosmic-button {
-  @apply transition-all duration-300;
-}
-
-.cosmic .cosmic-button {
+[data-theme="cosmic"] .cosmic-button {
   @apply bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-700;
   box-shadow: 0 0 15px -5px hsl(var(--primary) / 0.5);
 }
 
-.cosmic-float {
-  @apply transition-all duration-300;
-}
-
-.cosmic .cosmic-float {
+[data-theme="cosmic"] .cosmic-float {
   animation: float 6s ease-in-out infinite;
 }
 

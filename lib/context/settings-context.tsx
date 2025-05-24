@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 
 interface Settings {
-  theme: "light" | "dark" | "system";
+  theme: "light" | "dark" | "cosmic" | "system";
   notifications: boolean;
   emailNotifications: boolean;
   language: string;

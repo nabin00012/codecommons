@@ -1,59 +1,77 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, Code, Plus, X, HelpCircle } from "lucide-react"
-import { motion } from "framer-motion"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, Code, Plus, X, HelpCircle } from "lucide-react";
+import { motion } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function AskQuestionPage() {
-  const router = useRouter()
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
-  const [code, setCode] = useState("")
-  const [language, setLanguage] = useState("javascript")
-  const [tag, setTag] = useState("")
-  const [tags, setTags] = useState<string[]>([])
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const router = useRouter();
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [code, setCode] = useState("");
+  const [language, setLanguage] = useState("javascript");
+  const [tag, setTag] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const addTag = () => {
     if (tag && !tags.includes(tag) && tags.length < 5) {
-      setTags([...tags, tag])
-      setTag("")
+      setTags([...tags, tag]);
+      setTag("");
     }
-  }
+  };
 
   const removeTag = (tagToRemove: string) => {
-    setTags(tags.filter((t) => t !== tagToRemove))
-  }
+    setTags(tags.filter((t) => t !== tagToRemove));
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && tag) {
-      e.preventDefault()
-      addTag()
+      e.preventDefault();
+      addTag();
     }
-  }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
+    e.preventDefault();
+    setIsSubmitting(true);
 
     // Simulate posting question
     setTimeout(() => {
-      router.push("/dashboard")
-    }, 1500)
-  }
+      router.push("/dashboard");
+    }, 1500);
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -67,17 +85,25 @@ export default function AskQuestionPage() {
       </header>
 
       <div className="container py-8 max-w-3xl">
-        <Link href="/dashboard" className="flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
+        <Link
+          href="/dashboard"
+          className="flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
+        >
           <ArrowLeft className="mr-1 h-4 w-4" />
           Back to Dashboard
         </Link>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <Card className="border-primary/10 shadow-md">
             <CardHeader className="bg-muted/30 border-b">
               <CardTitle>Ask a Question</CardTitle>
               <CardDescription>
-                Be specific and provide enough details for others to understand your problem
+                Be specific and provide enough details for others to understand
+                your problem
               </CardDescription>
             </CardHeader>
             <form onSubmit={handleSubmit}>
@@ -88,12 +114,18 @@ export default function AskQuestionPage() {
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-6 w-6">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                          >
                             <HelpCircle className="h-4 w-4 text-muted-foreground" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p className="max-w-xs">A good title is specific and summarizes your problem</p>
+                          <p className="max-w-xs">
+                            A good title is specific and summarizes your problem
+                          </p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -107,7 +139,8 @@ export default function AskQuestionPage() {
                     className="transition-all border-muted-foreground/20 focus:border-primary"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Be specific and imagine you're asking a question to another person
+                    Be specific and imagine you're asking a question to another
+                    person
                   </p>
                 </div>
 
@@ -122,7 +155,8 @@ export default function AskQuestionPage() {
                     required
                   />
                   <p className="text-xs text-muted-foreground">
-                    Include all the information someone would need to answer your question
+                    Include all the information someone would need to answer
+                    your question
                   </p>
                 </div>
 
@@ -158,7 +192,8 @@ export default function AskQuestionPage() {
                     onChange={(e) => setCode(e.target.value)}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Include only the relevant code that demonstrates your problem
+                    Include only the relevant code that demonstrates your
+                    problem
                   </p>
                 </div>
 
@@ -173,7 +208,13 @@ export default function AskQuestionPage() {
                       onKeyDown={handleKeyDown}
                       className="transition-all border-muted-foreground/20 focus:border-primary"
                     />
-                    <Button type="button" onClick={addTag} variant="outline" size="icon" className="shrink-0">
+                    <Button
+                      type="button"
+                      onClick={addTag}
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0"
+                    >
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
@@ -183,7 +224,11 @@ export default function AskQuestionPage() {
                   {tags.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
                       {tags.map((t) => (
-                        <Badge key={t} variant="secondary" className="flex items-center gap-1 px-3 py-1">
+                        <Badge
+                          key={t}
+                          variant="secondary"
+                          className="flex items-center gap-1 px-3 py-1"
+                        >
                           {t}
                           <button
                             type="button"
@@ -203,20 +248,33 @@ export default function AskQuestionPage() {
                     <TabsTrigger value="preview">Preview</TabsTrigger>
                     <TabsTrigger value="guidelines">Guidelines</TabsTrigger>
                   </TabsList>
-                  <TabsContent value="preview" className="p-4 border rounded-md min-h-[200px] mt-4">
+                  <TabsContent
+                    value="preview"
+                    className="p-4 border rounded-md min-h-[200px] mt-4"
+                  >
                     {title || description || code || tags.length > 0 ? (
                       <div className="space-y-4">
-                        {title && <h3 className="font-semibold text-lg">{title}</h3>}
-                        {description && <p className="text-sm">{description}</p>}
+                        {title && (
+                          <h3 className="font-semibold text-lg">{title}</h3>
+                        )}
+                        {description && (
+                          <p className="text-sm">{description}</p>
+                        )}
                         {code && (
                           <div className="bg-muted p-3 rounded-md">
-                            <pre className="text-xs overflow-x-auto font-mono">{code}</pre>
+                            <pre className="text-xs overflow-x-auto font-mono">
+                              {code}
+                            </pre>
                           </div>
                         )}
                         {tags.length > 0 && (
                           <div className="flex flex-wrap gap-2">
                             {tags.map((t) => (
-                              <Badge key={t} variant="outline" className="px-2 py-0.5 text-xs">
+                              <Badge
+                                key={t}
+                                variant="outline"
+                                className="px-2 py-0.5 text-xs"
+                              >
                                 {t}
                               </Badge>
                             ))}
@@ -224,26 +282,48 @@ export default function AskQuestionPage() {
                         )}
                       </div>
                     ) : (
-                      <p className="text-muted-foreground text-center">Your question preview will appear here...</p>
+                      <p className="text-muted-foreground text-center">
+                        Your question preview will appear here...
+                      </p>
                     )}
                   </TabsContent>
-                  <TabsContent value="guidelines" className="p-4 border rounded-md min-h-[200px] mt-4">
-                    <h3 className="text-sm font-medium mb-3">Guidelines for asking questions:</h3>
+                  <TabsContent
+                    value="guidelines"
+                    className="p-4 border rounded-md min-h-[200px] mt-4"
+                  >
+                    <h3 className="text-sm font-medium mb-3">
+                      Guidelines for asking questions:
+                    </h3>
                     <ul className="text-sm text-muted-foreground space-y-2 list-disc pl-5">
                       <li>Be specific and clear about your problem</li>
                       <li>Describe what you've already tried</li>
                       <li>Include relevant code snippets if applicable</li>
-                      <li>Don't ask for complete solutions to homework assignments</li>
-                      <li>Be respectful and open to guidance rather than just answers</li>
+                      <li>
+                        Don't ask for complete solutions to homework assignments
+                      </li>
+                      <li>
+                        Be respectful and open to guidance rather than just
+                        answers
+                      </li>
                       <li>Format your code properly for readability</li>
-                      <li>Check if your question has already been asked before posting</li>
-                      <li>Use appropriate tags to categorize your question correctly</li>
+                      <li>
+                        Check if your question has already been asked before
+                        posting
+                      </li>
+                      <li>
+                        Use appropriate tags to categorize your question
+                        correctly
+                      </li>
                     </ul>
                   </TabsContent>
                 </Tabs>
               </CardContent>
               <CardFooter className="flex justify-between border-t bg-muted/30 py-4">
-                <Button type="button" variant="ghost" onClick={() => router.push("/dashboard")}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => router.push("/dashboard")}
+                >
                   Cancel
                 </Button>
                 <Button
@@ -259,5 +339,5 @@ export default function AskQuestionPage() {
         </motion.div>
       </div>
     </div>
-  )
+  );
 }

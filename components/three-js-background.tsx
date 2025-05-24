@@ -38,6 +38,18 @@ export default function ThreeJsBackground() {
     const isDarkMode = resolvedTheme === "dark";
     const isCosmicMode = resolvedTheme === "cosmic";
 
+    // Clean up previous scene if it exists
+    if (sceneRef.current) {
+      if (starsRef.current) {
+        sceneRef.current.remove(starsRef.current);
+        starsRef.current.geometry.dispose();
+        (starsRef.current.material as THREE.PointsMaterial).dispose();
+      }
+      if (rendererRef.current) {
+        containerRef.current.removeChild(rendererRef.current.domElement);
+      }
+    }
+
     if (!isDarkMode && !isCosmicMode) return;
 
     try {
@@ -67,42 +79,41 @@ export default function ThreeJsBackground() {
 
       containerRef.current.appendChild(renderer.domElement);
 
-      // Only create stars in cosmic mode
-      if (isCosmicMode) {
-        const starGeometry = new THREE.BufferGeometry();
-        const starMaterial = new THREE.PointsMaterial({
-          color: 0xffffff,
-          size: 1.0,
-          transparent: true,
-          opacity: 0.8,
-          sizeAttenuation: true,
-        });
+      // Create stars for both dark and cosmic mode, but with different properties
+      const starGeometry = new THREE.BufferGeometry();
+      const starMaterial = new THREE.PointsMaterial({
+        color: isCosmicMode ? 0xffffff : 0x666666,
+        size: isCosmicMode ? 1.0 : 0.5,
+        transparent: true,
+        opacity: isCosmicMode ? 0.8 : 0.4,
+        sizeAttenuation: true,
+      });
 
-        const starVertices: number[] = [];
-        for (let i = 0; i < 10000; i++) {
-          const x = (Math.random() - 0.5) * 1000;
-          const y = (Math.random() - 0.5) * 1000;
-          const z = (Math.random() - 0.5) * 1000;
-          starVertices.push(x, y, z);
-        }
-
-        starGeometry.setAttribute(
-          "position",
-          new THREE.Float32BufferAttribute(starVertices, 3)
-        );
-
-        const stars = new THREE.Points(starGeometry, starMaterial);
-        scene.add(stars);
-        starsRef.current = stars;
+      const starVertices: number[] = [];
+      const starCount = isCosmicMode ? 10000 : 5000;
+      for (let i = 0; i < starCount; i++) {
+        const x = (Math.random() - 0.5) * 1000;
+        const y = (Math.random() - 0.5) * 1000;
+        const z = (Math.random() - 0.5) * 1000;
+        starVertices.push(x, y, z);
       }
+
+      starGeometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(starVertices, 3)
+      );
+
+      const stars = new THREE.Points(starGeometry, starMaterial);
+      scene.add(stars);
+      starsRef.current = stars;
 
       // Animation loop
       const animate = () => {
         animationRef.current = requestAnimationFrame(animate);
 
-        if (isCosmicMode && starsRef.current) {
-          starsRef.current.rotation.x += 0.0001;
-          starsRef.current.rotation.y += 0.0001;
+        if (starsRef.current) {
+          starsRef.current.rotation.x += isCosmicMode ? 0.0001 : 0.00005;
+          starsRef.current.rotation.y += isCosmicMode ? 0.0001 : 0.00005;
         }
 
         renderer.render(scene, camera);

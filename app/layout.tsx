@@ -30,7 +30,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider
-          attribute="class"
+          attribute="data-theme"
           defaultTheme="system"
           enableSystem
           themes={["light", "dark", "cosmic"]}
@@ -46,9 +46,10 @@ export default function RootLayout({
               <UserProvider>
                 <SettingsProvider>
                   <HelpProvider>
-                    {children}
-                    <Toaster />
-                    <CosmicMode />
+                    <CosmicMode>
+                      {children}
+                      <Toaster />
+                    </CosmicMode>
                   </HelpProvider>
                 </SettingsProvider>
               </UserProvider>
