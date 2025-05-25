@@ -25,11 +25,19 @@ interface AuthResponse {
     role: UserRole;
     avatar?: string;
     theme?: string;
+    preferences?: {
+      theme: string;
+      notifications: boolean;
+      language: string;
+    };
   };
 }
 
 class AuthService {
   private token: string | null = null;
+  private verificationPromise: Promise<AuthResponse> | null = null;
+  private lastVerificationTime: number = 0;
+  private readonly VERIFICATION_CACHE_TIME = 5000; // 5 seconds
 
   constructor() {
     if (typeof window !== "undefined") {
@@ -41,9 +49,18 @@ class AuthService {
     return this.token;
   }
 
+  setToken(token: string | null): void {
+    this.token = token;
+    if (token) {
+      localStorage.setItem("token", token);
+    } else {
+      localStorage.removeItem("token");
+    }
+  }
+
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
+      const response: Response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -55,11 +72,11 @@ class AuthService {
         throw new Error("Login failed");
       }
 
-      const data = await response.json();
+      const data: AuthResponse = await response.json();
       this.token = data.token;
       localStorage.setItem("token", data.token);
       return data;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Login error:", error);
       throw error;
     }
@@ -67,7 +84,7 @@ class AuthService {
 
   async register(data: RegisterData): Promise<AuthResponse> {
     try {
-      const response = await fetch(`${API_URL}/auth/register`, {
+      const response: Response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -79,40 +96,56 @@ class AuthService {
         throw new Error("Registration failed");
       }
 
-      const responseData = await response.json();
+      const responseData: AuthResponse = await response.json();
       this.token = responseData.token;
       localStorage.setItem("token", responseData.token);
       return responseData;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Registration error:", error);
       throw error;
     }
   }
 
   async verifyToken(token: string): Promise<AuthResponse> {
-    try {
-      const response = await fetch(`${API_URL}/auth/verify`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    const now = Date.now();
 
-      if (!response.ok) {
-        throw new Error("Token verification failed");
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Token verification error:", error);
-      throw error;
+    // If we have a cached verification and it's still valid, return it
+    if (
+      this.verificationPromise &&
+      now - this.lastVerificationTime < this.VERIFICATION_CACHE_TIME
+    ) {
+      return this.verificationPromise;
     }
+
+    // Create a new verification promise
+    this.verificationPromise = (async () => {
+      try {
+        const response: Response = await fetch(`${API_URL}/api/auth/verify`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Token verification failed");
+        }
+
+        const data: AuthResponse = await response.json();
+        this.lastVerificationTime = now;
+        return data;
+      } catch (error: unknown) {
+        console.error("Token verification error:", error);
+        throw error;
+      }
+    })();
+
+    return this.verificationPromise;
   }
 
   async updateTheme(theme: string): Promise<void> {
     try {
-      const response = await fetch(`${API_URL}/users/theme`, {
+      const response: Response = await fetch(`${API_URL}/api/users/theme`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -124,7 +157,7 @@ class AuthService {
       if (!response.ok) {
         throw new Error("Failed to update theme");
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Theme update error:", error);
       throw error;
     }

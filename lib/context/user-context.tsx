@@ -6,6 +6,7 @@ import React, {
   useState,
   useEffect,
   ReactNode,
+  useRef,
 } from "react";
 import { authService } from "@/lib/services/auth";
 import { useAuth } from "./AuthContext";
@@ -39,6 +40,12 @@ interface UserContextType {
   updatePreferences: (preferences: Partial<User["preferences"]>) => void;
 }
 
+const defaultPreferences = {
+  theme: "system",
+  notifications: true,
+  language: "en",
+};
+
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
@@ -47,15 +54,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { token, setToken } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
+  const verificationInProgress = useRef(false);
 
   useEffect(() => {
     let mounted = true;
 
     const loadUser = async () => {
       try {
-        console.log("Loading user...");
         if (!token) {
-          console.log("No token found");
           if (mounted) {
             setUser(null);
             setLoading(false);
@@ -63,21 +69,35 @@ export function UserProvider({ children }: { children: ReactNode }) {
           return;
         }
 
+        // Prevent multiple simultaneous verifications
+        if (verificationInProgress.current) {
+          return;
+        }
+
+        verificationInProgress.current = true;
         const response = await authService.verifyToken(token);
-        console.log("User verification response:", response);
+        verificationInProgress.current = false;
 
         if (mounted && response.user) {
-          setUser({
+          const userData = {
             id: response.user._id,
             name: response.user.name,
             email: response.user.email,
             role: response.user.role,
             avatar:
               response.user.avatar || "/placeholder.svg?height=40&width=40",
-            preferences: response.user.preferences,
-          });
+            preferences: response.user.preferences || defaultPreferences,
+          };
+          setUser(userData);
+
+          // Set theme if user has a preference
+          if (
+            userData.preferences?.theme &&
+            userData.preferences.theme !== resolvedTheme
+          ) {
+            setTheme(userData.preferences.theme);
+          }
         } else if (mounted) {
-          console.log("No user data in response");
           setUser(null);
           setToken(null);
           setLoading(false);
@@ -103,17 +123,19 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, [token, router, setToken]);
-
-  useEffect(() => {
-    console.log("UserProvider - Theme changed:", resolvedTheme);
-    if (user?.preferences.theme && user.preferences.theme !== resolvedTheme) {
-      setTheme(user.preferences.theme);
-    }
-  }, [resolvedTheme, user?.preferences.theme, setTheme]);
+  }, [token, router, setToken, resolvedTheme, setTheme]);
 
   const login = (userData: User) => {
-    setUser(userData);
+    const userWithPreferences = {
+      ...userData,
+      preferences: userData.preferences || defaultPreferences,
+    };
+    setUser(userWithPreferences);
+
+    // Set theme if user has a preference
+    if (userWithPreferences.preferences?.theme) {
+      setTheme(userWithPreferences.preferences.theme);
+    }
   };
 
   const logout = () => {
