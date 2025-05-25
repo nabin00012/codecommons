@@ -9,12 +9,13 @@ export interface Event {
   date: Date;
   location: string;
   tags: string[];
+  maxAttendees: number;
+  attendees: number;
+  isRegistered?: boolean;
   organizer: {
     name: string;
     avatar?: string;
   };
-  maxAttendees: number;
-  attendees: string[];
 }
 
 export const eventService = {
@@ -38,10 +39,12 @@ export const eventService = {
     tags: string[];
     maxAttendees: number;
   }) {
+    const token = await authService.getToken();
     const response = await fetch(`${API_URL}/api/events`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(data),
     });
@@ -115,7 +118,7 @@ export const eventService = {
       page: page.toString(),
       limit: limit.toString(),
     });
-    if (tags && tags.length > 0) {
+    if (tags) {
       params.append("tags", tags.join(","));
     }
 
@@ -126,9 +129,14 @@ export const eventService = {
     return response.json();
   },
 
+  // Register for an event
   async registerForEvent(eventId: string) {
+    const token = await authService.getToken();
     const response = await fetch(`${API_URL}/api/events/${eventId}/attend`, {
       method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
     if (!response.ok) {
       throw new Error("Failed to register for event");
