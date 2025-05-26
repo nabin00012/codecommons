@@ -1,65 +1,67 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose from "mongoose";
 
-export interface IProject extends Document {
-  title: string;
-  description: string;
-  longDescription: string;
-  githubLink: string;
-  demoLink?: string;
-  tags: string[];
-  author: {
-    _id: mongoose.Types.ObjectId;
-    name: string;
-    role: string;
-  };
-  media: Array<{
-    type: "image" | "video";
-    url: string;
-    caption?: string;
-  }>;
-  screenshots: Array<{
-    url: string;
-    caption?: string;
-  }>;
-  screenRecordings: Array<{
-    url: string;
-    caption?: string;
-  }>;
-  stars: number;
-  contributors: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-const projectSchema = new Schema<IProject>(
+const projectSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: [true, "Please add a title"],
+      required: true,
       trim: true,
-      maxlength: [100, "Title cannot be more than 100 characters"],
     },
     description: {
       type: String,
-      required: [true, "Please add a description"],
-      maxlength: [200, "Description cannot be more than 200 characters"],
+      required: true,
+      trim: true,
     },
     longDescription: {
       type: String,
-      required: [true, "Please add a detailed description"],
-      maxlength: [5000, "Description cannot be more than 5000 characters"],
+      required: true,
+      trim: true,
     },
     githubLink: {
       type: String,
-      required: [true, "Please add a GitHub link"],
+      required: true,
+      trim: true,
     },
     demoLink: {
       type: String,
+      trim: true,
     },
     tags: [
       {
         type: String,
         trim: true,
+      },
+    ],
+    media: [
+      {
+        type: {
+          type: String,
+          enum: ["image", "video"],
+          required: true,
+        },
+        url: {
+          type: String,
+          required: true,
+        },
+        caption: String,
+      },
+    ],
+    screenshots: [
+      {
+        url: {
+          type: String,
+          required: true,
+        },
+        caption: String,
+      },
+    ],
+    screenRecordings: [
+      {
+        url: {
+          type: String,
+          required: true,
+        },
+        caption: String,
       },
     ],
     author: {
@@ -77,59 +79,59 @@ const projectSchema = new Schema<IProject>(
         required: true,
       },
     },
-    media: [
-      {
-        type: {
-          type: String,
-          enum: ["image", "video"],
-          required: true,
-        },
-        url: {
-          type: String,
-          required: true,
-        },
-        caption: {
-          type: String,
-          maxlength: [200, "Caption cannot be more than 200 characters"],
-        },
-      },
-    ],
-    screenshots: [
-      {
-        url: {
-          type: String,
-          required: true,
-        },
-        caption: {
-          type: String,
-          maxlength: [200, "Caption cannot be more than 200 characters"],
-        },
-      },
-    ],
-    screenRecordings: [
-      {
-        url: {
-          type: String,
-          required: true,
-        },
-        caption: {
-          type: String,
-          maxlength: [200, "Caption cannot be more than 200 characters"],
-        },
-      },
-    ],
+    isPublic: {
+      type: Boolean,
+      default: true,
+    },
     stars: {
       type: Number,
       default: 0,
     },
     contributors: {
       type: Number,
-      default: 1,
+      default: 0,
     },
+    likes: {
+      type: Number,
+      default: 0,
+    },
+    views: {
+      type: Number,
+      default: 0,
+    },
+    comments: [
+      {
+        user: {
+          _id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+          },
+          name: {
+            type: String,
+            required: true,
+          },
+          role: {
+            type: String,
+            required: true,
+          },
+        },
+        content: {
+          type: String,
+          required: true,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   {
     timestamps: true,
   }
 );
 
-export default mongoose.model<IProject>("Project", projectSchema);
+const Project = mongoose.model("Project", projectSchema);
+
+export default Project;

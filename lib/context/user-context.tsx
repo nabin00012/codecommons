@@ -10,7 +10,7 @@ import React, {
 } from "react";
 import { authService } from "@/lib/services/auth";
 import { useAuth } from "./AuthContext";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 
 export type UserRole = "student" | "teacher" | "user" | "admin";
@@ -52,6 +52,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
   const { token, setToken } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
   const verificationInProgress = useRef(false);
@@ -78,7 +79,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         const response = await authService.verifyToken(token);
         verificationInProgress.current = false;
 
-        if (mounted && response.user) {
+        if (mounted && response?.user) {
           const userData = {
             id: response.user._id,
             name: response.user.name,
@@ -101,7 +102,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
           setUser(null);
           setToken(null);
           setLoading(false);
-          router.push("/login");
+          // Only redirect to login if not already on login page
+          if (pathname !== "/login") {
+            router.replace("/login");
+          }
         }
       } catch (error) {
         console.error("Error loading user:", error);
@@ -109,7 +113,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
           setUser(null);
           setToken(null);
           setLoading(false);
-          router.push("/login");
+          // Only redirect to login if not already on login page
+          if (pathname !== "/login") {
+            router.replace("/login");
+          }
         }
       } finally {
         if (mounted) {
@@ -123,7 +130,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, [token, router, setToken, resolvedTheme, setTheme]);
+  }, [token, router, setToken, resolvedTheme, setTheme, pathname]);
 
   const login = (userData: User) => {
     const userWithPreferences = {
@@ -142,7 +149,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setToken(null);
     localStorage.removeItem("token");
-    router.push("/login");
+    router.replace("/login");
   };
 
   const switchRole = (newRole: UserRole) => {

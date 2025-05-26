@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/lib/context/user-context";
 
@@ -15,20 +15,23 @@ export default function ProtectedRoute({
 }: ProtectedRouteProps) {
   const router = useRouter();
   const { user, loading } = useUser();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !isRedirecting) {
       if (!user) {
+        setIsRedirecting(true);
         router.push("/login");
         return;
       }
 
       if (requireTeacher && user.role !== "teacher") {
+        setIsRedirecting(true);
         router.push("/dashboard");
         return;
       }
     }
-  }, [user, loading, router, requireTeacher]);
+  }, [user, loading, router, requireTeacher, isRedirecting]);
 
   if (loading) {
     return (
@@ -38,7 +41,7 @@ export default function ProtectedRoute({
     );
   }
 
-  if (!user) {
+  if (!user || isRedirecting) {
     return null;
   }
 

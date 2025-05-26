@@ -108,19 +108,7 @@ class AuthService {
       }
 
       const data = await response.json();
-      console.log("Login response:", data); // Add logging to debug response
-
-      // Ensure the response has the required fields
-      if (
-        !data ||
-        !data._id ||
-        !data.name ||
-        !data.email ||
-        !data.role ||
-        !data.token
-      ) {
-        throw new Error("Invalid response structure from server");
-      }
+      console.log("Login response:", data);
 
       // Create a properly structured response
       const authResponse: AuthResponse = {
@@ -139,6 +127,7 @@ class AuthService {
         },
       };
 
+      // Set token before returning
       this.setToken(authResponse.token);
       return authResponse;
     } catch (error: unknown) {
@@ -171,9 +160,12 @@ class AuthService {
     }
   }
 
-  async verifyToken(token: string): Promise<AuthResponse | null> {
+  async verifyToken(token: string | null): Promise<AuthResponse | null> {
     try {
-      console.log("Verifying token:", token.substring(0, 20) + "..."); // Log partial token for debugging
+      if (!token || typeof token !== "string") {
+        console.error("Invalid token format");
+        return null;
+      }
 
       const response = await fetch(`${API_URL}/api/auth/verify`, {
         method: "GET",
@@ -183,108 +175,35 @@ class AuthService {
       });
 
       if (!response.ok) {
-        let errorMessage = `Token verification failed: ${response.status} ${response.statusText}`;
-
-        try {
-          const contentType = response.headers.get("content-type");
-          if (contentType && contentType.includes("application/json")) {
-            const errorData = await response.json();
-            errorMessage = errorData.message || errorMessage;
-          } else {
-            const textError = await response.text();
-            errorMessage = textError || errorMessage;
-          }
-        } catch (e) {
-          console.error("Error parsing error response:", e);
-        }
-
-        console.error("Token verification failed:", {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorMessage,
-        });
-
-        this.setToken(null); // Clear invalid token
+        console.error("Token verification failed:", response.status);
         return null;
       }
 
       const data = await response.json();
       console.log("Token verification response:", data);
 
-      // Validate response structure
-      if (!data || typeof data !== "object") {
-        console.error("Invalid response: not an object", data);
-        this.setToken(null);
+      if (!data || !data.user) {
+        console.error("Invalid verification response");
         return null;
       }
 
-      // Check if the response has a user object
-      if (data.user) {
-        // If response has a user object, validate its structure
-        if (
-          !data.user._id ||
-          !data.user.name ||
-          !data.user.email ||
-          !data.user.role
-        ) {
-          console.error(
-            "Invalid user object: missing required fields",
-            data.user
-          );
-          this.setToken(null);
-          return null;
-        }
-
-        // Create response from user object
-        const authResponse: AuthResponse = {
-          token: token,
-          user: {
-            _id: data.user._id,
-            name: data.user.name,
-            email: data.user.email,
-            role: data.user.role,
-            avatar: data.user.avatar,
-            preferences: data.user.preferences || {
-              theme: "light",
-              notifications: true,
-              language: "en",
-            },
+      return {
+        token,
+        user: {
+          _id: data.user._id,
+          name: data.user.name,
+          email: data.user.email,
+          role: data.user.role,
+          avatar: data.user.avatar,
+          preferences: data.user.preferences || {
+            theme: "light",
+            notifications: true,
+            language: "en",
           },
-        };
-
-        this.lastVerificationTime = Date.now();
-        return authResponse;
-      } else {
-        // If response has fields at root level, validate them
-        if (!data._id || !data.name || !data.email || !data.role) {
-          console.error("Invalid response: missing required fields", data);
-          this.setToken(null);
-          return null;
-        }
-
-        // Create response from root level fields
-        const authResponse: AuthResponse = {
-          token: token,
-          user: {
-            _id: data._id,
-            name: data.name,
-            email: data.email,
-            role: data.role,
-            avatar: data.avatar,
-            preferences: data.preferences || {
-              theme: "light",
-              notifications: true,
-              language: "en",
-            },
-          },
-        };
-
-        this.lastVerificationTime = Date.now();
-        return authResponse;
-      }
+        },
+      };
     } catch (error) {
       console.error("Token verification error:", error);
-      this.setToken(null); // Clear invalid token
       return null;
     }
   }

@@ -1,6 +1,6 @@
 import express, { RequestHandler } from "express";
 import { discussionController } from "../controllers/discussionController";
-import { authenticateToken } from "../middleware/auth";
+import { auth } from "../middleware/auth";
 
 const router = express.Router();
 
@@ -10,7 +10,7 @@ router.get("/search", discussionController.search as RequestHandler);
 router.get("/:id", discussionController.getById as RequestHandler);
 
 // Protected routes
-router.use(authenticateToken as RequestHandler);
+router.use(auth as RequestHandler);
 router.post("/", discussionController.create as RequestHandler);
 router.post("/:id/comments", discussionController.addComment as RequestHandler);
 router.post("/:id/like", discussionController.toggleLike as RequestHandler);

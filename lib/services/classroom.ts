@@ -51,16 +51,13 @@ export interface Material {
 export class ClassroomService {
   private baseUrl: string;
 
-  constructor(token: string) {
+  constructor() {
     this.baseUrl = `${API_URL}/api/classrooms`;
-    if (token) {
-      authService.setToken(token);
-    }
   }
 
   private async getAuthHeader(): Promise<HeadersInit> {
     const token = await authService.getToken();
-    if (!token) {
+    if (!token || typeof token !== "string") {
       console.error("No authentication token found in classroom service");
       throw new Error("No authentication token found");
     }

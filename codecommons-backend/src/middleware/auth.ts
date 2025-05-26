@@ -14,11 +14,7 @@ declare global {
 }
 
 interface AuthRequest extends Request {
-  user?: {
-    _id: string;
-    email: string;
-    role: string;
-  };
+  user?: any;
 }
 
 export const protect: Middleware = async (
@@ -91,34 +87,32 @@ export const teacherOnly: Middleware = (
   }
 };
 
-export const authenticateToken = (
+export const auth = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
 ) => {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
-
-  if (!token) {
-    return res.status(401).json({ message: "No token provided" });
-  }
-
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
-      _id: string;
-      email: string;
-      role: string;
-    };
+    const token = req.header("Authorization")?.replace("Bearer ", "");
 
-    req.user = decoded;
+    if (!token) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "your-secret-key"
+    ) as any;
+    const user = await User.findById(decoded._id);
+
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+
+    req.user = user;
     next();
   } catch (error) {
-    if (error instanceof jwt.TokenExpiredError) {
-      return res.status(401).json({ message: "Token expired" });
-    }
-    if (error instanceof jwt.JsonWebTokenError) {
-      return res.status(401).json({ message: "Invalid token" });
-    }
-    return res.status(500).json({ message: "Error verifying token" });
+    console.error("Auth middleware error:", error);
+    res.status(401).json({ error: "Invalid authentication" });
   }
 };

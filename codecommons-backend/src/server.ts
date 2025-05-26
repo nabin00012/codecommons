@@ -13,6 +13,7 @@ import codecornerRoutes from "./routes/codecorner";
 import discussionRoutes from "./routes/discussionRoutes";
 import eventRoutes from "./routes/eventRoutes";
 import groupRoutes from "./routes/groupRoutes";
+import projectRoutes from "./routes/projects";
 
 // Load environment variables
 dotenv.config();
@@ -77,6 +78,7 @@ app.use("/api/codecorner", codecornerRoutes);
 app.use("/api/discussions", discussionRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/groups", groupRoutes);
+app.use("/api/projects", projectRoutes);
 
 // Error handling middleware
 app.use(
