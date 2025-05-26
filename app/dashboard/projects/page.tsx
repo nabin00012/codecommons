@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/select";
 import ProtectedRoute from "@/lib/components/ProtectedRoute";
 import { authService } from "@/lib/services/auth";
+import { API_URL } from "@/lib/constants";
 
 interface Project {
   _id: string;
@@ -73,6 +74,7 @@ export default function ProjectsPage() {
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string>("all");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProjects();
@@ -81,26 +83,55 @@ export default function ProjectsPage() {
   const fetchProjects = async () => {
     try {
       setIsLoading(true);
-      const token = authService.getToken();
-      const response = await fetch("/api/projects", {
+      const token = await authService.getToken();
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      console.log(
+        "Fetching projects with token:",
+        token.substring(0, 10) + "..."
+      );
+
+      const response = await fetch(`${API_URL}/api/projects`, {
+        method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       });
 
+      console.log("Projects response status:", response.status);
+
       if (!response.ok) {
-        throw new Error("Failed to fetch projects");
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          errorData = { message: "Failed to parse error response" };
+        }
+
+        console.error("Failed to fetch projects:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+          url: `${API_URL}/api/projects`,
+        });
+
+        throw new Error(
+          errorData.message ||
+            `Failed to fetch projects: ${response.status} ${response.statusText}`
+        );
       }
 
       const data = await response.json();
-      setProjects(Array.isArray(data) ? data : []);
+      console.log("Projects fetched successfully:", data.length, "projects");
+      setProjects(data);
     } catch (error) {
       console.error("Error fetching projects:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load projects. Please try again.",
-        variant: "destructive",
-      });
+      setError(
+        error instanceof Error ? error.message : "Failed to fetch projects"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -108,7 +139,11 @@ export default function ProjectsPage() {
 
   const handleCreateProject = async () => {
     try {
-      const token = authService.getToken();
+      const token = await authService.getToken();
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
       const response = await fetch("/api/projects", {
         method: "POST",
         headers: {

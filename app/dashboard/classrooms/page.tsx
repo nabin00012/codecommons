@@ -11,7 +11,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Plus, BookOpen, Search, Grid, List } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  BookOpen,
+  Search,
+  Grid,
+  List,
+  AlertCircle,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Classroom } from "@/lib/services/classroom";
 import * as THREE from "three";
@@ -207,39 +215,36 @@ export default function ClassroomsListPage() {
   const { user } = useUser();
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [isJoining, setIsJoining] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "3d">("grid");
+  const [selectedSemester, setSelectedSemester] = useState("all");
 
   const isTeacher = user?.role === "teacher";
 
   useEffect(() => {
-    const loadClassrooms = async () => {
+    const fetchClassrooms = async () => {
       try {
-        const token = await authService.getToken();
-        if (!token) {
-          router.push("/login");
-          return;
-        }
-
-        const classroomService = new ClassroomService(token);
+        setIsLoading(true);
+        const classroomService = new ClassroomService(
+          (await authService.getToken()) || ""
+        );
         const data = await classroomService.getClassrooms();
         setClassrooms(data);
       } catch (error) {
-        console.error("Error loading classrooms:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load classrooms. Please try again.",
-          variant: "destructive",
-        });
+        console.error("Error fetching classrooms:", error);
+        setError(
+          error instanceof Error ? error.message : "Failed to fetch classrooms"
+        );
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadClassrooms();
-  }, [router, toast]);
+    fetchClassrooms();
+  }, []);
 
   const handleJoinClassroom = async () => {
     if (!joinCode) {
@@ -282,10 +287,6 @@ export default function ClassroomsListPage() {
     }
   };
 
-  const filteredClassrooms = classrooms.filter((classroom) =>
-    classroom.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -293,6 +294,25 @@ export default function ClassroomsListPage() {
       </div>
     );
   }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <AlertCircle className="w-8 h-8 text-destructive mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Error Loading Classrooms</h2>
+        <p className="text-muted-foreground">{error}</p>
+      </div>
+    );
+  }
+
+  const filteredClassrooms = classrooms.filter((classroom) => {
+    const matchesSearch =
+      classroom.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      classroom.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSemester =
+      selectedSemester === "all" || classroom.semester === selectedSemester;
+    return matchesSearch && matchesSemester;
+  });
 
   return (
     <ProtectedRoute>

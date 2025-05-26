@@ -58,54 +58,55 @@ export class ClassroomService {
     }
   }
 
-  private async getAuthHeader() {
+  private async getAuthHeader(): Promise<HeadersInit> {
     const token = await authService.getToken();
     if (!token) {
+      console.error("No authentication token found in classroom service");
       throw new Error("No authentication token found");
     }
     return {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     };
   }
 
   async getClassrooms(): Promise<Classroom[]> {
     try {
       console.log("Fetching classrooms...");
-      const response = await fetch(this.baseUrl, {
+      const headers = await this.getAuthHeader();
+
+      const response = await fetch(`${API_URL}/api/classrooms`, {
         method: "GET",
-        headers: await this.getAuthHeader(),
-        credentials: "include",
+        headers,
       });
 
       console.log("Classrooms response status:", response.status);
 
       if (!response.ok) {
-        let errorMessage = "Failed to fetch classrooms";
-        try {
-          const errorData = await response.json();
-          if (response.status === 401) {
-            errorMessage = "Please log in to view classrooms";
-          } else if (response.status === 403) {
-            errorMessage = "You are not authorized to view classrooms";
-          } else {
-            errorMessage = errorData.message || errorMessage;
-          }
-        } catch (e) {
-          console.error("Failed to parse error response:", e);
-        }
-        throw new Error(errorMessage);
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: "Failed to fetch classrooms" }));
+        console.error("Failed to fetch classrooms:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+        });
+        throw new Error(errorData.message || "Failed to fetch classrooms");
       }
 
-      const result = await response.json();
-      console.log("Classrooms response:", result);
+      const responseData = await response.json();
+      console.log(
+        "Classrooms response:",
+        JSON.stringify(responseData, null, 2)
+      );
 
-      if (!result.success || !Array.isArray(result.data)) {
-        console.error("Invalid response format:", result);
+      // Check if the response has the expected structure
+      if (!responseData.success || !Array.isArray(responseData.data)) {
+        console.error("Invalid response format:", responseData);
         throw new Error("Invalid response format from server");
       }
 
-      return result.data;
+      return responseData.data;
     } catch (error) {
       console.error("Error fetching classrooms:", error);
       throw error;

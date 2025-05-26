@@ -173,6 +173,8 @@ class AuthService {
 
   async verifyToken(token: string): Promise<AuthResponse | null> {
     try {
+      console.log("Verifying token:", token.substring(0, 20) + "..."); // Log partial token for debugging
+
       const response = await fetch(`${API_URL}/api/auth/verify`, {
         method: "GET",
         headers: {
@@ -181,16 +183,23 @@ class AuthService {
       });
 
       if (!response.ok) {
-        const error = await response
+        const errorData = await response
           .json()
           .catch(() => ({ message: "Token verification failed" }));
-        console.error("Token verification failed:", error);
+        console.error("Token verification failed:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+        });
         this.setToken(null); // Clear invalid token
         return null;
       }
 
       const data = await response.json();
-      console.log("Token verification response:", data); // Add logging to debug response
+      console.log(
+        "Token verification response:",
+        JSON.stringify(data, null, 2)
+      ); // Pretty print the response
 
       // Validate response structure
       if (!data || typeof data !== "object") {
