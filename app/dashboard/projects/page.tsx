@@ -88,6 +88,7 @@ export default function ProjectsPage() {
         throw new Error("No authentication token found");
       }
 
+      console.log("API URL:", API_URL);
       console.log(
         "Fetching projects with token:",
         token.substring(0, 10) + "..."
@@ -102,26 +103,35 @@ export default function ProjectsPage() {
       });
 
       console.log("Projects response status:", response.status);
+      console.log(
+        "Projects response headers:",
+        Object.fromEntries(response.headers.entries())
+      );
 
       if (!response.ok) {
-        let errorData;
+        let errorMessage = `Failed to fetch projects: ${response.status} ${response.statusText}`;
+
         try {
-          errorData = await response.json();
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+          } else {
+            const textError = await response.text();
+            errorMessage = textError || errorMessage;
+          }
         } catch (e) {
-          errorData = { message: "Failed to parse error response" };
+          console.error("Error parsing error response:", e);
         }
 
         console.error("Failed to fetch projects:", {
           status: response.status,
           statusText: response.statusText,
-          error: errorData,
+          error: errorMessage,
           url: `${API_URL}/api/projects`,
         });
 
-        throw new Error(
-          errorData.message ||
-            `Failed to fetch projects: ${response.status} ${response.statusText}`
-        );
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -144,7 +154,13 @@ export default function ProjectsPage() {
         throw new Error("No authentication token found");
       }
 
-      const response = await fetch("/api/projects", {
+      console.log(
+        "Creating project with token:",
+        token.substring(0, 10) + "..."
+      );
+      console.log("Project data:", newProject);
+
+      const response = await fetch(`${API_URL}/api/projects`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -153,8 +169,24 @@ export default function ProjectsPage() {
         body: JSON.stringify(newProject),
       });
 
+      console.log("Create project response status:", response.status);
+
       if (!response.ok) {
-        throw new Error("Failed to create project");
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          console.error("Failed to parse error response:", e);
+          errorData = { message: "Failed to parse error response" };
+        }
+
+        console.error("Failed to create project:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+        });
+
+        throw new Error(errorData.message || "Failed to create project");
       }
 
       toast({
@@ -175,7 +207,10 @@ export default function ProjectsPage() {
       console.error("Error creating project:", error);
       toast({
         title: "Error",
-        description: "Failed to create project. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to create project. Please try again.",
         variant: "destructive",
       });
     }

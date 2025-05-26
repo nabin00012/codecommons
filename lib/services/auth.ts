@@ -183,23 +183,33 @@ class AuthService {
       });
 
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: "Token verification failed" }));
+        let errorMessage = `Token verification failed: ${response.status} ${response.statusText}`;
+
+        try {
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+          } else {
+            const textError = await response.text();
+            errorMessage = textError || errorMessage;
+          }
+        } catch (e) {
+          console.error("Error parsing error response:", e);
+        }
+
         console.error("Token verification failed:", {
           status: response.status,
           statusText: response.statusText,
-          error: errorData,
+          error: errorMessage,
         });
+
         this.setToken(null); // Clear invalid token
         return null;
       }
 
       const data = await response.json();
-      console.log(
-        "Token verification response:",
-        JSON.stringify(data, null, 2)
-      ); // Pretty print the response
+      console.log("Token verification response:", data);
 
       // Validate response structure
       if (!data || typeof data !== "object") {
