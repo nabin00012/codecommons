@@ -52,8 +52,8 @@ export interface Answer {
 }
 
 class AssignmentService {
-  private getAuthHeader() {
-    const token = authService.getToken();
+  private async getAuthHeader() {
+    const token = await authService.getToken();
     if (!token) {
       throw new Error("No authentication token found");
     }
@@ -69,7 +69,7 @@ class AssignmentService {
         `${API_URL}/api/classrooms/${data.classroomId}/assignments`,
         {
           method: "POST",
-          headers: this.getAuthHeader(),
+          headers: await this.getAuthHeader(),
           body: JSON.stringify(data),
         }
       );
@@ -91,7 +91,7 @@ class AssignmentService {
       const url = `${API_URL}/api/classrooms/${classroomId}/assignments`;
       console.log("Fetching assignments from:", url);
 
-      const headers = this.getAuthHeader();
+      const headers = await this.getAuthHeader();
       console.log("Auth header:", headers);
 
       const response = await fetch(url, {
@@ -173,7 +173,7 @@ class AssignmentService {
       const response = await fetch(
         `${API_URL}/api/classrooms/${classroomId}/assignments/${id}`,
         {
-          headers: this.getAuthHeader(),
+          headers: await this.getAuthHeader(),
           credentials: "include",
         }
       );
@@ -247,7 +247,7 @@ class AssignmentService {
     try {
       const response = await fetch(`${API_URL}/assignments/${id}`, {
         method: "PATCH",
-        headers: this.getAuthHeader(),
+        headers: await this.getAuthHeader(),
         body: JSON.stringify(data),
       });
 
@@ -267,7 +267,7 @@ class AssignmentService {
     try {
       const response = await fetch(`${API_URL}/assignments/${id}`, {
         method: "DELETE",
-        headers: this.getAuthHeader(),
+        headers: await this.getAuthHeader(),
       });
 
       if (!response.ok) {
@@ -299,7 +299,7 @@ class AssignmentService {
       }
 
       // Get auth token
-      const token = authService.getToken();
+      const token = await authService.getToken();
       if (!token) {
         throw new Error("No authentication token found");
       }
@@ -384,7 +384,7 @@ class AssignmentService {
         `${API_URL}/submissions/${submissionId}/grade`,
         {
           method: "POST",
-          headers: this.getAuthHeader(),
+          headers: await this.getAuthHeader(),
           body: JSON.stringify(data),
         }
       );
@@ -406,7 +406,7 @@ class AssignmentService {
       const response = await fetch(
         `${API_URL}/assignments/${assignmentId}/submissions`,
         {
-          headers: this.getAuthHeader(),
+          headers: await this.getAuthHeader(),
         }
       );
 
@@ -431,7 +431,7 @@ class AssignmentService {
       `${API_URL}/classrooms/${classroomId}/assignments/${assignmentId}/questions`,
       {
         method: "POST",
-        headers: this.getAuthHeader(),
+        headers: await this.getAuthHeader(),
         body: JSON.stringify({ question }),
       }
     );
@@ -454,7 +454,7 @@ class AssignmentService {
         `${API_URL}/classrooms/${classroomId}/assignments/${assignmentId}/questions/${questionIdx}/answers`,
         {
           method: "POST",
-          headers: this.getAuthHeader(),
+          headers: await this.getAuthHeader(),
           body: JSON.stringify({
             answer,
             createdAt: new Date().toISOString(),

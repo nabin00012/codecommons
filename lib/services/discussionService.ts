@@ -30,8 +30,14 @@ export const discussionService = {
   // Get all discussions
   async getAllDiscussions(page = 1, limit = 10) {
     try {
+      const token = await authService.getToken();
       const response = await fetch(
-        `${API_URL}/api/discussions?page=${page}&limit=${limit}`
+        `${API_URL}/api/discussions?page=${page}&limit=${limit}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       if (!response.ok) {
         const error = await response.json();
@@ -129,6 +135,7 @@ export const discussionService = {
     limit = 10
   ) {
     try {
+      const token = await authService.getToken();
       const params = new URLSearchParams({
         query,
         page: page.toString(),
@@ -139,7 +146,12 @@ export const discussionService = {
       }
 
       const response = await fetch(
-        `${API_URL}/api/discussions/search?${params}`
+        `${API_URL}/api/discussions/search?${params}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       if (!response.ok) {
         const error = await response.json();
@@ -155,8 +167,14 @@ export const discussionService = {
   // Get comments for a discussion
   async getComments(discussionId: string) {
     try {
+      const token = await authService.getToken();
       const response = await fetch(
-        `${API_URL}/api/discussions/${discussionId}/comments`
+        `${API_URL}/api/discussions/${discussionId}/comments`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       if (!response.ok) {
         const error = await response.json();

@@ -58,8 +58,8 @@ export class ClassroomService {
     }
   }
 
-  private getAuthHeader() {
-    const token = authService.getToken();
+  private async getAuthHeader() {
+    const token = await authService.getToken();
     if (!token) {
       throw new Error("No authentication token found");
     }
@@ -74,7 +74,7 @@ export class ClassroomService {
       console.log("Fetching classrooms...");
       const response = await fetch(this.baseUrl, {
         method: "GET",
-        headers: this.getAuthHeader(),
+        headers: await this.getAuthHeader(),
         credentials: "include",
       });
 
@@ -117,7 +117,7 @@ export class ClassroomService {
       console.log("Creating classroom:", data);
       const response = await fetch(this.baseUrl, {
         method: "POST",
-        headers: this.getAuthHeader(),
+        headers: await this.getAuthHeader(),
         credentials: "include",
         body: JSON.stringify(data),
       });
@@ -152,7 +152,7 @@ export class ClassroomService {
       console.log("Fetching classroom:", id);
       const response = await fetch(`${this.baseUrl}/${id}`, {
         method: "GET",
-        headers: this.getAuthHeader(),
+        headers: await this.getAuthHeader(),
         credentials: "include",
       });
 
@@ -196,7 +196,7 @@ export class ClassroomService {
       console.log("Updating classroom:", id, data);
       const response = await fetch(`${this.baseUrl}/${id}`, {
         method: "PATCH",
-        headers: this.getAuthHeader(),
+        headers: await this.getAuthHeader(),
         credentials: "include",
         body: JSON.stringify(data),
       });
@@ -231,7 +231,7 @@ export class ClassroomService {
       console.log("Deleting classroom:", id);
       const response = await fetch(`${this.baseUrl}/${id}`, {
         method: "DELETE",
-        headers: this.getAuthHeader(),
+        headers: await this.getAuthHeader(),
         credentials: "include",
       });
 
@@ -256,7 +256,7 @@ export class ClassroomService {
       console.log("Enrolling student in classroom:", id);
       const response = await fetch(`${this.baseUrl}/${id}/enroll`, {
         method: "POST",
-        headers: this.getAuthHeader(),
+        headers: await this.getAuthHeader(),
         credentials: "include",
       });
 
@@ -290,7 +290,7 @@ export class ClassroomService {
       console.log("Joining classroom with code:", code);
       const response = await fetch(`${this.baseUrl}/join`, {
         method: "POST",
-        headers: this.getAuthHeader(),
+        headers: await this.getAuthHeader(),
         credentials: "include",
         body: JSON.stringify({ code }),
       });
@@ -366,7 +366,7 @@ export class ClassroomService {
       formData.append("file", file);
       formData.append("title", title);
 
-      const token = authService.getToken();
+      const token = await authService.getToken();
       if (!token) {
         throw new Error("No authentication token found");
       }
@@ -411,7 +411,7 @@ export class ClassroomService {
         `${this.baseUrl}/${classroomId}/materials/${materialId}/download`,
         {
           headers: {
-            Authorization: `Bearer ${authService.getToken()}`,
+            Authorization: `Bearer ${await authService.getToken()}`,
           },
         }
       );

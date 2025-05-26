@@ -32,20 +32,21 @@ export default function LoginPage() {
   // Check if user is already logged in
   useEffect(() => {
     const checkAuth = async () => {
-      const token = authService.getToken();
-      if (token) {
-        try {
+      try {
+        // Only attempt to verify token if we have one
+        const token = localStorage.getItem("token");
+        if (token) {
           const response = await authService.verifyToken(token);
-          if (response.user) {
+          if (response?.user) {
             // Only redirect if explicitly requested (e.g., from protected route)
             if (redirectTo) {
               router.replace(redirectTo);
             }
           }
-        } catch (error) {
-          console.error("Token verification failed:", error);
-          setToken(null);
         }
+      } catch (error) {
+        console.error("Token verification failed:", error);
+        setToken(null);
       }
     };
 
@@ -72,11 +73,16 @@ export default function LoginPage() {
 
       // Set the user in user context
       login({
-        id: response._id,
-        name: response.name,
-        email: response.email,
-        role: response.role,
-        avatar: "/placeholder.svg?height=40&width=40",
+        id: response.user._id,
+        name: response.user.name,
+        email: response.user.email,
+        role: response.user.role,
+        avatar: response.user.avatar || "/placeholder.svg?height=40&width=40",
+        preferences: response.user.preferences || {
+          theme: "light",
+          notifications: true,
+          language: "en",
+        },
       });
 
       toast({

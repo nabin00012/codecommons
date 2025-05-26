@@ -178,7 +178,10 @@ export default function CodeCornerPage() {
   const fetchQuestions = async () => {
     try {
       setIsLoading(true);
-      const token = authService.getToken();
+      const token = await authService.getToken();
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
       const response = await fetch("/api/codecorner/questions", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -214,7 +217,10 @@ export default function CodeCornerPage() {
 
   const fetchUserStats = async () => {
     try {
-      const token = authService.getToken();
+      const token = await authService.getToken();
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
       const response = await fetch("/api/codecorner/user/stats", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -239,7 +245,10 @@ export default function CodeCornerPage() {
 
   const handleCreateQuestion = async () => {
     try {
-      const token = authService.getToken();
+      const token = await authService.getToken();
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
       const response = await fetch("/api/codecorner/questions", {
         method: "POST",
         headers: {
@@ -282,7 +291,10 @@ export default function CodeCornerPage() {
     points?: number
   ) => {
     try {
-      const token = authService.getToken();
+      const token = await authService.getToken();
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
       const response = await fetch(
         `/api/codecorner/questions/${postId}/answers`,
         {
@@ -329,7 +341,7 @@ export default function CodeCornerPage() {
 
   const handleVote = async (questionId: string, type: "like" | "dislike") => {
     try {
-      const token = authService.getToken();
+      const token = await authService.getToken();
       if (!token) {
         toast({
           title: "Error",

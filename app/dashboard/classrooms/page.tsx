@@ -217,7 +217,7 @@ export default function ClassroomsListPage() {
   useEffect(() => {
     const loadClassrooms = async () => {
       try {
-        const token = authService.getToken();
+        const token = await authService.getToken();
         if (!token) {
           router.push("/login");
           return;
@@ -253,7 +253,7 @@ export default function ClassroomsListPage() {
 
     setIsJoining(true);
     try {
-      const token = authService.getToken();
+      const token = await authService.getToken();
       if (!token) {
         router.push("/login");
         return;
