@@ -37,6 +37,7 @@ interface LoginResponse {
   email: string;
   role: string;
   token: string;
+  avatar?: string;
   preferences?: {
     theme: string;
     notifications: boolean;
@@ -240,19 +241,11 @@ class AuthService {
       }
 
       const data = await response.json();
-      console.log("Token verification successful:", {
-        success: data.success,
-        user: data.user
-          ? {
-              id: data.user._id,
-              name: data.user.name,
-              email: data.user.email,
-              role: data.user.role,
-            }
-          : null,
-      });
+      console.log("Token verification response:", data);
 
-      if (!data.success || !data.user) {
+      // Handle both response formats
+      const userData = data.user || data;
+      if (!userData || !userData._id) {
         console.error("Invalid verification response:", data);
         return null;
       }
@@ -260,11 +253,11 @@ class AuthService {
       return {
         success: true,
         user: {
-          _id: data.user._id,
-          name: data.user.name,
-          email: data.user.email,
-          role: data.user.role,
-          preferences: data.user.preferences || {
+          _id: userData._id,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role,
+          preferences: userData.preferences || {
             theme: "system",
             notifications: true,
             language: "en",

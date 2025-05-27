@@ -84,37 +84,39 @@ export function UserProvider({ children }: { children: ReactNode }) {
         const response = await authService.verifyToken(token);
         verificationInProgress.current = false;
 
-        if (mounted && response?.user) {
-          const userData = {
-            id: response.user._id,
-            name: response.user.name,
-            email: response.user.email,
-            role: response.user.role,
-            avatar:
-              response.user.avatar || "/placeholder.svg?height=40&width=40",
-            preferences: response.user.preferences || defaultPreferences,
-          };
-          setUser(userData);
+        if (mounted) {
+          if (response?.user) {
+            const userData = {
+              id: response.user._id,
+              name: response.user.name,
+              email: response.user.email,
+              role: response.user.role as UserRole,
+              avatar:
+                response.user.avatar || "/placeholder.svg?height=40&width=40",
+              preferences: response.user.preferences || defaultPreferences,
+            };
+            setUser(userData);
 
-          // Set theme if user has a preference
-          if (
-            userData.preferences?.theme &&
-            userData.preferences.theme !== resolvedTheme
-          ) {
-            setTheme(userData.preferences.theme);
-          }
+            // Set theme if user has a preference
+            if (
+              userData.preferences?.theme &&
+              userData.preferences.theme !== resolvedTheme
+            ) {
+              setTheme(userData.preferences.theme);
+            }
 
-          // If on auth page and user is verified, redirect to dashboard
-          if (isAuthPage) {
-            router.replace("/dashboard");
-          }
-        } else if (mounted) {
-          setUser(null);
-          setToken(null);
-          setLoading(false);
-          // Only redirect to login if not on auth pages
-          if (!isAuthPage) {
-            router.replace("/login");
+            // If on auth page and user is verified, redirect to dashboard
+            if (isAuthPage) {
+              router.replace("/dashboard");
+            }
+          } else {
+            setUser(null);
+            setToken(null);
+            setLoading(false);
+            // Only redirect to login if not on auth pages
+            if (!isAuthPage) {
+              router.replace("/login");
+            }
           }
         }
       } catch (error) {
@@ -153,6 +155,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (userWithPreferences.preferences?.theme) {
       setTheme(userWithPreferences.preferences.theme);
     }
+
+    // Redirect to dashboard after successful login
+    router.replace("/dashboard");
   };
 
   const logout = () => {

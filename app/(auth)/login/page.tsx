@@ -9,7 +9,7 @@ import { Code } from "lucide-react";
 
 const LoginPage: React.FC = () => {
   const router = useRouter();
-  const { user, loading } = useUser();
+  const { user, loading, login } = useUser();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,8 +32,18 @@ const LoginPage: React.FC = () => {
     try {
       const response = await authService.login({ email, password });
       if (response?.success && response.user) {
-        // Token is already stored in localStorage by authService
-        router.replace("/dashboard");
+        // Login through user context
+        login({
+          id: response.user._id,
+          name: response.user.name,
+          email: response.user.email,
+          role: response.user.role as UserRole,
+          preferences: response.user.preferences || {
+            theme: "system",
+            notifications: true,
+            language: "en",
+          },
+        });
       } else {
         setError("Invalid login response");
       }
