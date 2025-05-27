@@ -31,16 +31,21 @@ const publicPaths = [
 ];
 
 export async function middleware(request: NextRequest) {
-  const path = request.nextUrl.pathname;
-
   // Debug logging
+  console.log("Middleware - Starting middleware execution");
+  console.log("Middleware - Request URL:", request.url);
+  console.log("Middleware - Request method:", request.method);
+  console.log(
+    "Middleware - Request headers:",
+    Object.fromEntries(request.headers.entries())
+  );
+
+  const path = request.nextUrl.pathname;
   console.log("Middleware - Current path:", path);
-  console.log("Middleware - Is root path:", path === "/");
-  console.log("Middleware - Is public path:", publicPaths.includes(path));
 
   // Always allow access to root path and public paths
   if (path === "/" || publicPaths.includes(path)) {
-    console.log("Middleware - Allowing access to public path");
+    console.log("Middleware - Allowing access to public path:", path);
     return NextResponse.next();
   }
 
@@ -68,16 +73,10 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
+// Update the matcher configuration to be more specific
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico|public).*)",
+    // Match all paths except static files and API routes
+    "/((?!_next/static|_next/image|favicon.ico|public).*)",
   ],
 };
