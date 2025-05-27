@@ -31,9 +31,11 @@ const LoginPage: React.FC = () => {
 
     try {
       const response = await authService.login({ email, password });
-      if (response?.token) {
-        localStorage.setItem("token", response.token);
+      if (response?.success && response.user) {
+        // Token is already stored in localStorage by authService
         router.replace("/dashboard");
+      } else {
+        setError("Invalid login response");
       }
     } catch (error) {
       console.error("Login failed:", error);

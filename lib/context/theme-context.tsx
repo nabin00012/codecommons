@@ -1,60 +1,42 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
-import { useTheme } from "next-themes";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { useTheme as useNextTheme } from "next-themes";
 
 interface ThemeContextType {
   theme: string;
   setTheme: (theme: string) => void;
-  isDark: boolean;
-  isLight: boolean;
-  isCosmic: boolean;
-  isSystem: boolean;
+  resolvedTheme: string | undefined;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useNextTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    console.log("ThemeProvider - Theme changed:", resolvedTheme);
-    if (resolvedTheme === "cosmic") {
-      document.body.classList.add("cosmic-mode");
-    } else {
-      document.body.classList.remove("cosmic-mode");
-    }
-  }, [resolvedTheme]);
-
+  // Prevent flash of wrong theme
   if (!mounted) {
     return null;
   }
 
   return (
     <ThemeContext.Provider
-      value={{
-        theme: theme || "system",
-        setTheme,
-        isDark: resolvedTheme === "dark",
-        isLight: resolvedTheme === "light",
-        isCosmic: resolvedTheme === "cosmic",
-        isSystem: theme === "system",
-      }}
+      value={{ theme: theme || "system", setTheme, resolvedTheme }}
     >
       {children}
     </ThemeContext.Provider>
   );
 }
 
-export function useThemeContext() {
+export function useTheme() {
   const context = useContext(ThemeContext);
   if (context === undefined) {
-    throw new Error("useThemeContext must be used within a ThemeProvider");
+    throw new Error("useTheme must be used within a ThemeProvider");
   }
   return context;
 }

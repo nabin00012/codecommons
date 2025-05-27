@@ -17,19 +17,30 @@ interface RegisterData {
 }
 
 interface AuthResponse {
-  token: string;
+  success: boolean;
   user: {
     _id: string;
     name: string;
     email: string;
-    role: UserRole;
-    avatar?: string;
-    theme?: string;
+    role: string;
     preferences?: {
       theme: string;
       notifications: boolean;
       language: string;
     };
+  };
+}
+
+interface LoginResponse {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  token: string;
+  preferences?: {
+    theme: string;
+    notifications: boolean;
+    language: string;
   };
 }
 
@@ -92,9 +103,12 @@ class AuthService {
     this.verificationPromise = null; // Clear any ongoing verification
   }
 
-  async login(credentials: LoginCredentials): Promise<AuthResponse> {
+  async login(credentials: {
+    email: string;
+    password: string;
+  }): Promise<AuthResponse | null> {
     try {
-      const response: Response = await fetch(`${API_URL}/api/auth/login`, {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -103,42 +117,57 @@ class AuthService {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Login failed");
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Login failed:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+          url: `${API_URL}/api/auth/login`,
+        });
+        return null;
       }
 
-      const data = await response.json();
-      console.log("Login response:", data);
+      const data = (await response.json()) as LoginResponse;
+      console.log("Login successful:", {
+        user: {
+          id: data._id,
+          name: data.name,
+          email: data.email,
+          role: data.role,
+        },
+      });
 
-      // Create a properly structured response
-      const authResponse: AuthResponse = {
-        token: data.token,
+      if (!data._id || !data.token) {
+        console.error("Invalid login response:", data);
+        return null;
+      }
+
+      // Store token in localStorage
+      this.setToken(data.token);
+
+      return {
+        success: true,
         user: {
           _id: data._id,
           name: data.name,
           email: data.email,
           role: data.role,
-          avatar: data.avatar,
           preferences: data.preferences || {
-            theme: "light",
+            theme: "system",
             notifications: true,
             language: "en",
           },
         },
       };
-
-      // Set token before returning
-      this.setToken(authResponse.token);
-      return authResponse;
-    } catch (error: unknown) {
-      console.error("Login error:", error);
-      throw error;
+    } catch (error) {
+      console.error("Error during login:", error);
+      return null;
     }
   }
 
-  async register(data: RegisterData): Promise<AuthResponse> {
+  async register(data: RegisterData): Promise<AuthResponse | null> {
     try {
-      const response: Response = await fetch(`${API_URL}/api/auth/register`, {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -147,26 +176,51 @@ class AuthService {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Registration failed");
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Registration failed:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+          url: `${API_URL}/api/auth/register`,
+        });
+        return null;
       }
 
-      const responseData: AuthResponse = await response.json();
+      const responseData = (await response.json()) as LoginResponse;
+      if (!responseData._id || !responseData.token) {
+        console.error("Invalid registration response:", responseData);
+        return null;
+      }
+
       this.setToken(responseData.token);
-      return responseData;
-    } catch (error: unknown) {
+
+      return {
+        success: true,
+        user: {
+          _id: responseData._id,
+          name: responseData.name,
+          email: responseData.email,
+          role: responseData.role,
+          preferences: responseData.preferences || {
+            theme: "system",
+            notifications: true,
+            language: "en",
+          },
+        },
+      };
+    } catch (error) {
       console.error("Registration error:", error);
-      throw error;
+      return null;
     }
   }
 
   async verifyToken(token: string | null): Promise<AuthResponse | null> {
-    try {
-      if (!token || typeof token !== "string") {
-        console.error("Invalid token format");
-        return null;
-      }
+    if (!token || typeof token !== "string") {
+      console.error("Invalid token format:", token);
+      return null;
+    }
 
+    try {
       const response = await fetch(`${API_URL}/api/auth/verify`, {
         method: "GET",
         headers: {
@@ -175,35 +229,50 @@ class AuthService {
       });
 
       if (!response.ok) {
-        console.error("Token verification failed:", response.status);
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Token verification failed:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+          url: `${API_URL}/api/auth/verify`,
+        });
         return null;
       }
 
       const data = await response.json();
-      console.log("Token verification response:", data);
+      console.log("Token verification successful:", {
+        success: data.success,
+        user: data.user
+          ? {
+              id: data.user._id,
+              name: data.user.name,
+              email: data.user.email,
+              role: data.user.role,
+            }
+          : null,
+      });
 
-      if (!data || !data.user) {
-        console.error("Invalid verification response");
+      if (!data.success || !data.user) {
+        console.error("Invalid verification response:", data);
         return null;
       }
 
       return {
-        token,
+        success: true,
         user: {
           _id: data.user._id,
           name: data.user.name,
           email: data.user.email,
           role: data.user.role,
-          avatar: data.user.avatar,
           preferences: data.user.preferences || {
-            theme: "light",
+            theme: "system",
             notifications: true,
             language: "en",
           },
         },
       };
     } catch (error) {
-      console.error("Token verification error:", error);
+      console.error("Error verifying token:", error);
       return null;
     }
   }
