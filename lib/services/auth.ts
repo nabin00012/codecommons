@@ -60,48 +60,58 @@ class AuthService {
   getToken(): string | null {
     try {
       // First try to get from memory
-      if (this.token) return this.token;
+      if (this.token) {
+        console.log("AuthService - Token found in memory");
+        return this.token;
+      }
 
       // Then try localStorage
       if (typeof window !== "undefined") {
         const storedToken = localStorage.getItem("token");
         if (storedToken) {
+          console.log("AuthService - Token found in localStorage");
           this.token = storedToken;
           return storedToken;
         }
       }
 
+      console.log("AuthService - No token found");
       return null;
     } catch (error) {
-      console.error("Error getting token:", error);
+      console.error("AuthService - Error getting token:", error);
       return null;
     }
   }
 
   setToken(token: string | null): void {
+    console.log("AuthService - Setting token:", !!token);
     this.token = token;
     if (token) {
       try {
         // Store in localStorage for client-side access
         if (typeof window !== "undefined") {
           localStorage.setItem("token", token);
+          console.log("AuthService - Token stored in localStorage");
         }
         // Set token in cookies with appropriate options
         document.cookie = `token=${token}; path=/; max-age=${
           30 * 24 * 60 * 60
         }; SameSite=Lax`;
+        console.log("AuthService - Token stored in cookies");
       } catch (error) {
-        console.error("Error setting token:", error);
+        console.error("AuthService - Error setting token:", error);
       }
     } else {
       try {
         // Remove from both localStorage and cookies
         if (typeof window !== "undefined") {
           localStorage.removeItem("token");
+          console.log("AuthService - Token removed from localStorage");
         }
         document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
+        console.log("AuthService - Token removed from cookies");
       } catch (error) {
-        console.error("Error removing token:", error);
+        console.error("AuthService - Error removing token:", error);
       }
     }
     this.lastVerificationTime = 0;
@@ -297,9 +307,19 @@ class AuthService {
   }
 
   logout(): void {
-    this.token = null;
-    this.lastVerificationTime = 0;
-    localStorage.removeItem("token");
+    console.log("AuthService - Logging out");
+    try {
+      this.token = null;
+      this.lastVerificationTime = 0;
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("token");
+        console.log("AuthService - Token removed from localStorage");
+      }
+      document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
+      console.log("AuthService - Token removed from cookies");
+    } catch (error) {
+      console.error("AuthService - Error during logout:", error);
+    }
   }
 }
 

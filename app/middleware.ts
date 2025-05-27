@@ -33,34 +33,38 @@ const publicPaths = [
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
-  // Always allow access to public paths
-  if (publicPaths.includes(path) || path === "/") {
+  // Debug logging
+  console.log("Middleware - Current path:", path);
+  console.log("Middleware - Is root path:", path === "/");
+  console.log("Middleware - Is public path:", publicPaths.includes(path));
+
+  // Always allow access to root path and public paths
+  if (path === "/" || publicPaths.includes(path)) {
+    console.log("Middleware - Allowing access to public path");
     return NextResponse.next();
   }
 
   // Check if the path is protected
   const isProtectedPath = protectedPaths.some((protectedPath) => {
-    // Convert protected path pattern to regex
     const pattern = protectedPath.replace("[id]", "[^/]+");
     return new RegExp(`^${pattern}`).test(path);
   });
 
-  if (isProtectedPath) {
-    // Check for token in cookies
-    const token = request.cookies.get("token")?.value;
+  console.log("Middleware - Is protected path:", isProtectedPath);
 
-    // If no token in cookies, check Authorization header
+  if (isProtectedPath) {
+    const token = request.cookies.get("token")?.value;
+    console.log("Middleware - Token exists:", !!token);
+
     if (!token) {
-      const authHeader = request.headers.get("Authorization");
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        // Redirect to login if no token is found
-        const loginUrl = new URL("/login", request.url);
-        loginUrl.searchParams.set("callbackUrl", path);
-        return NextResponse.redirect(loginUrl);
-      }
+      console.log("Middleware - Redirecting to login");
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("callbackUrl", path);
+      return NextResponse.redirect(loginUrl);
     }
   }
 
+  console.log("Middleware - Allowing access");
   return NextResponse.next();
 }
 
