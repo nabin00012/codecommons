@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/db";
+import { NextRequest, NextResponse } from "next/server";
+import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { authService } from "@/lib/services/auth";
+import { Answer } from "@/lib/models/answer";
 
 export async function POST(
   request: Request,
@@ -29,7 +30,7 @@ export async function POST(
     }
 
     console.log("Connecting to database...");
-    const db = await connectToDatabase();
+    const { db } = await connectToDatabase();
     const { id } = params;
 
     // Validate ID format

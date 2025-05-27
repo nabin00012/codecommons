@@ -16,3 +16,6 @@ export async function connectDB() {
     throw error;
   }
 }
+
+// Export connectToDatabase as an alias for connectDB for backward compatibility
+export const connectToDatabase = connectDB;

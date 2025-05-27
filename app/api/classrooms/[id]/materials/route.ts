@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authService } from "@/lib/services/auth";
-import { connectToDatabase } from "@/lib/db";
-import { Classroom } from "@/lib/models/classroom";
+import { connectToDatabase } from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
 import { writeFile } from "fs/promises";
 import { join } from "path";
 import { v4 as uuidv4 } from "uuid";
@@ -49,10 +49,13 @@ export async function POST(
     }
 
     // Connect to database
-    await connectToDatabase();
+    const { db } = await connectToDatabase();
 
     // Verify classroom exists and user is the teacher
-    const classroom = await Classroom.findById(params.id);
+    const classroom = await db.collection("classrooms").findOne({
+      _id: new ObjectId(params.id),
+    });
+
     if (!classroom) {
       return NextResponse.json(
         { success: false, message: "Classroom not found" },
@@ -95,8 +98,12 @@ export async function POST(
     };
 
     // Update classroom with new material
-    classroom.materials.push(material);
-    await classroom.save();
+    await db
+      .collection("classrooms")
+      .updateOne(
+        { _id: new ObjectId(params.id) },
+        { $push: { materials: material } }
+      );
 
     return NextResponse.json(
       { success: true, data: material },
