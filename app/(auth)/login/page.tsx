@@ -3,9 +3,10 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/lib/services/auth";
-import { useUser } from "@/lib/context/user-context";
+import { useUser, UserRole } from "@/lib/context/user-context";
 import { motion } from "framer-motion";
 import { Code } from "lucide-react";
+import Link from "next/link";
 
 const LoginPage: React.FC = () => {
   const router = useRouter();
@@ -180,6 +181,18 @@ const LoginPage: React.FC = () => {
             )}
           </motion.button>
         </motion.form>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          className="text-center text-sm text-muted-foreground mt-4"
+        >
+          Don't have an account?{" "}
+          <Link href="/signup" className="text-primary hover:underline">
+            Sign up
+          </Link>
+        </motion.p>
       </motion.div>
     </div>
   );

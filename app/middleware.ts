@@ -48,11 +48,15 @@ export async function middleware(request: NextRequest) {
     // Check for token in cookies
     const token = request.cookies.get("token")?.value;
 
+    // If no token in cookies, check Authorization header
     if (!token) {
-      // Redirect to login if no token is found
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("callbackUrl", path);
-      return NextResponse.redirect(loginUrl);
+      const authHeader = request.headers.get("Authorization");
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        // Redirect to login if no token is found
+        const loginUrl = new URL("/login", request.url);
+        loginUrl.searchParams.set("callbackUrl", path);
+        return NextResponse.redirect(loginUrl);
+      }
     }
   }
 

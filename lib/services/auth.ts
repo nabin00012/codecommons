@@ -97,8 +97,14 @@ class AuthService {
     this.token = token;
     if (token) {
       localStorage.setItem("token", token);
+      // Set token in cookies with appropriate options
+      document.cookie = `token=${token}; path=/; max-age=${
+        30 * 24 * 60 * 60
+      }; SameSite=Lax`;
     } else {
       localStorage.removeItem("token");
+      // Remove token from cookies
+      document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
     }
     this.lastVerificationTime = 0; // Reset verification time when token changes
     this.verificationPromise = null; // Clear any ongoing verification
