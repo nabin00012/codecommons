@@ -56,6 +56,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const { token, setToken } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
   const verificationInProgress = useRef(false);
+  const isAuthPage = pathname === "/login" || pathname === "/register";
 
   useEffect(() => {
     let mounted = true;
@@ -66,6 +67,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
           if (mounted) {
             setUser(null);
             setLoading(false);
+            // Only redirect to login if not on auth pages
+            if (!isAuthPage) {
+              router.replace("/login");
+            }
           }
           return;
         }
@@ -98,12 +103,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
           ) {
             setTheme(userData.preferences.theme);
           }
+
+          // If on auth page and user is verified, redirect to dashboard
+          if (isAuthPage) {
+            router.replace("/dashboard");
+          }
         } else if (mounted) {
           setUser(null);
           setToken(null);
           setLoading(false);
-          // Only redirect to login if not already on login page
-          if (pathname !== "/login") {
+          // Only redirect to login if not on auth pages
+          if (!isAuthPage) {
             router.replace("/login");
           }
         }
@@ -113,8 +123,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
           setUser(null);
           setToken(null);
           setLoading(false);
-          // Only redirect to login if not already on login page
-          if (pathname !== "/login") {
+          // Only redirect to login if not on auth pages
+          if (!isAuthPage) {
             router.replace("/login");
           }
         }
@@ -130,7 +140,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, [token, router, setToken, resolvedTheme, setTheme, pathname]);
+  }, [token, router, setToken, resolvedTheme, setTheme, pathname, isAuthPage]);
 
   const login = (userData: User) => {
     const userWithPreferences = {
