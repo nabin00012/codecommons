@@ -58,37 +58,54 @@ class AuthService {
   }
 
   getToken(): string | null {
-    // First try to get from memory
-    if (this.token) return this.token;
+    try {
+      // First try to get from memory
+      if (this.token) return this.token;
 
-    // Then try localStorage
-    if (typeof window !== "undefined") {
-      const storedToken = localStorage.getItem("token");
-      if (storedToken) {
-        this.token = storedToken;
-        return storedToken;
+      // Then try localStorage
+      if (typeof window !== "undefined") {
+        const storedToken = localStorage.getItem("token");
+        if (storedToken) {
+          this.token = storedToken;
+          return storedToken;
+        }
       }
-    }
 
-    return null;
+      return null;
+    } catch (error) {
+      console.error("Error getting token:", error);
+      return null;
+    }
   }
 
   setToken(token: string | null): void {
     this.token = token;
     if (token) {
-      // Store in localStorage for client-side access
-      localStorage.setItem("token", token);
-      // Set token in cookies with appropriate options
-      document.cookie = `token=${token}; path=/; max-age=${
-        30 * 24 * 60 * 60
-      }; SameSite=Lax`;
+      try {
+        // Store in localStorage for client-side access
+        if (typeof window !== "undefined") {
+          localStorage.setItem("token", token);
+        }
+        // Set token in cookies with appropriate options
+        document.cookie = `token=${token}; path=/; max-age=${
+          30 * 24 * 60 * 60
+        }; SameSite=Lax`;
+      } catch (error) {
+        console.error("Error setting token:", error);
+      }
     } else {
-      // Remove from both localStorage and cookies
-      localStorage.removeItem("token");
-      document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
+      try {
+        // Remove from both localStorage and cookies
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("token");
+        }
+        document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
+      } catch (error) {
+        console.error("Error removing token:", error);
+      }
     }
-    this.lastVerificationTime = 0; // Reset verification time when token changes
-    this.verificationPromise = null; // Clear any ongoing verification
+    this.lastVerificationTime = 0;
+    this.verificationPromise = null;
   }
 
   async login(credentials: {

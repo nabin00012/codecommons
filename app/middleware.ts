@@ -33,12 +33,8 @@ const publicPaths = [
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
-  // Allow access to public paths without any checks
-  if (
-    publicPaths.some(
-      (publicPath) => path === publicPath || path.startsWith(publicPath + "/")
-    )
-  ) {
+  // Always allow access to public paths
+  if (publicPaths.includes(path) || path === "/") {
     return NextResponse.next();
   }
 
