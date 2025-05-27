@@ -57,53 +57,34 @@ class AuthService {
     }
   }
 
-  async getToken(): Promise<string | null> {
-    if (!this.token) {
-      return null;
-    }
+  getToken(): string | null {
+    // First try to get from memory
+    if (this.token) return this.token;
 
-    // If there's an ongoing verification, wait for it
-    if (this.verificationPromise) {
-      const result = await this.verificationPromise;
-      if (!result) {
-        this.token = null;
-        localStorage.removeItem("token");
-        return null;
-      }
-      return this.token;
-    }
-
-    // Verify token if it's been more than 30 seconds since last verification
-    const now = Date.now();
-    if (now - this.lastVerificationTime > this.VERIFICATION_CACHE_TIME) {
-      this.verificationPromise = this.verifyToken(this.token);
-      try {
-        const response = await this.verificationPromise;
-        if (!response) {
-          this.token = null;
-          localStorage.removeItem("token");
-          return null;
-        }
-        this.lastVerificationTime = now;
-      } finally {
-        this.verificationPromise = null;
+    // Then try localStorage
+    if (typeof window !== "undefined") {
+      const storedToken = localStorage.getItem("token");
+      if (storedToken) {
+        this.token = storedToken;
+        return storedToken;
       }
     }
 
-    return this.token;
+    return null;
   }
 
   setToken(token: string | null): void {
     this.token = token;
     if (token) {
+      // Store in localStorage for client-side access
       localStorage.setItem("token", token);
       // Set token in cookies with appropriate options
       document.cookie = `token=${token}; path=/; max-age=${
         30 * 24 * 60 * 60
       }; SameSite=Lax`;
     } else {
+      // Remove from both localStorage and cookies
       localStorage.removeItem("token");
-      // Remove token from cookies
       document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
     }
     this.lastVerificationTime = 0; // Reset verification time when token changes

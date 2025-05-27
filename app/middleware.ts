@@ -27,13 +27,18 @@ const publicPaths = [
   "/signup",
   "/about",
   "/contact",
+  "/api/auth",
 ];
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
-  // Allow access to public paths
-  if (publicPaths.includes(path)) {
+  // Allow access to public paths without any checks
+  if (
+    publicPaths.some(
+      (publicPath) => path === publicPath || path.startsWith(publicPath + "/")
+    )
+  ) {
     return NextResponse.next();
   }
 
