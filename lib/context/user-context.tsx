@@ -12,6 +12,7 @@ import { authService } from "@/lib/services/auth";
 import { useAuth } from "./AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
+import { useToast } from "@/components/ui/use-toast";
 
 export type UserRole = "student" | "teacher" | "user" | "admin";
 
@@ -22,6 +23,19 @@ export interface User {
   role: UserRole;
   avatar?: string;
   preferences: {
+    theme: string;
+    notifications: boolean;
+    language: string;
+  };
+}
+
+interface ApiUser {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  avatar?: string;
+  preferences?: {
     theme: string;
     notifications: boolean;
     language: string;
@@ -55,8 +69,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { token, setToken } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
+  const { toast } = useToast();
   const verificationInProgress = useRef(false);
   const isAuthPage = pathname === "/login" || pathname === "/register";
+  const initialThemeSet = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -67,15 +83,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
           if (mounted) {
             setUser(null);
             setLoading(false);
-            // Only redirect to login if not on auth pages
-            if (!isAuthPage) {
+            if (
+              !isAuthPage &&
+              pathname !== "/" &&
+              !pathname.startsWith("/public")
+            ) {
               router.replace("/login");
             }
           }
           return;
         }
 
-        // Prevent multiple simultaneous verifications
         if (verificationInProgress.current) {
           return;
         }
@@ -86,26 +104,22 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
         if (mounted) {
           if (response?.user) {
-            const userData = {
-              id: response.user._id,
-              name: response.user.name,
-              email: response.user.email,
-              role: response.user.role as UserRole,
-              avatar:
-                response.user.avatar || "/placeholder.svg?height=40&width=40",
-              preferences: response.user.preferences || defaultPreferences,
+            const apiUser = response.user as ApiUser;
+            const userData: User = {
+              id: apiUser._id,
+              name: apiUser.name,
+              email: apiUser.email,
+              role: apiUser.role as UserRole,
+              avatar: apiUser.avatar || "/placeholder.svg?height=40&width=40",
+              preferences: apiUser.preferences || defaultPreferences,
             };
             setUser(userData);
 
-            // Set theme if user has a preference
-            if (
-              userData.preferences?.theme &&
-              userData.preferences.theme !== resolvedTheme
-            ) {
+            if (!initialThemeSet.current && userData.preferences?.theme) {
+              initialThemeSet.current = true;
               setTheme(userData.preferences.theme);
             }
 
-            // If on auth page and user is verified, redirect to dashboard
             if (isAuthPage) {
               router.replace("/dashboard");
             }
@@ -113,8 +127,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
             setUser(null);
             setToken(null);
             setLoading(false);
-            // Only redirect to login if not on auth pages
-            if (!isAuthPage) {
+            toast({
+              title: "Session expired",
+              description: "Please log in again to continue.",
+              variant: "destructive",
+            });
+            if (
+              !isAuthPage &&
+              pathname !== "/" &&
+              !pathname.startsWith("/public")
+            ) {
               router.replace("/login");
             }
           }
@@ -125,8 +147,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
           setUser(null);
           setToken(null);
           setLoading(false);
-          // Only redirect to login if not on auth pages
-          if (!isAuthPage) {
+          toast({
+            title: "Authentication error",
+            description: "Please log in again to continue.",
+            variant: "destructive",
+          });
+          if (
+            !isAuthPage &&
+            pathname !== "/" &&
+            !pathname.startsWith("/public")
+          ) {
             router.replace("/login");
           }
         }
@@ -142,7 +172,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, [token, router, setToken, resolvedTheme, setTheme, pathname, isAuthPage]);
+  }, [token, router, setToken, pathname, isAuthPage, setTheme, toast]);
 
   const login = (userData: User) => {
     const userWithPreferences = {
@@ -151,19 +181,20 @@ export function UserProvider({ children }: { children: ReactNode }) {
     };
     setUser(userWithPreferences);
 
-    // Set theme if user has a preference
     if (userWithPreferences.preferences?.theme) {
       setTheme(userWithPreferences.preferences.theme);
     }
 
-    // Redirect to dashboard after successful login
     router.replace("/dashboard");
   };
 
   const logout = () => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem("token");
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out.",
+    });
     router.replace("/login");
   };
 
@@ -171,31 +202,42 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (user) {
       const updatedUser = { ...user, role: newRole };
       setUser(updatedUser);
+      toast({
+        title: "Role updated",
+        description: `Your role has been updated to ${newRole}.`,
+      });
     }
   };
 
   const updateUser = (updates: Partial<User>) => {
-    setUser((prev) => (prev ? { ...prev, ...updates } : null));
+    setUser((prev) => {
+      if (!prev) return null;
+      const updatedUser = { ...prev, ...updates };
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated successfully.",
+      });
+      return updatedUser;
+    });
   };
 
   const updatePreferences = (preferences: Partial<User["preferences"]>) => {
-    setUser((prev) =>
-      prev
-        ? {
-            ...prev,
-            preferences: { ...prev.preferences, ...preferences },
-          }
-        : null
-    );
+    setUser((prev) => {
+      if (!prev) return null;
+      const updatedUser = {
+        ...prev,
+        preferences: { ...prev.preferences, ...preferences },
+      };
+      if (preferences.theme) {
+        setTheme(preferences.theme);
+      }
+      toast({
+        title: "Preferences updated",
+        description: "Your preferences have been updated successfully.",
+      });
+      return updatedUser;
+    });
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
 
   return (
     <UserContext.Provider

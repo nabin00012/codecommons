@@ -251,18 +251,13 @@ export const verifyToken = async (
       },
     });
   } catch (error) {
-    console.error("Token verification error:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "An error occurred";
-    res.status(500).json({ message: errorMessage });
+    next(error);
   }
 };
 
-/**
- * @route   GET /api/auth/me
- * @desc    Get current user
- * @access  Private
- */
+// @desc    Get current user
+// @route   GET /api/auth/me
+// @access  Private
 export const getCurrentUser = async (
   req: Request,
   res: Response,
@@ -274,15 +269,15 @@ export const getCurrentUser = async (
       return;
     }
 
-    const user = await User.findById(req.user.id).select("-password");
-    if (!user) {
-      res.status(404).json({ message: "User not found" });
-      return;
-    }
-
-    res.json(user);
+    res.json({
+      user: {
+        _id: req.user._id,
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role,
+      },
+    });
   } catch (error) {
-    console.error("Error in getCurrentUser:", error);
-    res.status(500).json({ message: "Server error" });
+    next(error);
   }
 };

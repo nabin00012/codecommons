@@ -31,21 +31,15 @@ const publicPaths = [
 ];
 
 export async function middleware(request: NextRequest) {
-  // Debug logging
-  console.log("Middleware - Starting middleware execution");
-  console.log("Middleware - Request URL:", request.url);
-  console.log("Middleware - Request method:", request.method);
-  console.log(
-    "Middleware - Request headers:",
-    Object.fromEntries(request.headers.entries())
-  );
-
   const path = request.nextUrl.pathname;
-  console.log("Middleware - Current path:", path);
 
-  // Always allow access to root path and public paths
-  if (path === "/" || publicPaths.includes(path)) {
-    console.log("Middleware - Allowing access to public path:", path);
+  // Always allow access to static files and API routes
+  if (
+    path.startsWith("/_next") ||
+    path.startsWith("/static") ||
+    path.startsWith("/api") ||
+    path.includes(".")
+  ) {
     return NextResponse.next();
   }
 
@@ -55,21 +49,25 @@ export async function middleware(request: NextRequest) {
     return new RegExp(`^${pattern}`).test(path);
   });
 
-  console.log("Middleware - Is protected path:", isProtectedPath);
+  // Check if the path is public
+  const isPublicPath = publicPaths.includes(path);
 
-  if (isProtectedPath) {
-    const token = request.cookies.get("token")?.value;
-    console.log("Middleware - Token exists:", !!token);
+  // Get the token from cookies
+  const token = request.cookies.get("token")?.value;
 
-    if (!token) {
-      console.log("Middleware - Redirecting to login");
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("callbackUrl", path);
-      return NextResponse.redirect(loginUrl);
-    }
+  // Always allow access to home page and auth pages
+  if (path === "/" || isPublicPath) {
+    return NextResponse.next();
   }
 
-  console.log("Middleware - Allowing access");
+  // If path is protected and no token exists, redirect to login
+  if (isProtectedPath && !token) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("callbackUrl", path);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // Allow access to all other paths
   return NextResponse.next();
 }
 

@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -16,7 +15,7 @@ import {
 } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/components/ui/use-toast";
-import { useUser } from "@/lib/context/user-context";
+import { useUser, UserRole } from "@/lib/context/user-context";
 import { useAuth } from "@/lib/context/AuthContext";
 import { Code, ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
 import { authService } from "@/lib/services/auth";
@@ -27,6 +26,12 @@ interface FormErrors {
   password: string;
   confirmPassword: string;
 }
+
+const defaultPreferences = {
+  theme: "system",
+  notifications: true,
+  language: "en",
+};
 
 export default function SignupPage() {
   const router = useRouter();
@@ -40,7 +45,7 @@ export default function SignupPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "student",
+    role: "student" as UserRole,
   });
 
   const [errors, setErrors] = useState<FormErrors>({
@@ -67,7 +72,7 @@ export default function SignupPage() {
   };
 
   const handleRoleChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, role: value }));
+    setFormData((prev) => ({ ...prev, role: value as UserRole }));
   };
 
   const validateForm = () => {
@@ -119,19 +124,36 @@ export default function SignupPage() {
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        role: formData.role as "student" | "teacher",
+        role: formData.role,
       });
+
+      if (!response) {
+        throw new Error("No response from server");
+      }
+
+      if (!response.success) {
+        throw new Error("Registration failed");
+      }
+
+      if (!response.token) {
+        throw new Error("No token received");
+      }
+
+      if (!response.user) {
+        throw new Error("No user data received");
+      }
 
       // Store the token using auth context
       setToken(response.token);
 
       // Login the user with the response data
       login({
-        id: response._id,
-        name: response.name,
-        email: response.email,
-        role: response.role,
+        id: response.user._id,
+        name: response.user.name,
+        email: response.user.email,
+        role: response.user.role as UserRole,
         avatar: "/placeholder.svg?height=40&width=40",
+        preferences: response.user.preferences || defaultPreferences,
       });
 
       toast({
@@ -200,18 +222,17 @@ export default function SignupPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="name">Name</Label>
                 <Input
                   id="name"
                   name="name"
-                  placeholder="John Doe"
                   value={formData.name}
                   onChange={handleChange}
-                  disabled={isLoading}
-                  className={errors.name ? "border-red-500" : ""}
+                  placeholder="Enter your name"
+                  required
                 />
                 {errors.name && (
-                  <p className="text-xs text-red-500">{errors.name}</p>
+                  <p className="text-sm text-destructive">{errors.name}</p>
                 )}
               </div>
 
@@ -221,14 +242,13 @@ export default function SignupPage() {
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="you@jainuniversity.ac.in"
                   value={formData.email}
                   onChange={handleChange}
-                  disabled={isLoading}
-                  className={errors.email ? "border-red-500" : ""}
+                  placeholder="Enter your email"
+                  required
                 />
                 {errors.email && (
-                  <p className="text-xs text-red-500">{errors.email}</p>
+                  <p className="text-sm text-destructive">{errors.email}</p>
                 )}
               </div>
 
@@ -241,31 +261,23 @@ export default function SignupPage() {
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={handleChange}
-                    disabled={isLoading}
-                    className={
-                      errors.password ? "border-red-500 pr-10" : "pr-10"
-                    }
+                    placeholder="Enter your password"
+                    required
                   />
-                  <Button
+                  <button
                     type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-0 h-full px-3 py-2"
                     onClick={() => setShowPassword(!showPassword)}
-                    disabled={isLoading}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
                     ) : (
                       <Eye className="h-4 w-4" />
                     )}
-                    <span className="sr-only">
-                      {showPassword ? "Hide password" : "Show password"}
-                    </span>
-                  </Button>
+                  </button>
                 </div>
                 {errors.password && (
-                  <p className="text-xs text-red-500">{errors.password}</p>
+                  <p className="text-sm text-destructive">{errors.password}</p>
                 )}
               </div>
 
@@ -278,91 +290,69 @@ export default function SignupPage() {
                     type={showConfirmPassword ? "text" : "password"}
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    disabled={isLoading}
-                    className={
-                      errors.confirmPassword ? "border-red-500 pr-10" : "pr-10"
-                    }
+                    placeholder="Confirm your password"
+                    required
                   />
-                  <Button
+                  <button
                     type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-0 h-full px-3 py-2"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    disabled={isLoading}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
                     {showConfirmPassword ? (
                       <EyeOff className="h-4 w-4" />
                     ) : (
                       <Eye className="h-4 w-4" />
                     )}
-                    <span className="sr-only">
-                      {showConfirmPassword ? "Hide password" : "Show password"}
-                    </span>
-                  </Button>
+                  </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p className="text-xs text-red-500">
+                  <p className="text-sm text-destructive">
                     {errors.confirmPassword}
                   </p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label>I am a</Label>
+                <Label>Role</Label>
                 <RadioGroup
                   value={formData.role}
                   onValueChange={handleRoleChange}
-                  className="flex gap-4"
+                  className="flex space-x-4"
                 >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem
-                      value="student"
-                      id="student"
-                      disabled={isLoading}
-                    />
-                    <Label htmlFor="student" className="cursor-pointer">
-                      Student
-                    </Label>
+                    <RadioGroupItem value="student" id="student" />
+                    <Label htmlFor="student">Student</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem
-                      value="teacher"
-                      id="teacher"
-                      disabled={isLoading}
-                    />
-                    <Label htmlFor="teacher" className="cursor-pointer">
-                      Teacher
-                    </Label>
+                    <RadioGroupItem value="teacher" id="teacher" />
+                    <Label htmlFor="teacher">Teacher</Label>
                   </div>
                 </RadioGroup>
               </div>
             </CardContent>
-            <CardFooter>
-              <Button
-                type="submit"
-                className="w-full cosmic-button"
-                disabled={isLoading}
-              >
+            <CardFooter className="flex flex-col space-y-4">
+              <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Creating account...
                   </>
                 ) : (
-                  "Create Account"
+                  "Create account"
                 )}
               </Button>
+              <div className="text-sm text-center text-muted-foreground">
+                Already have an account?{" "}
+                <Link
+                  href="/login"
+                  className="text-primary hover:text-primary/90 underline-offset-4 hover:underline"
+                >
+                  Sign in
+                </Link>
+              </div>
             </CardFooter>
           </form>
         </Card>
-
-        <p className="text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
-          <Link href="/login" className="text-primary hover:underline">
-            Sign in
-          </Link>
-        </p>
       </div>
     </div>
   );

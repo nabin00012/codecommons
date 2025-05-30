@@ -2,18 +2,8 @@ import type React from "react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "next-themes";
-import { AuthProvider } from "@/lib/context/AuthContext";
-import { UserProvider } from "@/lib/context/user-context";
-import { SettingsProvider } from "@/lib/context/settings-context";
-import { NotificationProvider } from "@/lib/context/notification-context";
-import { ProjectProvider } from "@/lib/context/project-context";
-import { ChatProvider } from "@/lib/context/chat-context";
-import { HelpProvider } from "@/lib/context/help-context";
-import { ThemeProvider as CustomThemeProvider } from "@/lib/context/theme-context";
+import { Providers } from "./providers";
 import { Toaster } from "@/components/ui/toaster";
-import { CosmicMode } from "@/components/cosmic-mode";
-import { SessionProvider } from "@/components/providers/session-provider";
 import "@/lib/monaco-config";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -30,44 +20,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <ThemeProvider
-          attribute="data-theme"
-          defaultTheme="system"
-          enableSystem
-          themes={["light", "dark", "cosmic"]}
-          value={{
-            light: "light",
-            dark: "dark",
-            cosmic: "cosmic",
-          }}
-          forcedTheme={undefined}
-          disableTransitionOnChange={false}
-        >
-          <CustomThemeProvider>
-            <AuthProvider>
-              <UserProvider>
-                <SettingsProvider>
-                  <NotificationProvider>
-                    <ProjectProvider>
-                      <ChatProvider>
-                        <HelpProvider>
-                          <CosmicMode>
-                            {children}
-                            <Toaster />
-                          </CosmicMode>
-                        </HelpProvider>
-                      </ChatProvider>
-                    </ProjectProvider>
-                  </NotificationProvider>
-                </SettingsProvider>
-              </UserProvider>
-            </AuthProvider>
-          </CustomThemeProvider>
-        </ThemeProvider>
+      <body
+        className={`${inter.className} min-h-screen bg-background antialiased`}
+      >
+        <Providers>
+          <main className="relative flex min-h-screen flex-col overflow-x-hidden">
+            <div className="flex-1">{children}</div>
+          </main>
+          <Toaster />
+        </Providers>
       </body>
     </html>
   );
 }
-
-import "./globals.css";

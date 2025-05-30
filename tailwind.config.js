@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: ["class"],
+  darkMode: ["class", "[data-theme='dark']", "[data-theme='cosmic']"],
   content: [
     "./pages/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
@@ -10,8 +10,18 @@ module.exports = {
   theme: {
     container: {
       center: true,
-      padding: "2rem",
+      padding: {
+        DEFAULT: "1rem",
+        sm: "2rem",
+        lg: "4rem",
+        xl: "5rem",
+        "2xl": "6rem",
+      },
       screens: {
+        sm: "640px",
+        md: "768px",
+        lg: "1024px",
+        xl: "1280px",
         "2xl": "1400px",
       },
     },
@@ -65,10 +75,23 @@ module.exports = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: 0 },
         },
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        float: "float 6s ease-in-out infinite",
+      },
+      spacing: {
+        "128": "32rem",
+        "144": "36rem",
+      },
+      maxWidth: {
+        "8xl": "88rem",
+        "9xl": "96rem",
       },
     },
   },

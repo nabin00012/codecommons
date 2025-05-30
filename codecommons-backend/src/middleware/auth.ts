@@ -13,77 +13,57 @@ declare global {
   }
 }
 
-interface AuthRequest extends Request {
+export interface AuthRequest extends Request {
   user?: any;
 }
 
-export const protect: Middleware = async (
-  req: Request,
+export const protect = async (
+  req: AuthRequest,
   res: Response,
   next: NextFunction
-) => {
-  let token;
-  console.log("Protect middleware called");
-  console.log("Headers:", req.headers);
-  console.log("Cookies:", req.cookies);
-
-  // Check for token in cookies first
-  if (req.cookies && req.cookies.token) {
-    token = req.cookies.token;
-    console.log("Token found in cookies:", token.substring(0, 10) + "...");
-  }
-  // Then check for token in headers
-  else if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
-    console.log("Token found in header:", token.substring(0, 10) + "...");
-  }
-
-  if (!token) {
-    console.log("No token found in request");
-    next({ status: 401, message: "Not authorized, no token" });
-    return;
-  }
-
+): Promise<void> => {
   try {
-    // Verify token
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || "your-secret-key"
-    ) as CustomJwtPayload;
-    console.log("Token decoded:", decoded);
+    let token;
 
-    // Get user from token
-    const user = await User.findById(decoded.id).select("-password");
-    console.log("User found:", user ? user._id : "No user found");
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
+      token = req.headers.authorization.split(" ")[1];
+    }
 
-    if (!user) {
-      console.log("No user found for token");
-      next({ status: 401, message: "Not authorized, user not found" });
+    if (!token) {
+      res.status(401).json({ message: "Not authorized" });
       return;
     }
 
-    req.user = user;
-    console.log("User attached to request:", req.user._id);
-    next();
+    try {
+      const decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET || "your-secret-key"
+      ) as { id: string };
+
+      req.user = await User.findById(decoded.id).select("-password");
+      next();
+    } catch (error) {
+      res.status(401).json({ message: "Not authorized" });
+      return;
+    }
   } catch (error) {
-    console.error("Token verification error:", error);
-    next({ status: 401, message: "Not authorized, token failed" });
+    next(error);
   }
 };
 
 // Middleware to check if user is a teacher
-export const teacherOnly: Middleware = (
-  req: Request,
+export const teacherOnly = async (
+  req: AuthRequest,
   res: Response,
   next: NextFunction
-) => {
+): Promise<void> => {
   if (req.user && req.user.role === "teacher") {
     next();
   } else {
-    next({ status: 403, message: "Not authorized as a teacher" });
+    res.status(403).json({ message: "Not authorized as teacher" });
   }
 };
 

@@ -43,9 +43,11 @@ const corsOptions = {
     "X-Requested-With",
     "Accept",
     "Origin",
+    "Access-Control-Allow-Origin",
+    "Access-Control-Allow-Headers",
+    "Access-Control-Allow-Methods",
   ],
-  exposedHeaders: ["Content-Range", "X-Content-Range"],
-  maxAge: 86400, // 24 hours
+  exposedHeaders: ["Authorization"],
 };
 
 // Middleware

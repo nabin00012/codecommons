@@ -1,6 +1,4 @@
 import { UserRole } from "@/lib/context/user-context";
-import { getToken } from "next-auth/jwt";
-import { NextRequest } from "next/server";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
 
@@ -29,6 +27,7 @@ interface AuthResponse {
       language: string;
     };
   };
+  token?: string;
 }
 
 interface LoginResponse {
@@ -47,9 +46,6 @@ interface LoginResponse {
 
 class AuthService {
   private token: string | null = null;
-  private verificationPromise: Promise<AuthResponse | null> | null = null;
-  private lastVerificationTime: number = 0;
-  private readonly VERIFICATION_CACHE_TIME = 30000; // 30 seconds
 
   constructor() {
     if (typeof window !== "undefined") {
@@ -59,23 +55,18 @@ class AuthService {
 
   getToken(): string | null {
     try {
-      // First try to get from memory
       if (this.token) {
-        console.log("AuthService - Token found in memory");
         return this.token;
       }
 
-      // Then try localStorage
       if (typeof window !== "undefined") {
         const storedToken = localStorage.getItem("token");
         if (storedToken) {
-          console.log("AuthService - Token found in localStorage");
           this.token = storedToken;
           return storedToken;
         }
       }
 
-      console.log("AuthService - No token found");
       return null;
     } catch (error) {
       console.error("AuthService - Error getting token:", error);
@@ -84,44 +75,27 @@ class AuthService {
   }
 
   setToken(token: string | null): void {
-    console.log("AuthService - Setting token:", !!token);
     this.token = token;
     if (token) {
       try {
-        // Store in localStorage for client-side access
         if (typeof window !== "undefined") {
           localStorage.setItem("token", token);
-          console.log("AuthService - Token stored in localStorage");
         }
-        // Set token in cookies with appropriate options
-        document.cookie = `token=${token}; path=/; max-age=${
-          30 * 24 * 60 * 60
-        }; SameSite=Lax`;
-        console.log("AuthService - Token stored in cookies");
       } catch (error) {
         console.error("AuthService - Error setting token:", error);
       }
     } else {
       try {
-        // Remove from both localStorage and cookies
         if (typeof window !== "undefined") {
           localStorage.removeItem("token");
-          console.log("AuthService - Token removed from localStorage");
         }
-        document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
-        console.log("AuthService - Token removed from cookies");
       } catch (error) {
         console.error("AuthService - Error removing token:", error);
       }
     }
-    this.lastVerificationTime = 0;
-    this.verificationPromise = null;
   }
 
-  async login(credentials: {
-    email: string;
-    password: string;
-  }): Promise<AuthResponse | null> {
+  async login(credentials: LoginCredentials): Promise<AuthResponse | null> {
     try {
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
@@ -129,35 +103,20 @@ class AuthService {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(credentials),
+        credentials: "include",
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("Login failed:", {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorData,
-          url: `${API_URL}/api/auth/login`,
-        });
-        return null;
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Login failed");
       }
 
       const data = (await response.json()) as LoginResponse;
-      console.log("Login successful:", {
-        user: {
-          id: data._id,
-          name: data.name,
-          email: data.email,
-          role: data.role,
-        },
-      });
 
       if (!data._id || !data.token) {
-        console.error("Invalid login response:", data);
-        return null;
+        throw new Error("Invalid login response");
       }
 
-      // Store token in localStorage
       this.setToken(data.token);
 
       return {
@@ -173,10 +132,12 @@ class AuthService {
             language: "en",
           },
         },
+        token: data.token,
       };
     } catch (error) {
-      console.error("Error during login:", error);
-      return null;
+      console.error("Login error:", error);
+      this.setToken(null);
+      throw error;
     }
   }
 
@@ -188,23 +149,18 @@ class AuthService {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
+        credentials: "include",
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("Registration failed:", {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorData,
-          url: `${API_URL}/api/auth/register`,
-        });
-        return null;
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Registration failed");
       }
 
       const responseData = (await response.json()) as LoginResponse;
+
       if (!responseData._id || !responseData.token) {
-        console.error("Invalid registration response:", responseData);
-        return null;
+        throw new Error("Invalid registration response");
       }
 
       this.setToken(responseData.token);
@@ -222,18 +178,17 @@ class AuthService {
             language: "en",
           },
         },
+        token: responseData.token,
       };
     } catch (error) {
       console.error("Registration error:", error);
-      return null;
+      this.setToken(null);
+      throw error;
     }
   }
 
   async verifyToken(token: string | null): Promise<AuthResponse | null> {
-    if (!token || typeof token !== "string") {
-      console.error("Invalid token format:", token);
-      return null;
-    }
+    if (!token) return null;
 
     try {
       const response = await fetch(`${API_URL}/api/auth/verify`, {
@@ -241,85 +196,24 @@ class AuthService {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("Token verification failed:", {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorData,
-          url: `${API_URL}/api/auth/verify`,
-        });
-        return null;
+        throw new Error("Token verification failed");
       }
 
       const data = await response.json();
-      console.log("Token verification response:", data);
-
-      // Handle both response formats
-      const userData = data.user || data;
-      if (!userData || !userData._id) {
-        console.error("Invalid verification response:", data);
-        return null;
-      }
-
-      return {
-        success: true,
-        user: {
-          _id: userData._id,
-          name: userData.name,
-          email: userData.email,
-          role: userData.role,
-          preferences: userData.preferences || {
-            theme: "system",
-            notifications: true,
-            language: "en",
-          },
-        },
-      };
+      return data;
     } catch (error) {
-      console.error("Error verifying token:", error);
+      console.error("Token verification error:", error);
+      this.setToken(null);
       return null;
     }
   }
 
-  async updateTheme(theme: string): Promise<void> {
-    try {
-      const token = await this.getToken();
-      const response: Response = await fetch(`${API_URL}/api/users/theme`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ theme }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to update theme");
-      }
-    } catch (error: unknown) {
-      console.error("Theme update error:", error);
-      throw error;
-    }
-  }
-
   logout(): void {
-    console.log("AuthService - Logging out");
-    try {
-      this.token = null;
-      this.lastVerificationTime = 0;
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("token");
-        console.log("AuthService - Token removed from localStorage");
-      }
-      document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
-      console.log("AuthService - Token removed from cookies");
-    } catch (error) {
-      console.error("AuthService - Error during logout:", error);
-    }
+    this.setToken(null);
   }
 }
 

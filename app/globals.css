@@ -26,7 +26,7 @@
     --radius: 0.5rem;
   }
 
-  .dark {
+  [data-theme="dark"] {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
     --card: 240 10% 3.9%;
@@ -76,11 +76,21 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
+/* Theme transition */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
 /* Cosmic mode styles */
+[data-theme="cosmic"] {
+  @apply relative;
+}
+
 [data-theme="cosmic"] .cosmic-text {
   @apply relative text-foreground;
 }
@@ -98,7 +108,7 @@
 }
 
 [data-theme="cosmic"] .cosmic-card {
-  @apply border-primary/20 bg-gradient-to-b from-background to-background/95;
+  @apply border-primary/20 bg-gradient-to-b from-background to-background/95 backdrop-blur-sm;
   box-shadow: 0 0 20px -10px hsl(var(--primary) / 0.2);
 }
 
@@ -113,18 +123,6 @@
 
 [data-theme="cosmic"] .cosmic-float {
   animation: float 6s ease-in-out infinite;
-}
-
-@keyframes float {
-  0% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-  100% {
-    transform: translateY(0px);
-  }
 }
 
 /* Cosmic card effect */
@@ -166,26 +164,16 @@
   }
 }
 
-.cosmic-mode .cosmic-card {
-  backdrop-filter: blur(8px);
-  background: rgba(0, 0, 0, 0.2);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.cosmic-mode .cosmic-card:hover {
-  box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.3);
-}
-
 /* Add this if you don't already have it */
 :root {
   --primary-rgb: 124, 58, 237;
 }
 
-.dark {
+[data-theme="dark"] {
   --primary-rgb: 167, 139, 250;
 }
 
-.cosmic {
+[data-theme="cosmic"] {
   --primary-rgb: 167, 139, 250;
 }
 

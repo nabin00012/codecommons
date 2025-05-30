@@ -2,38 +2,33 @@ import express from "express";
 import {
   register,
   login,
-  forgotPassword,
-  resetPassword,
   verifyToken,
   getCurrentUser,
 } from "../controllers/authController";
-import {
-  registerValidation,
-  loginValidation,
-  forgotPasswordValidation,
-  resetPasswordValidation,
-  validate,
-} from "../middleware/validation";
-import { protect } from "../middleware/auth";
+import { protect, AuthRequest } from "../middleware/auth";
+import { Response, NextFunction } from "express";
 
 const router = express.Router();
 
-// Apply validation middleware to routes
-router.post("/register", registerValidation, validate, register);
-router.post("/login", loginValidation, validate, login);
-router.get("/verify", protect, verifyToken);
-router.get("/me", protect, getCurrentUser);
-router.post(
-  "/forgot-password",
-  forgotPasswordValidation,
-  validate,
-  forgotPassword
+// Public routes
+router.post("/register", register);
+router.post("/login", login);
+
+// Protected routes
+router.get(
+  "/verify",
+  protect,
+  (req: AuthRequest, res: Response, next: NextFunction) => {
+    verifyToken(req, res, next).catch(next);
+  }
 );
-router.post(
-  "/reset-password/:resetToken",
-  resetPasswordValidation,
-  validate,
-  resetPassword
+
+router.get(
+  "/me",
+  protect,
+  (req: AuthRequest, res: Response, next: NextFunction) => {
+    getCurrentUser(req, res, next).catch(next);
+  }
 );
 
 export default router;
