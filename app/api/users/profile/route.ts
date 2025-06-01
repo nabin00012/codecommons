@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId, WithId, Document } from "mongodb";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 
 interface Language extends Document {
   language: string;
