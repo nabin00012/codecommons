@@ -50,17 +50,26 @@ class AuthService {
   constructor() {
     if (typeof window !== "undefined") {
       this.token = localStorage.getItem("token");
+      console.log(
+        "AuthService initialized with token:",
+        this.token ? "exists" : "none"
+      );
     }
   }
 
   getToken(): string | null {
     try {
       if (this.token) {
+        console.log("Getting token from memory");
         return this.token;
       }
 
       if (typeof window !== "undefined") {
         const storedToken = localStorage.getItem("token");
+        console.log(
+          "Getting token from localStorage:",
+          storedToken ? "exists" : "none"
+        );
         if (storedToken) {
           this.token = storedToken;
           return storedToken;
@@ -75,11 +84,16 @@ class AuthService {
   }
 
   setToken(token: string | null): void {
+    console.log("Setting token:", token ? "exists" : "null");
     this.token = token;
+
     if (token) {
       try {
         if (typeof window !== "undefined") {
           localStorage.setItem("token", token);
+          // Set cookie with proper attributes
+          document.cookie = `token=${token}; path=/; secure; samesite=lax; max-age=2592000`; // 30 days
+          console.log("Token set in cookie and localStorage");
         }
       } catch (error) {
         console.error("AuthService - Error setting token:", error);
@@ -88,6 +102,10 @@ class AuthService {
       try {
         if (typeof window !== "undefined") {
           localStorage.removeItem("token");
+          // Clear cookie
+          document.cookie =
+            "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+          console.log("Token removed from cookie and localStorage");
         }
       } catch (error) {
         console.error("AuthService - Error removing token:", error);
@@ -97,6 +115,7 @@ class AuthService {
 
   async login(credentials: LoginCredentials): Promise<AuthResponse | null> {
     try {
+      console.log("Attempting login with:", credentials.email);
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: {
@@ -108,16 +127,20 @@ class AuthService {
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error("Login failed:", errorData);
         throw new Error(errorData.message || "Login failed");
       }
 
       const data = (await response.json()) as LoginResponse;
+      console.log("Login response:", data);
 
       if (!data._id || !data.token) {
         throw new Error("Invalid login response");
       }
 
+      // Set token before returning response
       this.setToken(data.token);
+      console.log("Token set after successful login");
 
       return {
         success: true,
@@ -143,6 +166,7 @@ class AuthService {
 
   async register(data: RegisterData): Promise<AuthResponse | null> {
     try {
+      console.log("Attempting registration with:", data.email);
       const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: {
@@ -154,16 +178,20 @@ class AuthService {
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error("Registration failed:", errorData);
         throw new Error(errorData.message || "Registration failed");
       }
 
       const responseData = (await response.json()) as LoginResponse;
+      console.log("Registration response:", responseData);
 
       if (!responseData._id || !responseData.token) {
         throw new Error("Invalid registration response");
       }
 
+      // Set token before returning response
       this.setToken(responseData.token);
+      console.log("Token set after successful registration");
 
       return {
         success: true,
@@ -187,32 +215,34 @@ class AuthService {
     }
   }
 
-  async verifyToken(token: string | null): Promise<AuthResponse | null> {
-    if (!token) return null;
-
+  async verifyToken(token: string): Promise<{ success: boolean }> {
     try {
+      console.log("Verifying token...");
       const response = await fetch(`${API_URL}/api/auth/verify`, {
-        method: "GET",
+        method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({ token }),
         credentials: "include",
       });
 
       if (!response.ok) {
-        throw new Error("Token verification failed");
+        console.error("Token verification failed");
+        return { success: false };
       }
 
       const data = await response.json();
-      return data;
+      console.log("Token verification response:", data);
+      return { success: data.success };
     } catch (error) {
       console.error("Token verification error:", error);
-      this.setToken(null);
-      return null;
+      return { success: false };
     }
   }
 
   logout(): void {
+    console.log("Logging out...");
     this.setToken(null);
   }
 }

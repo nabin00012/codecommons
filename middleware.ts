@@ -6,6 +6,7 @@ const publicPaths = [
   "/",
   "/login",
   "/signup",
+  "/register",
   "/api/auth/login",
   "/api/auth/register",
   "/api/auth/verify",
@@ -13,18 +14,22 @@ const publicPaths = [
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  console.log("Middleware processing path:", pathname);
 
   // Allow public paths
   if (publicPaths.includes(pathname)) {
+    console.log("Path is public, allowing access");
     return NextResponse.next();
   }
 
   // Check if the path is an API route
   const isApiRoute = pathname.startsWith("/api/");
   if (isApiRoute) {
+    console.log("Path is API route, checking Authorization header");
     // For API routes, check for Authorization header
     const authHeader = request.headers.get("authorization");
     if (!authHeader?.startsWith("Bearer ")) {
+      console.log("No valid Authorization header found");
       return new NextResponse(
         JSON.stringify({ error: "Authentication required" }),
         {
@@ -35,17 +40,22 @@ export async function middleware(request: NextRequest) {
         }
       );
     }
+    console.log("Valid Authorization header found");
     return NextResponse.next();
   }
 
   // For non-API routes, check for token in cookies
   const token = request.cookies.get("token")?.value;
+  console.log("Checking for token in cookies:", token ? "exists" : "none");
+
   if (!token) {
+    console.log("No token found, redirecting to login");
     const url = new URL("/login", request.url);
     url.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(url);
   }
 
+  console.log("Token found, allowing access");
   return NextResponse.next();
 }
 

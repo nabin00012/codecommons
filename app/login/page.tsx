@@ -37,12 +37,6 @@ export default function LoginPage() {
   const { user, login } = useUser();
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (user) {
-      router.replace("/dashboard");
-    }
-  }, [user, router]);
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -53,7 +47,9 @@ export default function LoginPage() {
         throw new Error("Please enter both email and password");
       }
 
+      console.log("Attempting login...");
       const response = await authService.login({ email, password });
+      console.log("Login response received:", response);
 
       if (!response?.success) {
         throw new Error("Invalid credentials");
@@ -64,6 +60,7 @@ export default function LoginPage() {
       }
 
       // Login the user with the response data
+      console.log("Setting user data in context...");
       login({
         id: response.user._id,
         name: response.user.name,
@@ -78,8 +75,14 @@ export default function LoginPage() {
         description: `Welcome back, ${response.user.name}!`,
       });
 
-      router.replace("/dashboard");
+      // Force redirect after a short delay
+      console.log("Initiating redirect to dashboard...");
+      setTimeout(() => {
+        console.log("Redirecting to dashboard...");
+        window.location.href = "/dashboard";
+      }, 500);
     } catch (err) {
+      console.error("Login error:", err);
       const errorMessage =
         err instanceof Error ? err.message : "An error occurred";
       setError(errorMessage);
@@ -92,6 +95,14 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  // Remove the useEffect for redirection since we're handling it in handleLogin
+  useEffect(() => {
+    if (user) {
+      console.log("User is already logged in, redirecting to dashboard...");
+      window.location.href = "/dashboard";
+    }
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background/90">

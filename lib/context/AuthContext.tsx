@@ -26,13 +26,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
+        console.log("Initializing auth...");
         const storedToken = authService.getToken();
+        console.log("Stored token:", storedToken ? "exists" : "none");
+
         if (storedToken) {
           const response = await authService.verifyToken(storedToken);
+          console.log("Token verification response:", response);
+
           if (response?.success) {
+            console.log("Setting token from storage");
             setToken(storedToken);
           } else {
-            // Token is invalid, clear it
+            console.log("Token verification failed, clearing token");
             authService.setToken(null);
             setToken(null);
             toast({
@@ -61,8 +67,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (newToken: string) => {
     try {
+      console.log("Login called with token:", newToken ? "exists" : "none");
       const response = await authService.verifyToken(newToken);
+      console.log("Token verification response:", response);
+
       if (response?.success) {
+        console.log("Setting token from login");
         setToken(newToken);
         authService.setToken(newToken);
       } else {
@@ -82,6 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
+    console.log("Logout called");
     setToken(null);
     authService.logout();
     toast({
@@ -99,7 +110,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         token,
-        setToken,
+        setToken: (newToken) => {
+          console.log("setToken called with:", newToken ? "token" : "null");
+          setToken(newToken);
+          if (newToken) {
+            authService.setToken(newToken);
+          }
+        },
         isAuthenticated: !!token,
         login,
         logout,
