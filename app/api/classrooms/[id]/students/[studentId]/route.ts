@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 
@@ -9,34 +7,25 @@ export async function GET(
   { params }: { params: { id: string; studentId: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    console.log("Session:", session);
-
-    if (!session?.user?.id) {
-      console.log("No session or user ID found");
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // TODO: Add custom authentication/authorization here
+    // Remove session-based checks
 
     const { db } = await connectToDatabase();
     const { id: classroomId, studentId } = params;
     console.log("Classroom ID:", classroomId, "Student ID:", studentId);
 
-    // Check if user is authorized to view this student's profile
+    // Get classroom (authorization logic should be added here)
     const classroom = await db.collection("classrooms").findOne({
       _id: new ObjectId(classroomId),
-      $or: [
-        { teacher: new ObjectId(session.user.id) },
-        { students: new ObjectId(session.user.id) },
-      ],
     });
 
     console.log("Classroom query result:", classroom);
 
     if (!classroom) {
-      console.log("Classroom not found or user not authorized");
+      console.log("Classroom not found");
       return NextResponse.json(
-        { error: "Not authorized to view this classroom" },
-        { status: 403 }
+        { error: "Classroom not found" },
+        { status: 404 }
       );
     }
 
