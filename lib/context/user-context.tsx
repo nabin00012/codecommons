@@ -85,6 +85,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             setLoading(false);
             if (
               !isAuthPage &&
+              pathname &&
               pathname !== "/" &&
               !pathname.startsWith("/public")
             ) {
@@ -134,6 +135,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             });
             if (
               !isAuthPage &&
+              pathname &&
               pathname !== "/" &&
               !pathname.startsWith("/public")
             ) {
@@ -154,6 +156,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           });
           if (
             !isAuthPage &&
+            pathname &&
             pathname !== "/" &&
             !pathname.startsWith("/public")
           ) {

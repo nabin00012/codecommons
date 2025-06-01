@@ -3,32 +3,22 @@ import {
   register,
   login,
   verifyToken,
+  verifyTokenPost,
   getCurrentUser,
 } from "../controllers/authController";
-import { protect, AuthRequest } from "../middleware/auth";
+import { protect, AuthRequest, auth } from "../middleware/auth";
 import { Response, NextFunction } from "express";
+import { asyncHandler } from "../utils/asyncHandler";
 
 const router = express.Router();
 
 // Public routes
 router.post("/register", register);
 router.post("/login", login);
+router.post("/verify", asyncHandler(auth), asyncHandler(verifyTokenPost));
 
 // Protected routes
-router.get(
-  "/verify",
-  protect,
-  (req: AuthRequest, res: Response, next: NextFunction) => {
-    verifyToken(req, res, next).catch(next);
-  }
-);
-
-router.get(
-  "/me",
-  protect,
-  (req: AuthRequest, res: Response, next: NextFunction) => {
-    getCurrentUser(req, res, next).catch(next);
-  }
-);
+router.get("/verify", protect, verifyToken);
+router.get("/me", protect, getCurrentUser);
 
 export default router;

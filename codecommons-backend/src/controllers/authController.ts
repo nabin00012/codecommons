@@ -80,11 +80,13 @@ export const register = async (
       role: user.role,
       token,
     });
+    return;
   } catch (error) {
     console.error("Registration error:", error);
     const errorMessage =
       error instanceof Error ? error.message : "An error occurred";
     res.status(500).json({ message: errorMessage });
+    return;
   }
 };
 
@@ -135,11 +137,13 @@ export const login = async (
       role: user.role,
       token,
     });
+    return;
   } catch (error) {
     console.error("Login error:", error);
     const errorMessage =
       error instanceof Error ? error.message : "An error occurred";
     res.status(500).json({ message: errorMessage });
+    return;
   }
 };
 
@@ -171,10 +175,12 @@ export const forgotPassword = async (
     }
 
     res.json({ message: "Password reset email sent" });
+    return;
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "An error occurred";
     res.status(500).json({ message: errorMessage });
+    return;
   }
 };
 
@@ -214,10 +220,12 @@ export const resetPassword = async (
     await user.save();
 
     res.json({ message: "Password reset successful" });
+    return;
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "An error occurred";
     res.status(500).json({ message: errorMessage });
+    return;
   }
 };
 
@@ -250,8 +258,10 @@ export const verifyToken = async (
         role: req.user.role,
       },
     });
+    return;
   } catch (error) {
     next(error);
+    return;
   }
 };
 
@@ -277,7 +287,61 @@ export const getCurrentUser = async (
         role: req.user.role,
       },
     });
+    return;
   } catch (error) {
     next(error);
+    return;
+  }
+};
+
+// @desc    Verify token (POST version for frontend)
+// @route   POST /api/auth/verify
+// @access  Public
+export const verifyTokenPost = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const authHeader = req.headers.authorization;
+    let token = null;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1];
+    } else if (req.cookies && req.cookies.token) {
+      token = req.cookies.token;
+    }
+    console.log("verifyTokenPost: using token =", token);
+
+    if (!token) {
+      console.log("verifyTokenPost: No token provided");
+      res.status(401).json({ success: false, message: "No token provided" });
+      return;
+    }
+
+    try {
+      const decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET || "your-secret-key"
+      );
+      console.log("verifyTokenPost: Decoded token:", decoded);
+
+      const user = await User.findById((decoded as any).id).select("-password");
+      if (!user) {
+        console.log("verifyTokenPost: User not found");
+        res.status(401).json({ success: false, message: "User not found" });
+        return;
+      }
+
+      console.log("verifyTokenPost: User found:", user.email);
+      res.json({ success: true, user });
+    } catch (err) {
+      console.log("verifyTokenPost: jwt.verify failed:", err);
+      res.status(401).json({ success: false, message: "Invalid token" });
+      return;
+    }
+  } catch (error) {
+    console.log("verifyTokenPost: Error:", error);
+    res.status(401).json({ success: false, message: "Authentication failed" });
+    return;
   }
 };

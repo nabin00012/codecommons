@@ -67,32 +67,58 @@ export const teacherOnly = async (
   }
 };
 
+// Middleware to check if user is authenticated (for POST /verify)
 export const auth = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
-) => {
+): Promise<void> => {
   try {
-    const token = req.header("Authorization")?.replace("Bearer ", "");
+    // Get token from header or cookie
+    let token = null;
+    const authHeader = req.headers.authorization;
+
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1];
+    } else if (req.cookies && req.cookies.token) {
+      token = req.cookies.token;
+    }
+
+    console.log("Auth middleware - Token from header:", authHeader);
+    console.log("Auth middleware - Token from cookie:", req.cookies?.token);
+    console.log("Auth middleware - Using token:", token);
 
     if (!token) {
-      return res.status(401).json({ error: "Authentication required" });
+      console.log("Auth middleware - No token provided");
+      res.status(401).json({ success: false, message: "No token provided" });
+      return;
     }
 
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || "your-secret-key"
-    ) as any;
-    const user = await User.findById(decoded._id);
+    try {
+      const decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET || "your-secret-key"
+      ) as any;
+      console.log("Auth middleware - Decoded token:", decoded);
 
-    if (!user) {
-      return res.status(401).json({ error: "User not found" });
+      const user = await User.findById(decoded.id).select("-password");
+      if (!user) {
+        console.log("Auth middleware - User not found");
+        res.status(401).json({ success: false, message: "User not found" });
+        return;
+      }
+
+      console.log("Auth middleware - User found:", user.email);
+      req.user = user;
+      next();
+    } catch (err) {
+      console.log("Auth middleware - Token verification failed:", err);
+      res.status(401).json({ success: false, message: "Invalid token" });
+      return;
     }
-
-    req.user = user;
-    next();
   } catch (error) {
-    console.error("Auth middleware error:", error);
-    res.status(401).json({ error: "Invalid authentication" });
+    console.log("Auth middleware - Error:", error);
+    res.status(401).json({ success: false, message: "Authentication failed" });
+    return;
   }
 };

@@ -91,8 +91,8 @@ class AuthService {
       try {
         if (typeof window !== "undefined") {
           localStorage.setItem("token", token);
-          // Set cookie with proper attributes
-          document.cookie = `token=${token}; path=/; secure; samesite=lax; max-age=2592000`; // 30 days
+          // Set cookie without secure flag for local development
+          document.cookie = `token=${token}; path=/; samesite=lax; max-age=2592000`; // 30 days
           console.log("Token set in cookie and localStorage");
         }
       } catch (error) {
@@ -215,15 +215,15 @@ class AuthService {
     }
   }
 
-  async verifyToken(token: string): Promise<{ success: boolean }> {
+  async verifyToken(token: string): Promise<{ success: boolean; user?: any }> {
     try {
       console.log("Verifying token...");
       const response = await fetch(`${API_URL}/api/auth/verify`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ token }),
         credentials: "include",
       });
 
@@ -234,7 +234,7 @@ class AuthService {
 
       const data = await response.json();
       console.log("Token verification response:", data);
-      return { success: data.success };
+      return data;
     } catch (error) {
       console.error("Token verification error:", error);
       return { success: false };
