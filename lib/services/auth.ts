@@ -1,6 +1,7 @@
 import { UserRole } from "@/lib/context/user-context";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "https://codecommons-backend.vercel.app";
 
 interface LoginCredentials {
   email: string;
