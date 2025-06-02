@@ -197,26 +197,49 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1e293b] via-[#312e81] to-[#9333ea] text-white">
-      {/* Hero Section */}
-      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
-        {/* Animated Gradient Background */}
-        <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#1e293b]/80 via-[#312e81]/70 to-[#9333ea]/80 animate-pulse" />
-          <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-gradient-to-tr from-purple-500 via-indigo-500 to-blue-500 rounded-full blur-3xl opacity-40 animate-spin-slow" />
-          <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 rounded-full blur-3xl opacity-30 animate-spin-reverse" />
+    <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#4c1d95] text-white overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 z-0">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-purple-900/20 via-indigo-900/20 to-blue-900/20 animate-pulse" />
+        <div className="absolute top-0 left-0 w-full h-full">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-2 h-2 bg-white rounded-full animate-float"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 5}s`,
+                opacity: Math.random() * 0.5 + 0.2,
+              }}
+            />
+          ))}
         </div>
+      </div>
+
+      {/* Hero Section */}
+      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
         <div className="container relative z-10 mx-auto text-center flex flex-col items-center justify-center py-24">
-          <motion.h1
-            className="text-5xl md:text-7xl font-extrabold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 via-indigo-300 to-sky-400 drop-shadow-lg"
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
+          <motion.div
+            className="relative"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
           >
-            Welcome to <span className="text-fuchsia-400">Code Commons</span>
-          </motion.h1>
+            <div className="absolute -inset-1 bg-gradient-to-r from-pink-600 to-purple-600 rounded-lg blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-gradient-x"></div>
+            <h1 className="relative text-6xl md:text-8xl font-extrabold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 drop-shadow-lg">
+              Welcome to{" "}
+              <span className="relative inline-block">
+                <span className="relative z-10 text-fuchsia-400">
+                  Code Commons
+                </span>
+                <span className="absolute inset-0 bg-gradient-to-r from-fuchsia-400 to-purple-400 blur-xl opacity-50"></span>
+              </span>
+            </h1>
+          </motion.div>
+
           <motion.p
-            className="text-2xl md:text-3xl text-indigo-100 mb-10 max-w-3xl mx-auto drop-shadow"
+            className="text-2xl md:text-3xl text-indigo-100 mb-10 max-w-3xl mx-auto drop-shadow-lg"
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
@@ -224,6 +247,7 @@ export default function HomePage() {
             Your collaborative platform for learning, sharing, and growing
             together in the world of programming.
           </motion.p>
+
           <motion.div
             className="flex flex-col sm:flex-row gap-6 justify-center"
             initial={{ opacity: 0, y: 40 }}
@@ -232,7 +256,7 @@ export default function HomePage() {
           >
             <Button
               size="lg"
-              className="bg-gradient-to-r from-fuchsia-500 to-indigo-500 text-white shadow-xl hover:scale-105 transition-transform duration-300 text-xl px-8 py-4 rounded-full font-bold animate-bounce"
+              className="relative group bg-gradient-to-r from-fuchsia-500 to-indigo-500 text-white shadow-xl hover:scale-105 transition-all duration-300 text-xl px-8 py-6 rounded-full font-bold"
               onClick={() => {
                 if (user) {
                   router.push("/dashboard");
@@ -241,15 +265,61 @@ export default function HomePage() {
                 }
               }}
             >
-              Get Started <ArrowRight className="ml-2 h-5 w-5" />
+              <span className="absolute -inset-1 bg-gradient-to-r from-fuchsia-500 to-indigo-500 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-gradient-x"></span>
+              <span className="relative flex items-center">
+                Get Started{" "}
+                <ArrowRight className="ml-2 h-5 w-5 animate-bounce-x" />
+              </span>
             </Button>
+
             <Button
               size="lg"
               variant="outline"
-              className="border-fuchsia-400 text-fuchsia-200 hover:bg-fuchsia-900/20 shadow-lg text-xl px-8 py-4 rounded-full font-bold"
+              className="relative group border-2 border-fuchsia-400 text-fuchsia-200 hover:bg-fuchsia-900/20 shadow-lg text-xl px-8 py-6 rounded-full font-bold transition-all duration-300 hover:scale-105"
             >
-              Learn More <ChevronDown className="ml-2 h-5 w-5" />
+              <span className="absolute -inset-1 bg-gradient-to-r from-fuchsia-500/20 to-indigo-500/20 rounded-full blur opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></span>
+              <span className="relative">Learn More</span>
             </Button>
+          </motion.div>
+
+          {/* Floating Features */}
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+          >
+            {[
+              {
+                icon: <Code className="h-8 w-8" />,
+                title: "Code Together",
+                description: "Collaborate in real-time with your peers",
+              },
+              {
+                icon: <Trophy className="h-8 w-8" />,
+                title: "Earn Points",
+                description: "Gain recognition for your contributions",
+              },
+              {
+                icon: <Users className="h-8 w-8" />,
+                title: "Join Community",
+                description: "Connect with fellow developers",
+              },
+            ].map((feature, index) => (
+              <motion.div
+                key={index}
+                className="relative group"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="absolute -inset-1 bg-gradient-to-r from-fuchsia-500 to-indigo-500 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+                <div className="relative p-6 bg-black/40 backdrop-blur-sm rounded-lg border border-white/10">
+                  <div className="text-fuchsia-400 mb-4">{feature.icon}</div>
+                  <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                  <p className="text-indigo-200">{feature.description}</p>
+                </div>
+              </motion.div>
+            ))}
           </motion.div>
         </div>
       </section>
