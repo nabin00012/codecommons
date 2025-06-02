@@ -19,6 +19,7 @@ interface AuthResponse {
   success: boolean;
   user: {
     _id: string;
+    id: string;
     name: string;
     email: string;
     role: string;
@@ -26,6 +27,12 @@ interface AuthResponse {
       theme: string;
       notifications: boolean;
       language: string;
+      editor?: {
+        fontSize: number;
+        theme: string;
+        lineNumbers: boolean;
+        minimap: boolean;
+      };
     };
   };
   token?: string;
@@ -147,6 +154,7 @@ class AuthService {
         success: true,
         user: {
           _id: data._id,
+          id: data._id,
           name: data.name,
           email: data.email,
           role: data.role,
@@ -174,9 +182,11 @@ class AuthService {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          role: data.role || "student",
+        }),
         credentials: "include",
-        mode: "cors",
       });
 
       console.log("Registration response status:", response.status);
@@ -216,6 +226,7 @@ class AuthService {
         success: true,
         user: {
           _id: responseData._id,
+          id: responseData._id,
           name: responseData.name,
           email: responseData.email,
           role: responseData.role,
@@ -234,7 +245,12 @@ class AuthService {
     }
   }
 
-  async verifyToken(token: string): Promise<{ success: boolean; user?: any }> {
+  async verifyToken(
+    token: string
+  ): Promise<{
+    success: boolean;
+    user?: { _id: string; id: string; role: string };
+  }> {
     try {
       console.log("Verifying token...");
       const response = await fetch(`${API_URL}/api/auth/verify`, {
@@ -261,7 +277,14 @@ class AuthService {
         return { success: false };
       }
 
-      return { success: true, user: data.user };
+      return {
+        success: true,
+        user: {
+          _id: data.user._id,
+          id: data.user._id,
+          role: data.user.role,
+        },
+      };
     } catch (error) {
       console.error("Token verification error:", error);
       this.setToken(null);
