@@ -92,25 +92,7 @@ export function Navbar() {
           {/* Right Side Items */}
           <div className="flex items-center space-x-4">
             <ModeToggle />
-            {user ? (
-              <Button
-                variant="ghost"
-                className={`${
-                  theme === "cosmic"
-                    ? "text-gray-300 hover:text-fuchsia-400"
-                    : theme === "dark"
-                    ? "text-gray-300 hover:text-blue-400"
-                    : "text-gray-600 hover:text-blue-600"
-                }`}
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-              >
-                {isMenuOpen ? (
-                  <X className="h-6 w-6" />
-                ) : (
-                  <Menu className="h-6 w-6" />
-                )}
-              </Button>
-            ) : (
+            {!user && (
               <Link href="/login">
                 <Button
                   variant="ghost"
@@ -126,6 +108,23 @@ export function Navbar() {
                 </Button>
               </Link>
             )}
+            <Button
+              variant="ghost"
+              className={`md:hidden ${
+                theme === "cosmic"
+                  ? "text-gray-300 hover:text-fuchsia-400"
+                  : theme === "dark"
+                  ? "text-gray-300 hover:text-blue-400"
+                  : "text-gray-600 hover:text-blue-600"
+              }`}
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </Button>
           </div>
         </div>
 
@@ -155,6 +154,21 @@ export function Navbar() {
                   {item.name}
                 </Link>
               ))}
+              {!user && (
+                <Link
+                  href="/login"
+                  className={`block px-3 py-2 rounded-md text-base font-medium ${
+                    theme === "cosmic"
+                      ? "text-gray-300 hover:text-fuchsia-400 hover:bg-fuchsia-900/20"
+                      : theme === "dark"
+                      ? "text-gray-300 hover:text-blue-400 hover:bg-blue-900/20"
+                      : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+                  }`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Login
+                </Link>
+              )}
             </div>
           </div>
         )}
