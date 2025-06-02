@@ -64,6 +64,7 @@ import {
 import { DemoQuestions } from "@/components/demo-questions";
 import { EnhancedFeaturesSection } from "@/components/enhanced-features-section";
 import { useTheme } from "next-themes";
+import { Navbar } from "@/components/navbar";
 
 const leaderboardData = [
   {
@@ -208,6 +209,8 @@ export default function HomePage() {
           : "bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200"
       } text-foreground overflow-hidden`}
     >
+      <Navbar />
+
       {/* Animated Background Elements */}
       <div className="fixed inset-0 z-0">
         <div
@@ -612,7 +615,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="relative py-12 bg-gradient-to-br from-indigo-900/60 via-fuchsia-900/40 to-transparent border-t border-white/10">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Brand Section */}
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
@@ -627,82 +630,8 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* Quick Links */}
-            <div>
-              <h3 className="text-lg font-semibold text-fuchsia-200 mb-4">
-                Quick Links
-              </h3>
-              <ul className="space-y-2">
-                <li>
-                  <Link
-                    href="/features"
-                    className="text-indigo-200 hover:text-fuchsia-400 transition-colors"
-                  >
-                    Features
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/questions"
-                    className="text-indigo-200 hover:text-fuchsia-400 transition-colors"
-                  >
-                    Questions
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/leaderboard"
-                    className="text-indigo-200 hover:text-fuchsia-400 transition-colors"
-                  >
-                    Leaderboard
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/point-system"
-                    className="text-indigo-200 hover:text-fuchsia-400 transition-colors"
-                  >
-                    Point System
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Legal */}
-            <div>
-              <h3 className="text-lg font-semibold text-fuchsia-200 mb-4">
-                Legal
-              </h3>
-              <ul className="space-y-2">
-                <li>
-                  <Link
-                    href="/terms"
-                    className="text-indigo-200 hover:text-fuchsia-400 transition-colors"
-                  >
-                    Terms
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/privacy"
-                    className="text-indigo-200 hover:text-fuchsia-400 transition-colors"
-                  >
-                    Privacy
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/contact"
-                    className="text-indigo-200 hover:text-fuchsia-400 transition-colors"
-                  >
-                    Contact
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
             {/* Social Links */}
-            <div>
+            <div className="flex flex-col items-end justify-center">
               <h3 className="text-lg font-semibold text-fuchsia-200 mb-4">
                 Connect With Us
               </h3>
@@ -725,18 +654,13 @@ export default function HomePage() {
 
           {/* Copyright */}
           <div className="mt-12 pt-8 border-t border-white/10">
-            <div className="flex flex-col md:flex-row justify-between items-center">
-              <p className="text-indigo-200 text-sm">
-                © 2024 CodeCommons. Created by{" "}
-                <span className="text-fuchsia-400 font-semibold">
-                  Nabin Chapagain
-                </span>
-                . All rights reserved.
-              </p>
-              <div className="mt-4 md:mt-0">
-                <ModeToggle />
-              </div>
-            </div>
+            <p className="text-indigo-200 text-sm text-center">
+              © 2024 CodeCommons. Created by{" "}
+              <span className="text-fuchsia-400 font-semibold">
+                Nabin Chapagain
+              </span>
+              . All rights reserved.
+            </p>
           </div>
         </div>
 
