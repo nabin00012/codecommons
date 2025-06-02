@@ -52,6 +52,7 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState("");
 
   const redirectTo = searchParams.get("redirectTo") || "";
 
@@ -111,14 +112,38 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
+    setError("");
     setIsLoading(true);
 
     try {
+      // Validate password
+      if (formData.password.length < 6) {
+        throw new Error("Password must be at least 6 characters long");
+      }
+
+      if (!/[A-Z]/.test(formData.password)) {
+        throw new Error("Password must contain at least one uppercase letter");
+      }
+
+      if (!/[a-z]/.test(formData.password)) {
+        throw new Error("Password must contain at least one lowercase letter");
+      }
+
+      if (!/[0-9]/.test(formData.password)) {
+        throw new Error("Password must contain at least one number");
+      }
+
+      // Validate email format
+      if (!formData.email.endsWith("@jainuniversity.ac.in")) {
+        throw new Error("Email must end with @jainuniversity.ac.in");
+      }
+
+      console.log("Submitting registration with:", {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+      });
       const response = await authService.register({
         name: formData.name,
         email: formData.email,
@@ -126,22 +151,21 @@ export default function RegisterPage() {
         role: formData.role as "student" | "teacher",
       });
 
+      console.log("Registration response:", response);
+
       if (!response || !response.success || !response.token) {
-        throw new Error("Registration failed");
+        throw new Error("Registration failed. Please try again.");
       }
 
       // Store the token using auth context
       setToken(response.token);
 
-      // Login the user with the response data
+      // Login the user after successful registration
       login({
         id: response.user._id,
         name: response.user.name,
         email: response.user.email,
-        role:
-          response.user.role === "student" || response.user.role === "teacher"
-            ? response.user.role
-            : "student",
+        role: response.user.role as "student" | "teacher",
         avatar: "/placeholder.svg?height=40&width=40",
         preferences: response.user.preferences || {
           theme: "system",
@@ -151,32 +175,22 @@ export default function RegisterPage() {
       });
 
       toast({
-        title: "Account created successfully!",
-        description: `Welcome to CodeCommons, ${formData.name}!`,
+        title: "Registration successful!",
+        description: "Welcome to Code Commons!",
       });
 
-      // Redirect to dashboard
       router.push("/dashboard");
     } catch (error) {
       console.error("Registration error:", error);
-
-      // Extract error message
-      let errorMessage = "Registration failed. Please try again.";
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-
-      // Check for specific error cases
-      if (errorMessage.includes("already exists")) {
-        errorMessage = "An account with this email already exists.";
-      } else if (errorMessage.includes("Invalid response")) {
-        errorMessage =
-          "Unable to connect to the server. Please try again later.";
-      }
-
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Registration failed. Please try again."
+      );
       toast({
         title: "Registration failed",
-        description: errorMessage,
+        description:
+          error instanceof Error ? error.message : "Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -243,6 +257,10 @@ export default function RegisterPage() {
                   disabled={isLoading}
                   className={errors.email ? "border-red-500" : ""}
                 />
+                <p className="text-xs text-muted-foreground">
+                  For developers: Add any random number before
+                  @jainuniversity.ac.in (e.g., 123456@jainuniversity.ac.in)
+                </p>
                 {errors.email && (
                   <p className="text-xs text-red-500">{errors.email}</p>
                 )}

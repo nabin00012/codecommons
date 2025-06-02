@@ -176,17 +176,32 @@ class AuthService {
         },
         body: JSON.stringify(data),
         credentials: "include",
+        mode: "cors",
       });
 
+      console.log("Registration response status:", response.status);
+      const responseText = await response.text();
+      console.log("Registration response text:", responseText);
+
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: "Registration failed" }));
+        let errorData;
+        try {
+          errorData = JSON.parse(responseText);
+        } catch (e) {
+          errorData = { message: "Registration failed" };
+        }
         console.error("Registration failed:", errorData);
         throw new Error(errorData.message || "Registration failed");
       }
 
-      const responseData = await response.json();
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        console.error("Failed to parse response:", e);
+        throw new Error("Invalid response from server");
+      }
+
       console.log("Registration response:", responseData);
 
       if (!responseData._id || !responseData.token) {
