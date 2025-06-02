@@ -63,6 +63,7 @@ import {
 } from "lucide-react";
 import { DemoQuestions } from "@/components/demo-questions";
 import { EnhancedFeaturesSection } from "@/components/enhanced-features-section";
+import { useTheme } from "next-themes";
 
 const leaderboardData = [
   {
@@ -184,6 +185,7 @@ export default function HomePage() {
   const { toast } = useToast();
   const { user } = useUser();
   const { scrollYProgress } = useScroll();
+  const { theme } = useTheme();
   const heroRef = useRef(null);
 
   // Parallax effects
@@ -197,15 +199,37 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#4c1d95] text-white overflow-hidden">
+    <div
+      className={`min-h-screen transition-colors duration-500 ${
+        theme === "cosmic"
+          ? "bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#4c1d95]"
+          : theme === "dark"
+          ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900"
+          : "bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200"
+      } text-foreground overflow-hidden`}
+    >
       {/* Animated Background Elements */}
       <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-purple-900/20 via-indigo-900/20 to-blue-900/20 animate-pulse" />
+        <div
+          className={`absolute inset-0 ${
+            theme === "cosmic"
+              ? "bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-purple-900/20 via-indigo-900/20 to-blue-900/20"
+              : theme === "dark"
+              ? "bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-800/20 via-gray-700/20 to-gray-900/20"
+              : "bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-200/20 via-slate-100/20 to-slate-50/20"
+          } animate-pulse`}
+        />
         <div className="absolute top-0 left-0 w-full h-full">
           {[...Array(20)].map((_, i) => (
             <div
               key={i}
-              className="absolute w-2 h-2 bg-white rounded-full animate-float"
+              className={`absolute w-2 h-2 rounded-full animate-float ${
+                theme === "cosmic"
+                  ? "bg-white"
+                  : theme === "dark"
+                  ? "bg-gray-400"
+                  : "bg-slate-600"
+              }`}
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
@@ -226,20 +250,58 @@ export default function HomePage() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
           >
-            <div className="absolute -inset-1 bg-gradient-to-r from-pink-600 to-purple-600 rounded-lg blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-gradient-x"></div>
-            <h1 className="relative text-6xl md:text-8xl font-extrabold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 drop-shadow-lg">
+            <div
+              className={`absolute -inset-1 rounded-lg blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-gradient-x ${
+                theme === "cosmic"
+                  ? "bg-gradient-to-r from-pink-600 to-purple-600"
+                  : theme === "dark"
+                  ? "bg-gradient-to-r from-blue-600 to-purple-600"
+                  : "bg-gradient-to-r from-blue-400 to-purple-400"
+              }`}
+            ></div>
+            <h1
+              className={`relative text-6xl md:text-8xl font-extrabold mb-6 bg-clip-text text-transparent ${
+                theme === "cosmic"
+                  ? "bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400"
+                  : theme === "dark"
+                  ? "bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400"
+                  : "bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600"
+              } drop-shadow-lg`}
+            >
               Welcome to{" "}
               <span className="relative inline-block">
-                <span className="relative z-10 text-fuchsia-400">
+                <span
+                  className={`relative z-10 ${
+                    theme === "cosmic"
+                      ? "text-fuchsia-400"
+                      : theme === "dark"
+                      ? "text-blue-400"
+                      : "text-blue-600"
+                  }`}
+                >
                   Code Commons
                 </span>
-                <span className="absolute inset-0 bg-gradient-to-r from-fuchsia-400 to-purple-400 blur-xl opacity-50"></span>
+                <span
+                  className={`absolute inset-0 blur-xl opacity-50 ${
+                    theme === "cosmic"
+                      ? "bg-gradient-to-r from-fuchsia-400 to-purple-400"
+                      : theme === "dark"
+                      ? "bg-gradient-to-r from-blue-400 to-purple-400"
+                      : "bg-gradient-to-r from-blue-600 to-purple-600"
+                  }`}
+                ></span>
               </span>
             </h1>
           </motion.div>
 
           <motion.p
-            className="text-2xl md:text-3xl text-indigo-100 mb-10 max-w-3xl mx-auto drop-shadow-lg"
+            className={`text-2xl md:text-3xl mb-10 max-w-3xl mx-auto drop-shadow-lg ${
+              theme === "cosmic"
+                ? "text-indigo-100"
+                : theme === "dark"
+                ? "text-gray-200"
+                : "text-gray-700"
+            }`}
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
@@ -256,7 +318,13 @@ export default function HomePage() {
           >
             <Button
               size="lg"
-              className="relative group bg-gradient-to-r from-fuchsia-500 to-indigo-500 text-white shadow-xl hover:scale-105 transition-all duration-300 text-xl px-8 py-6 rounded-full font-bold"
+              className={`relative group shadow-xl hover:scale-105 transition-all duration-300 text-xl px-8 py-6 rounded-full font-bold ${
+                theme === "cosmic"
+                  ? "bg-gradient-to-r from-fuchsia-500 to-indigo-500 text-white"
+                  : theme === "dark"
+                  ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white"
+                  : "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+              }`}
               onClick={() => {
                 if (user) {
                   router.push("/dashboard");
@@ -265,7 +333,15 @@ export default function HomePage() {
                 }
               }}
             >
-              <span className="absolute -inset-1 bg-gradient-to-r from-fuchsia-500 to-indigo-500 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-gradient-x"></span>
+              <span
+                className={`absolute -inset-1 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-gradient-x ${
+                  theme === "cosmic"
+                    ? "bg-gradient-to-r from-fuchsia-500 to-indigo-500"
+                    : theme === "dark"
+                    ? "bg-gradient-to-r from-blue-500 to-purple-500"
+                    : "bg-gradient-to-r from-blue-600 to-purple-600"
+                }`}
+              ></span>
               <span className="relative flex items-center">
                 Get Started{" "}
                 <ArrowRight className="ml-2 h-5 w-5 animate-bounce-x" />
@@ -275,9 +351,23 @@ export default function HomePage() {
             <Button
               size="lg"
               variant="outline"
-              className="relative group border-2 border-fuchsia-400 text-fuchsia-200 hover:bg-fuchsia-900/20 shadow-lg text-xl px-8 py-6 rounded-full font-bold transition-all duration-300 hover:scale-105"
+              className={`relative group border-2 shadow-lg text-xl px-8 py-6 rounded-full font-bold transition-all duration-300 hover:scale-105 ${
+                theme === "cosmic"
+                  ? "border-fuchsia-400 text-fuchsia-200 hover:bg-fuchsia-900/20"
+                  : theme === "dark"
+                  ? "border-blue-400 text-blue-200 hover:bg-blue-900/20"
+                  : "border-blue-600 text-blue-600 hover:bg-blue-50"
+              }`}
             >
-              <span className="absolute -inset-1 bg-gradient-to-r from-fuchsia-500/20 to-indigo-500/20 rounded-full blur opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></span>
+              <span
+                className={`absolute -inset-1 rounded-full blur opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 ${
+                  theme === "cosmic"
+                    ? "bg-gradient-to-r from-fuchsia-500/20 to-indigo-500/20"
+                    : theme === "dark"
+                    ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20"
+                    : "bg-gradient-to-r from-blue-600/20 to-purple-600/20"
+                }`}
+              ></span>
               <span className="relative">Learn More</span>
             </Button>
           </motion.div>
