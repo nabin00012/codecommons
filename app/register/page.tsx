@@ -89,11 +89,16 @@ export default function RegisterPage() {
 
     if (!formData.password) {
       newErrors.password = "Password is required";
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
     } else if (!/[A-Z]/.test(formData.password)) {
       newErrors.password =
         "Password must contain at least one uppercase letter";
+    } else if (!/[a-z]/.test(formData.password)) {
+      newErrors.password =
+        "Password must contain at least one lowercase letter";
+    } else if (!/\d/.test(formData.password)) {
+      newErrors.password = "Password must contain at least one number";
     }
 
     if (formData.password !== formData.confirmPassword) {
@@ -121,16 +126,28 @@ export default function RegisterPage() {
         role: formData.role as "student" | "teacher",
       });
 
+      if (!response || !response.success || !response.token) {
+        throw new Error("Registration failed");
+      }
+
       // Store the token using auth context
       setToken(response.token);
 
       // Login the user with the response data
       login({
-        id: response._id,
-        name: response.name,
-        email: response.email,
-        role: response.role,
+        id: response.user._id,
+        name: response.user.name,
+        email: response.user.email,
+        role:
+          response.user.role === "student" || response.user.role === "teacher"
+            ? response.user.role
+            : "student",
         avatar: "/placeholder.svg?height=40&width=40",
+        preferences: response.user.preferences || {
+          theme: "system",
+          notifications: true,
+          language: "en",
+        },
       });
 
       toast({
