@@ -230,14 +230,19 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            <Link href="/register" passHref legacyBehavior>
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-fuchsia-500 to-indigo-500 text-white shadow-xl hover:scale-105 transition-transform duration-300 text-xl px-8 py-4 rounded-full font-bold animate-bounce"
-              >
-                Get Started <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
+            <Button
+              size="lg"
+              className="bg-gradient-to-r from-fuchsia-500 to-indigo-500 text-white shadow-xl hover:scale-105 transition-transform duration-300 text-xl px-8 py-4 rounded-full font-bold animate-bounce"
+              onClick={() => {
+                if (user) {
+                  router.push("/dashboard");
+                } else {
+                  router.push("/register");
+                }
+              }}
+            >
+              Get Started <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
             <Button
               size="lg"
               variant="outline"
