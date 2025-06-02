@@ -172,16 +172,22 @@ class AuthService {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify(data),
+        credentials: "include",
       });
 
-      const responseData = await response.json();
-
       if (!response.ok) {
-        console.error("Registration failed:", responseData);
-        throw new Error(responseData.message || "Registration failed");
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: "Registration failed" }));
+        console.error("Registration failed:", errorData);
+        throw new Error(errorData.message || "Registration failed");
       }
+
+      const responseData = await response.json();
+      console.log("Registration response:", responseData);
 
       if (!responseData._id || !responseData.token) {
         throw new Error("Invalid registration response");

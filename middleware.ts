@@ -7,6 +7,12 @@ const publicPaths = [
   "/login",
   "/signup",
   "/register",
+  "/about",
+  "/contact",
+];
+
+// Add API paths that don't require authentication
+const publicApiPaths = [
   "/api/auth/login",
   "/api/auth/register",
   "/api/auth/verify",
@@ -25,6 +31,12 @@ export async function middleware(request: NextRequest) {
   // Check if the path is an API route
   const isApiRoute = pathname.startsWith("/api/");
   if (isApiRoute) {
+    // Allow public API paths
+    if (publicApiPaths.some((path) => pathname.endsWith(path))) {
+      console.log("API path is public, allowing access");
+      return NextResponse.next();
+    }
+
     console.log("Path is API route, checking Authorization header");
     // For API routes, check for Authorization header
     const authHeader = request.headers.get("authorization");
