@@ -518,6 +518,157 @@ export default function HomePage() {
           <DemoQuestions />
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="relative py-12 bg-gradient-to-br from-indigo-900/60 via-fuchsia-900/40 to-transparent border-t border-white/10">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {/* Brand Section */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Code className="h-6 w-6 text-fuchsia-400" />
+                <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 to-indigo-400">
+                  CodeCommons
+                </span>
+              </div>
+              <p className="text-indigo-200 text-sm">
+                Jain University's collaborative platform for learning, sharing,
+                and growing together in the world of programming.
+              </p>
+            </div>
+
+            {/* Quick Links */}
+            <div>
+              <h3 className="text-lg font-semibold text-fuchsia-200 mb-4">
+                Quick Links
+              </h3>
+              <ul className="space-y-2">
+                <li>
+                  <Link
+                    href="/features"
+                    className="text-indigo-200 hover:text-fuchsia-400 transition-colors"
+                  >
+                    Features
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/questions"
+                    className="text-indigo-200 hover:text-fuchsia-400 transition-colors"
+                  >
+                    Questions
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/leaderboard"
+                    className="text-indigo-200 hover:text-fuchsia-400 transition-colors"
+                  >
+                    Leaderboard
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/point-system"
+                    className="text-indigo-200 hover:text-fuchsia-400 transition-colors"
+                  >
+                    Point System
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <h3 className="text-lg font-semibold text-fuchsia-200 mb-4">
+                Legal
+              </h3>
+              <ul className="space-y-2">
+                <li>
+                  <Link
+                    href="/terms"
+                    className="text-indigo-200 hover:text-fuchsia-400 transition-colors"
+                  >
+                    Terms
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/privacy"
+                    className="text-indigo-200 hover:text-fuchsia-400 transition-colors"
+                  >
+                    Privacy
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/contact"
+                    className="text-indigo-200 hover:text-fuchsia-400 transition-colors"
+                  >
+                    Contact
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Social Links */}
+            <div>
+              <h3 className="text-lg font-semibold text-fuchsia-200 mb-4">
+                Connect With Us
+              </h3>
+              <div className="flex space-x-4">
+                <Link
+                  href="https://github.com/nabin00012"
+                  className="text-indigo-200 hover:text-fuchsia-400 transition-colors"
+                >
+                  <GitBranch className="h-5 w-5" />
+                </Link>
+                <Link
+                  href="https://linkedin.com/in/nabin-chapagain"
+                  className="text-indigo-200 hover:text-fuchsia-400 transition-colors"
+                >
+                  <MessageSquare className="h-5 w-5" />
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Copyright */}
+          <div className="mt-12 pt-8 border-t border-white/10">
+            <div className="flex flex-col md:flex-row justify-between items-center">
+              <p className="text-indigo-200 text-sm">
+                © 2024 CodeCommons. Created by{" "}
+                <span className="text-fuchsia-400 font-semibold">
+                  Nabin Chapagain
+                </span>
+                . All rights reserved.
+              </p>
+              <div className="mt-4 md:mt-0">
+                <ModeToggle />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-purple-900/10 via-indigo-900/10 to-blue-900/10 animate-pulse" />
+          <div className="absolute top-0 left-0 w-full h-full">
+            {[...Array(10)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute w-1 h-1 bg-white rounded-full animate-float"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                  animationDelay: `${Math.random() * 5}s`,
+                  opacity: Math.random() * 0.3 + 0.1,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
