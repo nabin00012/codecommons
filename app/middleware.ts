@@ -24,7 +24,6 @@ const publicPaths = [
   "/",
   "/login",
   "/register",
-  "/signup",
   "/about",
   "/contact",
   "/api/auth",

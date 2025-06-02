@@ -230,7 +230,7 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            <Link href="/signup" passHref legacyBehavior>
+            <Link href="/register" passHref legacyBehavior>
               <Button
                 size="lg"
                 className="bg-gradient-to-r from-fuchsia-500 to-indigo-500 text-white shadow-xl hover:scale-105 transition-transform duration-300 text-xl px-8 py-4 rounded-full font-bold animate-bounce"

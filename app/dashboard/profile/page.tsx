@@ -168,6 +168,7 @@ export default function ProfilePage() {
     }
 
     try {
+      console.log("Fetching profile with token:", token);
       const response = await fetch(`/api/users/profile`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -176,16 +177,21 @@ export default function ProfilePage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch profile");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch profile");
       }
 
       const data = await response.json();
+      console.log("Profile data received:", data);
       setProfileData(data);
     } catch (error) {
       console.error("Error fetching profile:", error);
       toast({
         title: "Error",
-        description: "Failed to load profile. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to load profile. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -227,22 +233,15 @@ export default function ProfilePage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Save button clicked");
-    console.log("Current profile data:", profileData);
+    setIsSaving(true);
 
     if (!token) {
-      console.error("No token available");
-      toast({
-        title: "Error",
-        description: "Authentication token is missing. Please log in again.",
-        variant: "destructive",
-      });
+      router.push("/login");
       return;
     }
 
-    setIsSaving(true);
-
     try {
+      console.log("Updating profile with data:", profileData);
       const response = await fetch(`/api/users/profile`, {
         method: "PUT",
         headers: {
@@ -252,17 +251,15 @@ export default function ProfilePage() {
         body: JSON.stringify(profileData),
       });
 
-      console.log("Profile update response status:", response.status);
-      const data = await response.json();
-      console.log("Profile update response data:", data);
-
       if (!response.ok) {
-        throw new Error(data.error || "Failed to update profile");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update profile");
       }
 
+      const data = await response.json();
+      console.log("Profile update response:", data);
       setProfileData(data);
       setIsEditing(false);
-      // Force a re-render after saving
       setEditModeKey((prev) => prev + 1);
       toast({
         title: "Success",
