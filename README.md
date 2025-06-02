@@ -65,14 +65,21 @@ A modern, collaborative platform for managing and tracking academic projects wit
 ## 🛠️ Tech Stack
 
 - **Frontend:**
-  - Next.js 15
-  - React 19
+  - Next.js 14
+  - React 18
   - TypeScript
   - Tailwind CSS
   - Framer Motion
   - Three.js (for cosmic effects)
   - Radix UI Components
   - Monaco Editor
+
+- **Backend:**
+  - Node.js
+  - Express.js
+  - MongoDB
+  - JWT Authentication
+  - Socket.IO (for real-time features)
 
 - **Form Handling:**
   - React Hook Form
@@ -88,43 +95,87 @@ A modern, collaborative platform for managing and tracking academic projects wit
 ### Prerequisites
 
 - Node.js (v18 or higher)
+- MongoDB (v7.0 or higher)
 - npm or yarn
 
 ### Installation
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/codecommons.git
+   git clone https://github.com/nabin00012/codecommons.git
    cd codecommons
    ```
 
 2. Install dependencies:
    ```bash
+   # Install frontend dependencies
    npm install
-   # or
-   yarn install
+
+   # Install backend dependencies
+   cd codecommons-backend
+   npm install
+   cd ..
    ```
 
-3. Start the development server:
+3. Set up environment variables:
+   - Create `.env` and `.env.local` in the root directory
+   - Create `.env` and `.env.local` in the `codecommons-backend` directory
+   - Use the following template:
+   ```
+   # MongoDB Configuration
+   MONGODB_URI=mongodb://localhost:27017/codecommons
+   MONGODB_DB=codecommons
+
+   # API Configuration
+   NEXT_PUBLIC_API_URL=http://localhost:5050
+
+   # JWT Configuration
+   JWT_SECRET=your-secret-key-here
+
+   # Backend Configuration
+   PORT=5050
+   ```
+
+4. Start MongoDB:
    ```bash
-   npm run dev
-   # or
-   yarn dev
+   mongod
    ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+5. Start the development servers:
+   ```bash
+   # Start backend server
+   cd codecommons-backend
+   npm run dev
+
+   # In a new terminal, start frontend server
+   cd ..
+   npm run dev
+   ```
+
+6. Visit `http://localhost:3000` in your browser
 
 ## 📦 Project Structure
 
 ```
 codecommons/
 ├── app/                    # Next.js app directory
+│   ├── api/               # API routes
+│   ├── dashboard/         # Dashboard pages
+│   └── (auth)/           # Authentication pages
 ├── components/            # Reusable components
 │   ├── ui/               # UI components
 │   └── project-management/ # Project management components
 ├── lib/                  # Utility functions and configurations
 ├── public/               # Static assets
 └── styles/              # Global styles
+
+codecommons-backend/
+├── src/
+│   ├── controllers/     # Route controllers
+│   ├── models/         # Database models
+│   ├── routes/         # API routes
+│   └── middleware/     # Custom middleware
+└── uploads/            # File uploads directory
 ```
 
 ## 🎨 Customization
@@ -143,13 +194,31 @@ The project uses a cosmic theme that can be customized in the following files:
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+We love your input! We want to make contributing to CodeCommons as easy and transparent as possible, whether it's:
+
+- Reporting a bug
+- Discussing the current state of the code
+- Submitting a fix
+- Proposing new features
+- Becoming a maintainer
+
+### Development Process
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
+
+### Pull Request Process
+
+1. Update the README.md with details of changes to the interface
+2. Update the documentation with any new environment variables, exposed ports, etc.
+3. The PR will be merged once you have the sign-off of at least one other developer
+
+### Any contributions you make will be under the MIT Software License
+
+In short, when you submit code changes, your submissions are understood to be under the same [MIT License](http://choosealicense.com/licenses/mit/) that covers the project. Feel free to contact the maintainers if that's a concern.
 
 ## 📝 License
 
@@ -162,4 +231,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Radix UI](https://www.radix-ui.com/)
 - [Framer Motion](https://www.framer.com/motion/)
 - [Three.js](https://threejs.org/)
+- [MongoDB](https://www.mongodb.com/)
+- [Express.js](https://expressjs.com/)
 
