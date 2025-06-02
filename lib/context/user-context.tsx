@@ -104,7 +104,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         verificationInProgress.current = false;
 
         if (mounted) {
-          if (response?.user) {
+          if (response?.success && response?.user) {
             const apiUser = response.user as ApiUser;
             const userData: User = {
               id: apiUser._id,
@@ -125,6 +125,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
               router.replace("/dashboard");
             }
           } else {
+            console.log("Token verification failed, clearing user data");
             setUser(null);
             setToken(null);
             setLoading(false);

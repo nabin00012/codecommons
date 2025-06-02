@@ -232,15 +232,24 @@ class AuthService {
       });
 
       if (!response.ok) {
-        console.error("Token verification failed");
+        console.error("Token verification failed:", response.status);
+        this.setToken(null);
         return { success: false };
       }
 
       const data = await response.json();
       console.log("Token verification response:", data);
-      return data;
+
+      if (!data.success || !data.user) {
+        console.error("Invalid verification response:", data);
+        this.setToken(null);
+        return { success: false };
+      }
+
+      return { success: true, user: data.user };
     } catch (error) {
       console.error("Token verification error:", error);
+      this.setToken(null);
       return { success: false };
     }
   }
