@@ -328,13 +328,7 @@ export default function HomePage() {
                   ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white"
                   : "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
               }`}
-              onClick={() => {
-                if (user) {
-                  router.push("/dashboard");
-                } else {
-                  router.push("/register");
-                }
-              }}
+              onClick={() => router.push("/register")}
             >
               <span
                 className={`absolute -inset-1 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-gradient-x ${
