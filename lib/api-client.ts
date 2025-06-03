@@ -1,6 +1,6 @@
-import { authService } from "@/lib/services/auth";
+import { API_URL } from "@/lib/constants";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
+const API_BASE_URL = API_URL;
 
 interface ApiResponse<T> {
   data?: T;
@@ -54,7 +54,8 @@ async function handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
 }
 
 async function getHeaders() {
-  const token = authService.getToken();
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
   return {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),

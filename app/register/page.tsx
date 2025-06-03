@@ -16,7 +16,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/components/ui/use-toast";
 import { useUser } from "@/lib/context/user-context";
 import { useAuth } from "@/lib/context/AuthContext";
-import { Code, ArrowLeft, Eye, EyeOff, Loader2, RefreshCw } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Loader2, RefreshCw } from "lucide-react";
 import { authService } from "@/lib/services/auth";
 
 interface FormErrors {
@@ -98,8 +98,8 @@ export default function RegisterPage() {
 
     if (!formData.password) {
       newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
     } else if (!/[A-Z]/.test(formData.password)) {
       newErrors.password =
         "Password must contain at least one uppercase letter";
@@ -153,7 +153,18 @@ export default function RegisterPage() {
       setToken(response.token);
 
       // Login the user after successful registration
-      login(response.user);
+      login({
+        id: response.user._id,
+        _id: response.user._id,
+        name: response.user.name,
+        email: response.user.email,
+        role: response.user.role,
+        preferences: response.user.preferences || {
+          theme: "system",
+          notifications: true,
+          language: "en",
+        },
+      });
 
       toast({
         title: "Registration successful!",
@@ -198,81 +209,82 @@ export default function RegisterPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-muted/30">
-      <Link
-        href="/"
-        className="absolute left-4 top-4 flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-      >
-        <ArrowLeft className="mr-1 h-4 w-4" />
-        Back to home
-      </Link>
+      <div className="w-full max-w-md">
+        <Card className="border-none shadow-lg">
+          <CardHeader className="space-y-1">
+            <div className="flex items-center justify-between">
+              <Link
+                href="/"
+                className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Home
+              </Link>
+              <Link
+                href="/login"
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                Already have an account?
+              </Link>
+            </div>
+            <div className="space-y-2 text-center">
+              <h1 className="text-2xl font-bold">Create an account</h1>
+              <p className="text-sm text-muted-foreground">
+                Enter your details to create your account
+              </p>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+                  {error}
+                </div>
+              )}
 
-      <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
-        <div className="flex flex-col space-y-2 text-center">
-          <div className="flex justify-center">
-            <Code className="h-6 w-6 text-primary cosmic-glow" />
-          </div>
-          <h1 className="text-2xl font-semibold tracking-tight cosmic-text">
-            Create an account
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Join the Jain University coding community
-          </p>
-        </div>
-
-        <Card className="cosmic-card">
-          <form onSubmit={handleSubmit}>
-            <CardHeader className="space-y-1 pb-4">
-              <div className="flex justify-center">
-                <div className="w-16 h-1 bg-primary/20 rounded-full" />
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="name">Name</Label>
                 <Input
                   id="name"
                   name="name"
-                  placeholder="John Doe"
                   value={formData.name}
                   onChange={handleChange}
-                  disabled={isLoading}
-                  className={errors.name ? "border-red-500" : ""}
+                  placeholder="Enter your name"
+                  required
+                  autoComplete="name"
                 />
                 {errors.name && (
-                  <p className="text-xs text-red-500">{errors.name}</p>
+                  <p className="text-sm text-destructive">{errors.name}</p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="you@jainuniversity.ac.in"
-                    value={formData.email}
-                    onChange={handleChange}
-                    disabled={isLoading}
-                    className={errors.email ? "border-red-500" : ""}
-                  />
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="email">Email</Label>
                   <Button
                     type="button"
-                    variant="outline"
-                    size="icon"
+                    variant="ghost"
+                    size="sm"
                     onClick={generateRandomEmail}
-                    disabled={isLoading}
-                    title="Generate random email for testing"
+                    className="h-8 px-2 text-xs"
                   >
-                    <RefreshCw className="h-4 w-4" />
+                    <RefreshCw className="mr-1 h-3 w-3" />
+                    Generate
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  For developers: Click the refresh icon to generate a random
-                  email
-                </p>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="Enter your email"
+                  required
+                  autoComplete="email"
+                  inputMode="email"
+                />
                 {errors.email && (
-                  <p className="text-xs text-red-500">{errors.email}</p>
+                  <p className="text-sm text-destructive">{errors.email}</p>
                 )}
               </div>
 
@@ -285,31 +297,26 @@ export default function RegisterPage() {
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={handleChange}
-                    disabled={isLoading}
-                    className={
-                      errors.password ? "border-red-500 pr-10" : "pr-10"
-                    }
+                    placeholder="Enter your password"
+                    required
+                    autoComplete="new-password"
                   />
                   <Button
                     type="button"
                     variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-0 h-full px-3 py-2"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3"
                     onClick={() => setShowPassword(!showPassword)}
-                    disabled={isLoading}
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
                     ) : (
                       <Eye className="h-4 w-4" />
                     )}
-                    <span className="sr-only">
-                      {showPassword ? "Hide password" : "Show password"}
-                    </span>
                   </Button>
                 </div>
                 {errors.password && (
-                  <p className="text-xs text-red-500">{errors.password}</p>
+                  <p className="text-sm text-destructive">{errors.password}</p>
                 )}
               </div>
 
@@ -322,91 +329,80 @@ export default function RegisterPage() {
                     type={showConfirmPassword ? "text" : "password"}
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    disabled={isLoading}
-                    className={
-                      errors.confirmPassword ? "border-red-500 pr-10" : "pr-10"
-                    }
+                    placeholder="Confirm your password"
+                    required
+                    autoComplete="new-password"
                   />
                   <Button
                     type="button"
                     variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-0 h-full px-3 py-2"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    disabled={isLoading}
                   >
                     {showConfirmPassword ? (
                       <EyeOff className="h-4 w-4" />
                     ) : (
                       <Eye className="h-4 w-4" />
                     )}
-                    <span className="sr-only">
-                      {showConfirmPassword ? "Hide password" : "Show password"}
-                    </span>
                   </Button>
                 </div>
                 {errors.confirmPassword && (
-                  <p className="text-xs text-red-500">
+                  <p className="text-sm text-destructive">
                     {errors.confirmPassword}
                   </p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label>I am a</Label>
+                <Label>Role</Label>
                 <RadioGroup
                   value={formData.role}
                   onValueChange={handleRoleChange}
-                  className="flex gap-4"
+                  className="flex flex-col space-y-1"
                 >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem
-                      value="student"
-                      id="student"
-                      disabled={isLoading}
-                    />
-                    <Label htmlFor="student" className="cursor-pointer">
-                      Student
-                    </Label>
+                    <RadioGroupItem value="student" id="student" />
+                    <Label htmlFor="student">Student</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem
-                      value="teacher"
-                      id="teacher"
-                      disabled={isLoading}
-                    />
-                    <Label htmlFor="teacher" className="cursor-pointer">
-                      Teacher
-                    </Label>
+                    <RadioGroupItem value="teacher" id="teacher" />
+                    <Label htmlFor="teacher">Teacher</Label>
                   </div>
                 </RadioGroup>
               </div>
-            </CardContent>
-            <CardFooter>
-              <Button
-                type="submit"
-                className="w-full cosmic-button"
-                disabled={isLoading}
-              >
+
+              <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Creating account...
                   </>
                 ) : (
-                  "Create Account"
+                  "Create account"
                 )}
               </Button>
-            </CardFooter>
-          </form>
+            </form>
+          </CardContent>
+          <CardFooter className="flex flex-col space-y-4">
+            <div className="text-sm text-center text-muted-foreground">
+              By creating an account, you agree to our{" "}
+              <Link
+                href="/terms"
+                className="text-primary hover:text-primary/90 underline-offset-4 hover:underline"
+              >
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link
+                href="/privacy"
+                className="text-primary hover:text-primary/90 underline-offset-4 hover:underline"
+              >
+                Privacy Policy
+              </Link>
+            </div>
+          </CardFooter>
         </Card>
-
-        <p className="text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
-          <Link href="/login" className="text-primary hover:underline">
-            Sign in
-          </Link>
-        </p>
       </div>
     </div>
   );

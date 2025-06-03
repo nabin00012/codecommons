@@ -8,13 +8,41 @@ import React, {
   ReactNode,
   useRef,
 } from "react";
-import { authService, User } from "@/lib/services/auth";
+import { authService } from "@/lib/services/auth";
 import { useAuth } from "./AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useToast } from "@/components/ui/use-toast";
 
 export type UserRole = "student" | "teacher" | "user" | "admin";
+
+export interface User {
+  id: string;
+  _id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  preferences?: {
+    theme: string;
+    notifications: boolean;
+    language: string;
+  };
+}
+
+interface AuthResponse {
+  token: string;
+  user: {
+    _id: string;
+    name: string;
+    email: string;
+    role: string;
+    preferences?: {
+      theme: string;
+      notifications: boolean;
+      language: string;
+    };
+  };
+}
 
 interface UserContextType {
   user: User | null;
@@ -76,14 +104,18 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
 
         verificationInProgress.current = true;
-        const userData = await authService.verifyToken();
+        const response = await authService.verifyToken(token);
         verificationInProgress.current = false;
 
         if (mounted) {
-          if (userData) {
+          if (response && response.user) {
             const userWithPreferences: User = {
-              ...userData,
-              preferences: userData.preferences || defaultPreferences,
+              id: response.user._id,
+              _id: response.user._id,
+              name: response.user.name,
+              email: response.user.email,
+              role: response.user.role as UserRole,
+              preferences: response.user.preferences || defaultPreferences,
             };
             setUser(userWithPreferences);
 
@@ -177,7 +209,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   const updateUser = (userData: Partial<User>) => {
-    setUser((prev) => {
+    setUser((prev: User | null) => {
       if (!prev) return null;
       const updatedUser = { ...prev, ...userData };
       toast({
