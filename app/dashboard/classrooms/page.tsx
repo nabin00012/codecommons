@@ -228,9 +228,7 @@ export default function ClassroomsListPage() {
     const fetchClassrooms = async () => {
       try {
         setIsLoading(true);
-        const classroomService = new ClassroomService(
-          (await authService.getToken()) || ""
-        );
+        const classroomService = new ClassroomService();
         const data = await classroomService.getClassrooms();
         setClassrooms(data);
       } catch (error) {
@@ -258,13 +256,7 @@ export default function ClassroomsListPage() {
 
     setIsJoining(true);
     try {
-      const token = await authService.getToken();
-      if (!token) {
-        router.push("/login");
-        return;
-      }
-
-      const classroomService = new ClassroomService(token);
+      const classroomService = new ClassroomService();
       const classroom = await classroomService.joinClassroomByCode(joinCode);
 
       toast({

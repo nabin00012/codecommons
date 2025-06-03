@@ -32,14 +32,14 @@ export default function AssignmentsPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = authService.getToken();
+        const token = await authService.getToken();
         if (!token) {
           router.push("/login");
           return;
         }
 
-        // Initialize services with token
-        const classroomServiceInstance = new ClassroomService(token);
+        // Initialize services
+        const classroomServiceInstance = new ClassroomService();
         const assignmentServiceInstance = assignmentService;
 
         // Fetch all classrooms
@@ -138,9 +138,27 @@ export default function AssignmentsPage() {
                   {subjectGroup.assignments.length === 0 ? (
                     <Card className="cosmic-card">
                       <CardContent className="flex flex-col items-center justify-center py-8">
-                        <p className="text-muted-foreground">
-                          No assignments till now.
+                        <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">
+                          No Assignments Yet
+                        </h3>
+                        <p className="text-muted-foreground text-center">
+                          {user?.role === "teacher"
+                            ? "Create your first assignment to get started"
+                            : "There are no assignments available for this subject yet"}
                         </p>
+                        {user?.role === "teacher" && (
+                          <Button
+                            onClick={() =>
+                              router.push(
+                                `/dashboard/classrooms/${subjectGroup.subject._id}/assignments/new`
+                              )
+                            }
+                            className="mt-4"
+                          >
+                            Create Assignment
+                          </Button>
+                        )}
                       </CardContent>
                     </Card>
                   ) : (

@@ -386,6 +386,10 @@ export default function RegisterPage() {
                     <Label htmlFor="teacher">Teacher</Label>
                   </div>
                 </RadioGroup>
+                <p className="text-sm text-muted-foreground mt-2">
+                  For developers: Use any email for teacher role. For student
+                  role, use @jainuniversity.ac.in email.
+                </p>
               </div>
 
               <Button type="submit" className="w-full" disabled={isLoading}>
