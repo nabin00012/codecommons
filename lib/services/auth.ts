@@ -62,7 +62,7 @@ class AuthService {
   async login(email: string, password: string): Promise<AuthResponse> {
     try {
       console.log("Attempting login for:", email);
-      const response = await this.request<AuthResponse>("/auth/login", {
+      const response = await this.request<AuthResponse>("/api/auth/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
@@ -102,7 +102,7 @@ class AuthService {
       }
 
       console.log("Attempting registration for:", data.email);
-      const response = await this.request<AuthResponse>("/auth/register", {
+      const response = await this.request<AuthResponse>("/api/auth/register", {
         method: "POST",
         body: JSON.stringify(data),
       });
@@ -135,7 +135,7 @@ class AuthService {
 
     try {
       console.log("Verifying token...");
-      const response = await this.request<{ user: User }>("/auth/verify", {
+      const response = await this.request<{ user: User }>("/api/auth/verify", {
         method: "GET",
       });
 

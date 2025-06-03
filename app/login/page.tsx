@@ -48,10 +48,10 @@ export default function LoginPage() {
       }
 
       console.log("Attempting login...");
-      const response = await authService.login({ email, password });
+      const response = await authService.login(email, password);
       console.log("Login response received:", response);
 
-      if (!response?.success) {
+      if (!response?.token || !response?.user) {
         throw new Error("Invalid credentials");
       }
 
@@ -63,10 +63,10 @@ export default function LoginPage() {
       console.log("Setting user data in context...");
       login({
         id: response.user._id,
+        _id: response.user._id,
         name: response.user.name,
         email: response.user.email,
         role: response.user.role,
-        avatar: "/placeholder.svg?height=40&width=40",
         preferences: response.user.preferences || defaultPreferences,
       });
 
@@ -75,12 +75,9 @@ export default function LoginPage() {
         description: `Welcome back, ${response.user.name}!`,
       });
 
-      // Force redirect after a short delay
+      // Use router.push instead of window.location
       console.log("Initiating redirect to dashboard...");
-      setTimeout(() => {
-        console.log("Redirecting to dashboard...");
-        window.location.href = "/dashboard";
-      }, 500);
+      router.push("/dashboard");
     } catch (err) {
       console.error("Login error:", err);
       const errorMessage =
@@ -96,13 +93,12 @@ export default function LoginPage() {
     }
   };
 
-  // Remove the useEffect for redirection since we're handling it in handleLogin
   useEffect(() => {
     if (user) {
       console.log("User is already logged in, redirecting to dashboard...");
-      window.location.href = "/dashboard";
+      router.push("/dashboard");
     }
-  }, [user]);
+  }, [user, router]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background/90">
@@ -142,6 +138,8 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email"
                     required
+                    autoComplete="email"
+                    inputMode="email"
                   />
                 </div>
 
@@ -154,6 +152,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
                     required
+                    autoComplete="current-password"
                   />
                 </div>
 
