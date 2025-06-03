@@ -13,8 +13,16 @@ interface User {
 }
 
 interface AuthResponse {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
   token: string;
-  user: User;
+  preferences?: {
+    theme: string;
+    notifications: boolean;
+    language: string;
+  };
 }
 
 class AuthService {
@@ -40,18 +48,31 @@ class AuthService {
           "Content-Type": "application/json",
           ...options.headers,
         },
+        credentials: "include",
       });
 
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 409) {
+          throw new Error("An account with this email already exists");
+        }
+        if (response.status === 400) {
+          throw new Error(data.message || "Invalid input data");
+        }
+        if (response.status === 500) {
+          throw new Error("Server error. Please try again later");
+        }
         throw new Error(data.message || "Something went wrong");
       }
 
       return data;
     } catch (error) {
       console.error("Request failed:", error);
-      throw error;
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Network error. Please check your connection");
     }
   }
 
@@ -68,7 +89,7 @@ class AuthService {
     password: string;
     role: string;
   }): Promise<AuthResponse> {
-    return this.request<AuthResponse>("/auth/register", {
+    return this.request<AuthResponse>("/api/auth/register", {
       method: "POST",
       body: JSON.stringify(userData),
     });

@@ -18,6 +18,7 @@ import { useUser } from "@/lib/context/user-context";
 import { useAuth } from "@/lib/context/AuthContext";
 import { ArrowLeft, Eye, EyeOff, Loader2, RefreshCw } from "lucide-react";
 import { authService } from "@/lib/services/auth";
+import { UserRole } from "@/lib/context/user-context";
 
 interface FormErrors {
   name: string;
@@ -38,7 +39,7 @@ export default function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "student",
+    role: "student" as UserRole,
   });
 
   const [errors, setErrors] = useState<FormErrors>({
@@ -74,7 +75,7 @@ export default function RegisterPage() {
     }
   };
 
-  const handleRoleChange = (value: string) => {
+  const handleRoleChange = (value: UserRole) => {
     setFormData((prev) => ({ ...prev, role: value }));
   };
 
@@ -129,6 +130,17 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
+      // Validate email domain for student role
+      if (
+        formData.role === "student" &&
+        !formData.email.endsWith("@jainuniversity.ac.in")
+      ) {
+        setError(
+          "Student accounts must use a @jainuniversity.ac.in email address"
+        );
+        return;
+      }
+
       console.log("Submitting registration with:", {
         name: formData.name,
         email: formData.email,
@@ -145,8 +157,9 @@ export default function RegisterPage() {
 
       console.log("Registration response:", response);
 
-      if (!response || !response.token || !response.user) {
-        throw new Error("Registration failed. Please try again.");
+      // Check if we have a valid response with token
+      if (!response?.token) {
+        throw new Error("Invalid response from server");
       }
 
       // Store the token using auth context
@@ -154,12 +167,12 @@ export default function RegisterPage() {
 
       // Login the user after successful registration
       login({
-        id: response.user._id,
-        _id: response.user._id,
-        name: response.user.name,
-        email: response.user.email,
-        role: response.user.role,
-        preferences: response.user.preferences || {
+        id: response._id,
+        _id: response._id,
+        name: response.name,
+        email: response.email,
+        role: response.role as UserRole,
+        preferences: {
           theme: "system",
           notifications: true,
           language: "en",
@@ -171,7 +184,10 @@ export default function RegisterPage() {
         description: "Welcome to Code Commons!",
       });
 
-      router.push(redirectTo || "/dashboard");
+      // Add a small delay before redirecting to ensure the toast is visible
+      setTimeout(() => {
+        router.push(redirectTo || "/dashboard");
+      }, 1000);
     } catch (error) {
       console.error("Registration error:", error);
       const errorMessage =
@@ -358,7 +374,7 @@ export default function RegisterPage() {
                 <Label>Role</Label>
                 <RadioGroup
                   value={formData.role}
-                  onValueChange={handleRoleChange}
+                  onValueChange={(value) => handleRoleChange(value as UserRole)}
                   className="flex flex-col space-y-1"
                 >
                   <div className="flex items-center space-x-2">
