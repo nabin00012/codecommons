@@ -23,7 +23,11 @@ const app = express();
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000",
+  origin: [
+    process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000",
+    "https://codecommons-delta.vercel.app",
+    "https://codecommons.vercel.app",
+  ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: [

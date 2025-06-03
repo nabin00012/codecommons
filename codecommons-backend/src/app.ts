@@ -1,5 +1,4 @@
 import express from "express";
-import cors from "cors";
 import path from "path";
 import classroomRoutes from "./routes/classroom";
 import authRoutes from "./routes/auth";
@@ -11,9 +10,6 @@ import eventRoutes from "./routes/eventRoutes";
 import groupRoutes from "./routes/groupRoutes";
 
 const app = express();
-
-// Middleware
-app.use(cors());
 
 // Serve static files from the uploads directory
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
