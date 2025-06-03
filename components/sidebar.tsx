@@ -16,10 +16,16 @@ import {
   Users2,
   Code,
   User,
+  LayoutDashboard,
+  GraduationCap,
+  FolderGit2,
+  School,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { authService } from "@/lib/services/auth";
 import { ModeToggle } from "@/components/mode-toggle";
+import { NavigationItem, NavigationSection } from "@/lib/types/navigation";
+import Link from "next/link";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -33,113 +39,115 @@ export function Sidebar() {
 
   const isTeacher = user?.role === "teacher";
 
-  const navigation = [
+  const navigation: NavigationSection[] = [
     {
-      name: "Profile",
-      href: "/dashboard/profile",
-      icon: User,
-      current: pathname.includes("/profile"),
-    },
-    {
-      name: "Classrooms",
-      href: "/dashboard/classrooms",
-      icon: BookOpen,
-      current: pathname.includes("/classrooms"),
-    },
-    {
-      name: "Assignments",
-      href: "/dashboard/assignments",
-      icon: FileText,
-      current: pathname.includes("/assignments"),
-    },
-    {
-      name: "Projects",
-      href: "/dashboard/projects",
-      icon: Code2,
-      current: pathname.includes("/projects"),
-    },
-    {
-      name: "CodeCorner",
-      href: "/dashboard/codecorner",
-      icon: Code,
-      current: pathname.includes("/codecorner"),
-    },
-    {
-      name: "Community",
-      href: "/dashboard/community",
-      icon: Users,
-      current: pathname.includes("/community"),
-      subItems: [
+      title: "Main",
+      items: [
         {
-          name: "Discussions",
-          href: "/dashboard/community/discussions",
-          icon: MessageSquare,
+          name: "Dashboard",
+          href: "/dashboard",
+          icon: LayoutDashboard,
+          current: true,
         },
         {
-          name: "Events",
-          href: "/dashboard/community/events",
-          icon: Calendar,
+          name: "Classrooms",
+          href: "/dashboard/classrooms",
+          icon: GraduationCap,
+          current: false,
         },
         {
-          name: "Groups",
-          href: "/dashboard/community/groups",
-          icon: Users2,
+          name: "Assignments",
+          href: "/dashboard/assignments",
+          icon: BookOpen,
+          current: false,
         },
       ],
     },
     {
-      name: "Settings",
-      href: "/dashboard/settings",
-      icon: Settings,
-      current: pathname.includes("/settings"),
+      title: "Community",
+      items: [
+        {
+          name: "Code Corner",
+          href: "/dashboard/codecorner",
+          icon: Code2,
+          current: false,
+        },
+        {
+          name: "Discussions",
+          href: "/dashboard/discussions",
+          icon: MessageSquare,
+          current: false,
+        },
+        {
+          name: "Projects",
+          href: "/dashboard/projects",
+          icon: FolderGit2,
+          current: false,
+        },
+      ],
     },
     {
-      name: "Help",
-      href: "/dashboard/help",
-      icon: HelpCircle,
-      current: pathname.includes("/help"),
+      title: "Teacher",
+      items: [
+        {
+          name: "Teacher Dashboard",
+          href: "/dashboard/teacher",
+          icon: School,
+          current: false,
+          teacherOnly: true,
+        },
+        {
+          name: "Manage Projects",
+          href: "/dashboard/teacher/projects",
+          icon: FolderGit2,
+          current: false,
+          teacherOnly: true,
+        },
+      ],
     },
   ];
 
   return (
-    <div className="flex h-full w-64 flex-col bg-background border-border border-r">
-      <div className="flex h-16 items-center border-b px-4">
-        <h1 className="text-xl font-semibold">CodeCommons</h1>
+    <div className="flex h-full flex-col gap-y-5 bg-background px-6">
+      <div className="flex h-16 shrink-0 items-center">
+        <Link href="/" className="flex items-center gap-2">
+          <Code2 className="h-6 w-6" />
+          <span className="text-lg font-semibold">CodeCommons</span>
+        </Link>
       </div>
-      <nav className="flex-1 space-y-1 px-2 py-4">
-        {navigation.map((item) => {
-          if (item.teacherOnly && !isTeacher) return null;
-          return (
-            <div key={item.name}>
-              <Button
-                variant={item.current ? "secondary" : "ghost"}
-                className={cn(
-                  "w-full justify-start",
-                  item.current && "bg-muted"
-                )}
-                onClick={() => router.push(item.href)}
-              >
-                <item.icon className="mr-2 h-5 w-5" />
-                {item.name}
-              </Button>
-              {item.subItems && item.current && (
-                <div className="ml-6 mt-1 space-y-1">
-                  {item.subItems.map((subItem) => (
-                    <Button
-                      key={subItem.name}
-                      variant="ghost"
-                      className="w-full justify-start text-sm"
-                      onClick={() => router.push(subItem.href)}
-                    >
-                      <subItem.icon className="mr-2 h-4 w-4" />
-                      {subItem.name}
-                    </Button>
+      <nav className="flex flex-1 flex-col">
+        <ul role="list" className="flex flex-1 flex-col gap-y-7">
+          {navigation.map((section) => (
+            <li key={section.title}>
+              <div className="text-xs font-semibold leading-6 text-muted-foreground">
+                {section.title}
+              </div>
+              <ul role="list" className="-mx-2 mt-2 space-y-1">
+                {section.items
+                  .filter((item) => !item.teacherOnly || isTeacher)
+                  .map((item) => (
+                    <li key={item.name}>
+                      <Link
+                        href={item.href}
+                        className={cn(
+                          item.current
+                            ? "bg-muted text-foreground"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                          "group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold"
+                        )}
+                      >
+                        <item.icon
+                          className="h-6 w-6 shrink-0"
+                          aria-hidden="true"
+                        />
+                        {item.name}
+                      </Link>
+                    </li>
                   ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+              </ul>
+            </li>
+          ))}
+        </ul>
       </nav>
       <div className="border-t p-4 flex flex-col gap-4">
         <ModeToggle />

@@ -44,6 +44,8 @@
     "@radix-ui/react-tooltip": "latest",
     "@react-three/drei": "9.56.15",
     "@react-three/fiber": "8.13.7",
+    "@swc/core": "^1.4.7",
+    "@swc/helpers": "^0.5.3",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/mongodb": "^4.0.6",
@@ -62,6 +64,7 @@
     "mongodb": "^6.16.0",
     "mongoose": "^8.14.3",
     "next": "14.1.0",
+    "next-auth": "^5.0.0-beta.28",
     "next-themes": "latest",
     "react": "^18.2.0",
     "react-day-picker": "8.10.1",
@@ -77,11 +80,10 @@
     "three": "0.152.2",
     "uuid": "^11.1.0",
     "vaul": "^0.9.6",
-    "zod": "latest",
-    "@swc/core": "^1.4.7",
-    "@swc/helpers": "^0.5.3"
+    "zod": "latest"
   },
   "devDependencies": {
+    "@swc/cli": "^0.3.10",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
@@ -89,7 +91,6 @@
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5",
-    "@swc/cli": "^0.3.10"
+    "typescript": "^5"
   }
 }

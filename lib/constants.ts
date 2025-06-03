@@ -1,5 +1,5 @@
 export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
+  process.env.NEXT_PUBLIC_API_URL || "https://codecommons-backend.vercel.app";
 
 // Ensure API_URL is always defined
 if (!API_URL) {

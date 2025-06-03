@@ -17,7 +17,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/components/ui/use-toast";
 import { useUser } from "@/lib/context/user-context";
 import { useAuth } from "@/lib/context/AuthContext";
-import { Code, ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Code, ArrowLeft, Eye, EyeOff, Loader2, RefreshCw } from "lucide-react";
 import { authService } from "@/lib/services/auth";
 
 interface FormErrors {
@@ -55,6 +55,15 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
 
   const redirectTo = searchParams.get("redirectTo") || "";
+
+  const generateRandomEmail = () => {
+    const randomNum = Math.floor(Math.random() * 1000000);
+    const newEmail = `${randomNum}@jainuniversity.ac.in`;
+    setFormData((prev) => ({ ...prev, email: newEmail }));
+    if (errors.email) {
+      setErrors((prev) => ({ ...prev, email: "" }));
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -113,31 +122,14 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (!validateForm()) {
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // Validate password
-      if (formData.password.length < 6) {
-        throw new Error("Password must be at least 6 characters long");
-      }
-
-      if (!/[A-Z]/.test(formData.password)) {
-        throw new Error("Password must contain at least one uppercase letter");
-      }
-
-      if (!/[a-z]/.test(formData.password)) {
-        throw new Error("Password must contain at least one lowercase letter");
-      }
-
-      if (!/[0-9]/.test(formData.password)) {
-        throw new Error("Password must contain at least one number");
-      }
-
-      // Validate email format
-      if (!formData.email.endsWith("@jainuniversity.ac.in")) {
-        throw new Error("Email must end with @jainuniversity.ac.in");
-      }
-
       console.log("Submitting registration with:", {
         name: formData.name,
         email: formData.email,
@@ -153,7 +145,7 @@ export default function RegisterPage() {
 
       console.log("Registration response:", response);
 
-      if (!response || !response.success || !response.token) {
+      if (!response || !response.token || !response.user) {
         throw new Error("Registration failed. Please try again.");
       }
 
@@ -162,12 +154,12 @@ export default function RegisterPage() {
 
       // Login the user after successful registration
       login({
-        id: response.user._id,
+        id: response.user.id,
         name: response.user.name,
         email: response.user.email,
         role: response.user.role as "student" | "teacher",
         avatar: "/placeholder.svg?height=40&width=40",
-        preferences: response.user.preferences || {
+        preferences: {
           theme: "system",
           notifications: true,
           language: "en",
@@ -247,19 +239,31 @@ export default function RegisterPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="you@jainuniversity.ac.in"
-                  value={formData.email}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                  className={errors.email ? "border-red-500" : ""}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="you@jainuniversity.ac.in"
+                    value={formData.email}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                    className={errors.email ? "border-red-500" : ""}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={generateRandomEmail}
+                    disabled={isLoading}
+                    title="Generate random email for testing"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  For developers: Add any random number before
-                  @jainuniversity.ac.in (e.g., 123456@jainuniversity.ac.in)
+                  For developers: Click the refresh icon to generate a random
+                  email
                 </p>
                 {errors.email && (
                   <p className="text-xs text-red-500">{errors.email}</p>

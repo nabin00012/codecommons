@@ -1,125 +1,86 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { authService } from "@/lib/services/auth";
-import { useTheme } from "next-themes";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { authService } from "@/lib/services/auth";
 import { useToast } from "@/components/ui/use-toast";
 
 interface AuthContextType {
-  token: string | null;
-  setToken: (token: string | null) => void;
   isAuthenticated: boolean;
-  login: (token: string) => void;
-  logout: () => void;
+  isLoading: boolean;
+  token: string | null;
+  setToken: (token: string) => void;
+  clearToken: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({
+  isAuthenticated: false,
+  isLoading: true,
+  token: null,
+  setToken: () => {},
+  clearToken: () => {},
+});
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const { resolvedTheme } = useTheme();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [token, setTokenState] = useState<string | null>(null);
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        console.log("Initializing auth...");
-        const storedToken = authService.getToken();
-        console.log("Stored token:", storedToken ? "exists" : "none");
+    console.log("Initializing auth...");
+    const storedToken = authService.getToken();
+    console.log("Stored token:", storedToken ? "exists" : "none");
 
-        if (storedToken) {
-          const response = await authService.verifyToken(storedToken);
-          console.log("Token verification response:", response);
+    if (storedToken) {
+      verifyToken(storedToken);
+    } else {
+      setIsLoading(false);
+    }
+  }, []);
 
-          if (response?.success) {
-            console.log("Setting token from storage");
-            setToken(storedToken);
-          } else {
-            console.log("Token verification failed, clearing token");
-            authService.setToken(null);
-            setToken(null);
-            toast({
-              title: "Session expired",
-              description: "Please log in again to continue.",
-              variant: "destructive",
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Token verification failed:", error);
-        authService.setToken(null);
-        setToken(null);
-        toast({
-          title: "Authentication error",
-          description: "Please log in again to continue.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsInitialized(true);
-      }
-    };
-
-    initializeAuth();
-  }, [toast]);
-
-  const login = async (newToken: string) => {
+  const verifyToken = async (tokenToVerify: string) => {
     try {
-      console.log("Login called with token:", newToken ? "exists" : "none");
-      const response = await authService.verifyToken(newToken);
+      const response = await authService.verifyToken(tokenToVerify);
       console.log("Token verification response:", response);
 
-      if (response?.success) {
-        console.log("Setting token from login");
-        setToken(newToken);
-        authService.setToken(newToken);
+      if (response) {
+        setTokenState(tokenToVerify);
+        setIsAuthenticated(true);
       } else {
-        throw new Error("Token verification failed");
+        throw new Error("Invalid token response");
       }
     } catch (error) {
-      console.error("Login error:", error);
-      setToken(null);
-      authService.setToken(null);
-      toast({
-        title: "Login failed",
-        description: "Please try again.",
-        variant: "destructive",
-      });
-      throw error;
+      console.error("Token verification failed:", error);
+      console.log("Token verification failed, clearing token");
+      clearToken();
+      router.push("/login");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    console.log("Logout called");
-    setToken(null);
-    authService.logout();
-    toast({
-      title: "Logged out",
-      description: "You have been successfully logged out.",
-    });
-    router.push("/login");
+  const setToken = (newToken: string) => {
+    authService.setToken(newToken);
+    setTokenState(newToken);
+    setIsAuthenticated(true);
   };
 
-  if (!isInitialized) {
-    return null; // or a loading spinner
-  }
+  const clearToken = () => {
+    authService.clearToken();
+    setTokenState(null);
+    setIsAuthenticated(false);
+  };
 
   return (
     <AuthContext.Provider
       value={{
+        isAuthenticated,
+        isLoading,
         token,
-        setToken: (newToken) => {
-          console.log("setToken called with:", newToken ? "token" : "null");
-          setToken(newToken);
-          if (newToken) {
-            authService.setToken(newToken);
-          }
-        },
-        isAuthenticated: !!token,
-        login,
-        logout,
+        setToken,
+        clearToken,
       }}
     >
       {children}
@@ -127,10 +88,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-}
+};

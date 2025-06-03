@@ -1,7 +1,5 @@
 import { UserRole } from "@/lib/context/user-context";
-
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://codecommons-backend.vercel.app";
+import { API_URL } from "@/lib/constants";
 
 interface LoginCredentials {
   email: string;
@@ -16,26 +14,14 @@ interface RegisterData {
 }
 
 interface AuthResponse {
-  success: boolean;
   user: {
-    _id: string;
     id: string;
+    _id: string;
     name: string;
     email: string;
     role: string;
-    preferences?: {
-      theme: string;
-      notifications: boolean;
-      language: string;
-      editor?: {
-        fontSize: number;
-        theme: string;
-        lineNumbers: boolean;
-        minimap: boolean;
-      };
-    };
   };
-  token?: string;
+  token: string;
 }
 
 interface LoginResponse {
@@ -66,235 +52,141 @@ class AuthService {
   }
 
   getToken(): string | null {
-    try {
-      if (this.token) {
-        console.log("Getting token from memory");
-        return this.token;
-      }
-
-      if (typeof window !== "undefined") {
-        const storedToken = localStorage.getItem("token");
-        console.log(
-          "Getting token from localStorage:",
-          storedToken ? "exists" : "none"
-        );
-        if (storedToken) {
-          this.token = storedToken;
-          return storedToken;
-        }
-      }
-
-      return null;
-    } catch (error) {
-      console.error("AuthService - Error getting token:", error);
-      return null;
-    }
+    return this.token;
   }
 
-  setToken(token: string | null): void {
-    console.log("Setting token:", token ? "exists" : "null");
+  setToken(token: string): void {
     this.token = token;
-
-    if (token) {
-      try {
-        if (typeof window !== "undefined") {
-          localStorage.setItem("token", token);
-          // Set cookie without secure flag for local development
-          document.cookie = `token=${token}; path=/; samesite=lax; max-age=2592000`; // 30 days
-          console.log("Token set in cookie and localStorage");
-        }
-      } catch (error) {
-        console.error("AuthService - Error setting token:", error);
-      }
-    } else {
-      try {
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("token");
-          // Clear cookie
-          document.cookie =
-            "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-          console.log("Token removed from cookie and localStorage");
-        }
-      } catch (error) {
-        console.error("AuthService - Error removing token:", error);
-      }
+    if (typeof window !== "undefined") {
+      localStorage.setItem("token", token);
     }
   }
 
-  async login(credentials: LoginCredentials): Promise<AuthResponse | null> {
+  clearToken(): void {
+    this.token = null;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token");
+    }
+  }
+
+  async login(email: string, password: string): Promise<AuthResponse> {
     try {
-      console.log("Attempting login with:", credentials.email);
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(credentials),
-        credentials: "include",
+        body: JSON.stringify({ email, password }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Login failed:", errorData);
-        throw new Error(errorData.message || "Login failed");
+        throw new Error(
+          data.message || "Login failed. Please check your credentials."
+        );
       }
 
-      const data = (await response.json()) as LoginResponse;
-      console.log("Login response:", data);
-
-      if (!data._id || !data.token) {
-        throw new Error("Invalid login response");
+      if (!data.token || !data.user) {
+        throw new Error("Invalid response from server");
       }
 
-      // Set token before returning response
       this.setToken(data.token);
-      console.log("Token set after successful login");
-
-      return {
-        success: true,
-        user: {
-          _id: data._id,
-          id: data._id,
-          name: data.name,
-          email: data.email,
-          role: data.role,
-          preferences: data.preferences || {
-            theme: "system",
-            notifications: true,
-            language: "en",
-          },
-        },
-        token: data.token,
-      };
+      return data;
     } catch (error) {
       console.error("Login error:", error);
-      this.setToken(null);
       throw error;
     }
   }
 
-  async register(data: RegisterData): Promise<AuthResponse | null> {
+  async register(data: {
+    name: string;
+    email: string;
+    password: string;
+    role?: string;
+  }): Promise<AuthResponse> {
     try {
-      console.log("Attempting registration with:", data.email);
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(data.email)) {
+        throw new Error("Please enter a valid email address");
+      }
+
+      // Validate password strength
+      if (data.password.length < 8) {
+        throw new Error("Password must be at least 8 characters long");
+      }
+
       const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Accept: "application/json",
         },
         body: JSON.stringify({
           ...data,
           role: data.role || "student",
         }),
-        credentials: "include",
       });
 
-      console.log("Registration response status:", response.status);
-      const responseText = await response.text();
-      console.log("Registration response text:", responseText);
+      const responseData = await response.json();
 
       if (!response.ok) {
-        let errorData;
-        try {
-          errorData = JSON.parse(responseText);
-        } catch (e) {
-          errorData = { message: "Registration failed" };
+        if (
+          response.status === 400 &&
+          responseData.message?.includes("already exists")
+        ) {
+          throw new Error(
+            "An account with this email already exists. Please try logging in instead."
+          );
         }
-        console.error("Registration failed:", errorData);
-        throw new Error(errorData.message || "Registration failed");
+        throw new Error(
+          responseData.message || "Registration failed. Please try again."
+        );
       }
 
-      let responseData;
-      try {
-        responseData = JSON.parse(responseText);
-      } catch (e) {
-        console.error("Failed to parse response:", e);
+      if (!responseData.token || !responseData.user) {
         throw new Error("Invalid response from server");
       }
 
-      console.log("Registration response:", responseData);
-
-      if (!responseData._id || !responseData.token) {
-        throw new Error("Invalid registration response");
-      }
-
-      // Set token before returning response
       this.setToken(responseData.token);
-      console.log("Token set after successful registration");
-
-      return {
-        success: true,
-        user: {
-          _id: responseData._id,
-          id: responseData._id,
-          name: responseData.name,
-          email: responseData.email,
-          role: responseData.role,
-          preferences: responseData.preferences || {
-            theme: "system",
-            notifications: true,
-            language: "en",
-          },
-        },
-        token: responseData.token,
-      };
+      return responseData;
     } catch (error) {
       console.error("Registration error:", error);
-      this.setToken(null);
       throw error;
     }
   }
 
-  async verifyToken(
-    token: string
-  ): Promise<{
-    success: boolean;
-    user?: { _id: string; id: string; role: string };
-  }> {
+  async verifyToken(token: string): Promise<AuthResponse["user"]> {
     try {
-      console.log("Verifying token...");
       const response = await fetch(`${API_URL}/api/auth/verify`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        credentials: "include",
       });
 
-      if (!response.ok) {
-        console.error("Token verification failed:", response.status);
-        this.setToken(null);
-        return { success: false };
-      }
-
       const data = await response.json();
-      console.log("Token verification response:", data);
 
-      if (!data.success || !data.user) {
-        console.error("Invalid verification response:", data);
-        this.setToken(null);
-        return { success: false };
+      if (!response.ok) {
+        throw new Error(data.message || "Token verification failed");
       }
 
-      return {
-        success: true,
-        user: {
-          _id: data.user._id,
-          id: data.user._id,
-          role: data.user.role,
-        },
-      };
+      if (!data.user) {
+        throw new Error("Invalid user data in response");
+      }
+
+      return data.user;
     } catch (error) {
       console.error("Token verification error:", error);
-      this.setToken(null);
-      return { success: false };
+      this.clearToken();
+      throw error;
     }
   }
 
   logout(): void {
     console.log("Logging out...");
-    this.setToken(null);
+    this.clearToken();
   }
 }
 

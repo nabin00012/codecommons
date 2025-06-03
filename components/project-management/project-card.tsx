@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { useUser } from "@/lib/context/user-context";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { Project } from "@/lib/models/project";
 
 export type ProjectStatus =
   | "not-started"
@@ -44,11 +45,11 @@ export interface ProjectCardProps {
   id: string;
   title: string;
   description: string;
-  status: ProjectStatus;
+  status: Project["status"];
   progress: number;
-  dueDate: string;
+  dueDate: Date;
   course?: string;
-  members?: number;
+  members: number;
   stars?: number;
   thumbnail?: string;
   owner: {
@@ -56,8 +57,9 @@ export interface ProjectCardProps {
     name: string;
     role: "student" | "teacher";
   };
-  onEdit?: (id: string) => void;
-  onDelete?: (id: string) => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+  onView: (id: string) => void;
 }
 
 export function ProjectCard({
@@ -68,12 +70,13 @@ export function ProjectCard({
   progress,
   dueDate,
   course,
-  members = 0,
+  members,
   stars = 0,
   thumbnail,
   owner,
   onEdit,
   onDelete,
+  onView,
 }: ProjectCardProps) {
   const { user } = useUser();
   const router = useRouter();
@@ -161,7 +164,7 @@ export function ProjectCard({
                   <DropdownMenuItem
                     onClick={(e) => {
                       e.stopPropagation();
-                      onEdit?.(id);
+                      onEdit(id);
                     }}
                   >
                     Edit
@@ -169,7 +172,7 @@ export function ProjectCard({
                   <DropdownMenuItem
                     onClick={(e) => {
                       e.stopPropagation();
-                      onDelete?.(id);
+                      onDelete(id);
                     }}
                     className="text-red-600"
                   >
@@ -208,7 +211,7 @@ export function ProjectCard({
                   {members}
                 </div>
               </div>
-              <span>Due {dueDate}</span>
+              <span>Due {dueDate.toLocaleDateString()}</span>
             </div>
           </div>
         </CardContent>

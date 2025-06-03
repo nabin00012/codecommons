@@ -1,5 +1,36 @@
 import mongoose, { Document, Schema } from "mongoose";
 
+export type ProjectStatus =
+  | "not-started"
+  | "in-progress"
+  | "completed"
+  | "overdue";
+
+export interface Project {
+  id: string;
+  _id: string;
+  title: string;
+  description: string;
+  status: ProjectStatus;
+  progress: number;
+  dueDate: Date;
+  members: number;
+  owner: {
+    id: string;
+    name: string;
+    avatar?: string;
+    role: "student" | "teacher";
+  };
+  collaborators?: {
+    id: string;
+    name: string;
+    avatar?: string;
+    role: "student" | "teacher";
+  }[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface IProject extends Document {
   title: string;
   description: string;
