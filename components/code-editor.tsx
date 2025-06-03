@@ -1,74 +1,52 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Editor, { Monaco } from "@monaco-editor/react";
+import { useEffect, useRef } from "react";
+import { Editor } from "@monaco-editor/react";
 import { useSettings } from "@/lib/context/settings-context";
+import { useTheme } from "next-themes";
 
 interface CodeEditorProps {
-  initialValue?: string;
-  language?: string;
+  code: string;
+  language: string;
   onChange?: (value: string | undefined) => void;
+  readOnly?: boolean;
   height?: string;
-  theme?: "vs-dark" | "light";
 }
 
 export function CodeEditor({
-  initialValue = "",
-  language = "typescript",
+  code,
+  language,
   onChange,
+  readOnly = false,
   height = "500px",
-  theme = "vs-dark",
 }: CodeEditorProps) {
-  const [value, setValue] = useState(initialValue);
+  const editorRef = useRef<any>(null);
   const { settings } = useSettings();
+  const { resolvedTheme } = useTheme();
 
-  const handleEditorChange = (value: string | undefined) => {
-    setValue(value || "");
-    onChange?.(value);
+  const handleEditorDidMount = (editor: any) => {
+    editorRef.current = editor;
   };
 
-  const handleEditorDidMount = (editor: any, monaco: Monaco) => {
-    // Configure editor options
-    editor.updateOptions({
-      fontSize: settings.editor.fontSize,
-      tabSize: settings.editor.tabSize,
-      wordWrap: settings.editor.wordWrap ? "on" : "off",
-      minimap: { enabled: settings.editor.minimap },
-      lineNumbers: "on",
-      roundedSelection: false,
-      scrollBeyondLastLine: false,
-      readOnly: false,
-      automaticLayout: true,
-    });
+  const editorOptions = {
+    minimap: { enabled: false },
+    fontSize: 14,
+    lineNumbers: "on" as const,
+    wordWrap: "on" as const,
+    automaticLayout: true,
+    scrollBeyondLastLine: false,
+    readOnly,
+    theme: resolvedTheme === "dark" ? "vs-dark" : "light",
   };
 
   return (
-    <div className="w-full rounded-lg overflow-hidden border border-border">
-      <Editor
-        height={height}
-        defaultLanguage={language}
-        defaultValue={initialValue}
-        value={value}
-        onChange={handleEditorChange}
-        theme={theme}
-        onMount={handleEditorDidMount}
-        loading={
-          <div className="w-full h-full flex items-center justify-center">
-            Loading editor...
-          </div>
-        }
-        options={{
-          minimap: { enabled: settings.editor.minimap },
-          fontSize: settings.editor.fontSize,
-          tabSize: settings.editor.tabSize,
-          wordWrap: settings.editor.wordWrap ? "on" : "off",
-          lineNumbers: "on",
-          roundedSelection: false,
-          scrollBeyondLastLine: false,
-          readOnly: false,
-          automaticLayout: true,
-        }}
-      />
-    </div>
+    <Editor
+      height={height}
+      defaultLanguage={language}
+      defaultValue={code}
+      onChange={onChange}
+      onMount={handleEditorDidMount}
+      options={editorOptions}
+    />
   );
 }

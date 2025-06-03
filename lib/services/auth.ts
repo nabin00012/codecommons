@@ -1,36 +1,11 @@
-import { UserRole } from "@/lib/context/user-context";
 import { API_URL } from "@/lib/constants";
 
-interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-interface RegisterData {
-  name: string;
-  email: string;
-  password: string;
-  role: UserRole;
-}
-
-interface AuthResponse {
-  user: {
-    id: string;
-    _id: string;
-    name: string;
-    email: string;
-    role: string;
-  };
-  token: string;
-}
-
-interface LoginResponse {
+export interface User {
+  id: string;
   _id: string;
   name: string;
   email: string;
   role: string;
-  token: string;
-  avatar?: string;
   preferences?: {
     theme: string;
     notifications: boolean;
@@ -38,61 +13,70 @@ interface LoginResponse {
   };
 }
 
+export interface AuthResponse {
+  token: string;
+  user: User;
+  success?: boolean;
+}
+
 class AuthService {
   private token: string | null = null;
+  private baseUrl: string;
 
   constructor() {
-    if (typeof window !== "undefined") {
-      this.token = localStorage.getItem("token");
-      console.log(
-        "AuthService initialized with token:",
-        this.token ? "exists" : "none"
-      );
-    }
+    this.baseUrl = API_URL;
+    this.token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    console.log(
+      "AuthService initialized with token:",
+      this.token ? "exists" : "none"
+    );
   }
 
-  getToken(): string | null {
-    return this.token;
-  }
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    const url = `${this.baseUrl}${endpoint}`;
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+      ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+      ...options.headers,
+    };
 
-  setToken(token: string): void {
-    this.token = token;
-    if (typeof window !== "undefined") {
-      localStorage.setItem("token", token);
-    }
-  }
+    try {
+      const response = await fetch(url, { ...options, headers });
+      const data = await response.json();
 
-  clearToken(): void {
-    this.token = null;
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("token");
+      if (!response.ok) {
+        throw new Error(data.message || "Request failed");
+      }
+
+      return data as T;
+    } catch (error) {
+      console.error("Request error:", error);
+      throw error;
     }
   }
 
   async login(email: string, password: string): Promise<AuthResponse> {
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
+      console.log("Attempting login for:", email);
+      const response = await this.request<AuthResponse>("/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || "Login failed. Please check your credentials."
-        );
-      }
-
-      if (!data.token || !data.user) {
+      if (!response.token || !response.user) {
         throw new Error("Invalid response from server");
       }
 
-      this.setToken(data.token);
-      return data;
+      this.token = response.token;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("token", response.token);
+      }
+
+      return response;
     } catch (error) {
       console.error("Login error:", error);
       throw error;
@@ -103,13 +87,13 @@ class AuthService {
     name: string;
     email: string;
     password: string;
-    role?: string;
+    role: string;
   }): Promise<AuthResponse> {
     try {
       // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(data.email)) {
-        throw new Error("Please enter a valid email address");
+        throw new Error("Invalid email format");
       }
 
       // Validate password strength
@@ -117,66 +101,49 @@ class AuthService {
         throw new Error("Password must be at least 8 characters long");
       }
 
-      const response = await fetch(`${API_URL}/api/auth/register`, {
+      console.log("Attempting registration for:", data.email);
+      const response = await this.request<AuthResponse>("/auth/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...data,
-          role: data.role || "student",
-        }),
+        body: JSON.stringify(data),
       });
 
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        if (
-          response.status === 400 &&
-          responseData.message?.includes("already exists")
-        ) {
-          throw new Error(
-            "An account with this email already exists. Please try logging in instead."
-          );
-        }
-        throw new Error(
-          responseData.message || "Registration failed. Please try again."
-        );
-      }
-
-      if (!responseData.token || !responseData.user) {
+      if (!response.token || !response.user) {
         throw new Error("Invalid response from server");
       }
 
-      this.setToken(responseData.token);
-      return responseData;
+      this.token = response.token;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("token", response.token);
+      }
+
+      return response;
     } catch (error) {
       console.error("Registration error:", error);
+      if (error instanceof Error && error.message.includes("already exists")) {
+        throw new Error(
+          "An account with this email already exists. Please try logging in instead."
+        );
+      }
       throw error;
     }
   }
 
-  async verifyToken(token: string): Promise<AuthResponse["user"]> {
+  async verifyToken(): Promise<User> {
+    if (!this.token) {
+      throw new Error("No token found");
+    }
+
     try {
-      const response = await fetch(`${API_URL}/api/auth/verify`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+      console.log("Verifying token...");
+      const response = await this.request<{ user: User }>("/auth/verify", {
+        method: "GET",
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Token verification failed");
+      if (!response.user) {
+        throw new Error("Invalid user data");
       }
 
-      if (!data.user) {
-        throw new Error("Invalid user data in response");
-      }
-
-      return data.user;
+      return response.user;
     } catch (error) {
       console.error("Token verification error:", error);
       this.clearToken();
@@ -184,9 +151,15 @@ class AuthService {
     }
   }
 
-  logout(): void {
-    console.log("Logging out...");
-    this.clearToken();
+  clearToken(): void {
+    this.token = null;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token");
+    }
+  }
+
+  getToken(): string | null {
+    return this.token;
   }
 }
 

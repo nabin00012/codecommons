@@ -1,6 +1,5 @@
 "use client";
 
-import type React from "react";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -136,11 +135,12 @@ export default function RegisterPage() {
         password: formData.password,
         role: formData.role,
       });
+
       const response = await authService.register({
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        role: formData.role as "student" | "teacher",
+        role: formData.role,
       });
 
       console.log("Registration response:", response);
@@ -153,38 +153,44 @@ export default function RegisterPage() {
       setToken(response.token);
 
       // Login the user after successful registration
-      login({
-        id: response.user.id,
-        name: response.user.name,
-        email: response.user.email,
-        role: response.user.role as "student" | "teacher",
-        avatar: "/placeholder.svg?height=40&width=40",
-        preferences: {
-          theme: "system",
-          notifications: true,
-          language: "en",
-        },
-      });
+      login(response.user);
 
       toast({
         title: "Registration successful!",
         description: "Welcome to Code Commons!",
       });
 
-      router.push("/dashboard");
+      router.push(redirectTo || "/dashboard");
     } catch (error) {
       console.error("Registration error:", error);
-      setError(
+      const errorMessage =
         error instanceof Error
           ? error.message
-          : "Registration failed. Please try again."
-      );
+          : "Registration failed. Please try again.";
+      setError(errorMessage);
+
       toast({
         title: "Registration failed",
-        description:
-          error instanceof Error ? error.message : "Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
+
+      // If the error is about an existing user, suggest logging in
+      if (errorMessage.includes("already exists")) {
+        toast({
+          title: "Account exists",
+          description: "Please try logging in instead.",
+          action: (
+            <Button
+              variant="outline"
+              onClick={() => router.push("/login")}
+              className="mt-2"
+            >
+              Go to Login
+            </Button>
+          ),
+        });
+      }
     } finally {
       setIsLoading(false);
     }

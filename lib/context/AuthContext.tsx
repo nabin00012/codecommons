@@ -9,7 +9,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   token: string | null;
-  setToken: (token: string) => void;
+  setToken: (token: string | null) => void;
   clearToken: () => void;
 }
 
@@ -29,48 +29,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    console.log("Initializing auth...");
-    const storedToken = authService.getToken();
-    console.log("Stored token:", storedToken ? "exists" : "none");
+    const verifyToken = async () => {
+      try {
+        const storedToken = authService.getToken();
+        if (!storedToken) {
+          setIsAuthenticated(false);
+          setIsLoading(false);
+          return;
+        }
 
-    if (storedToken) {
-      verifyToken(storedToken);
-    } else {
-      setIsLoading(false);
-    }
+        await authService.verifyToken();
+        setIsAuthenticated(true);
+        setTokenState(storedToken);
+      } catch (error) {
+        console.error("Token verification error:", error);
+        setIsAuthenticated(false);
+        setTokenState(null);
+        authService.clearToken();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    verifyToken();
   }, []);
 
-  const verifyToken = async (tokenToVerify: string) => {
-    try {
-      const response = await authService.verifyToken(tokenToVerify);
-      console.log("Token verification response:", response);
-
-      if (response) {
-        setTokenState(tokenToVerify);
-        setIsAuthenticated(true);
-      } else {
-        throw new Error("Invalid token response");
-      }
-    } catch (error) {
-      console.error("Token verification failed:", error);
-      console.log("Token verification failed, clearing token");
-      clearToken();
-      router.push("/login");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const setToken = (newToken: string) => {
-    authService.setToken(newToken);
+  const setToken = (newToken: string | null) => {
     setTokenState(newToken);
-    setIsAuthenticated(true);
+    setIsAuthenticated(!!newToken);
+    if (typeof window !== "undefined" && newToken) {
+      localStorage.setItem("token", newToken);
+    }
   };
 
   const clearToken = () => {
-    authService.clearToken();
     setTokenState(null);
     setIsAuthenticated(false);
+    authService.clearToken();
+    router.push("/login");
   };
 
   return (
@@ -88,10 +84,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-};
+export const useAuth = () => useContext(AuthContext);

@@ -40,6 +40,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // Verify token format
+  if (token === "null" || token === "undefined") {
+    console.log("Invalid token format, redirecting to login");
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirectTo", path);
+    return NextResponse.redirect(loginUrl);
+  }
+
   console.log("Token found, allowing access");
   return NextResponse.next();
 }
