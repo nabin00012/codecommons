@@ -47,39 +47,32 @@ export default function LoginPage() {
         throw new Error("Please enter both email and password");
       }
 
-      console.log("Attempting login...");
       const response = await authService.login(email, password);
-      console.log("Login response received:", response);
 
-      if (!response?.token || !response?.user) {
+      if (!response?.token) {
         throw new Error("Invalid credentials");
       }
 
-      if (!isValidRole(response.user.role)) {
+      if (!isValidRole(response.role)) {
         throw new Error("Invalid user role");
       }
 
-      // Login the user with the response data
-      console.log("Setting user data in context...");
       login({
-        id: response.user._id,
-        _id: response.user._id,
-        name: response.user.name,
-        email: response.user.email,
-        role: response.user.role,
-        preferences: response.user.preferences || defaultPreferences,
+        id: response._id,
+        _id: response._id,
+        name: response.name,
+        email: response.email,
+        role: response.role,
+        preferences: response.preferences || defaultPreferences,
       });
 
       toast({
         title: "Welcome back!",
-        description: `Welcome back, ${response.user.name}!`,
+        description: `Welcome back, ${response.name}!`,
       });
 
-      // Use router.push instead of window.location
-      console.log("Initiating redirect to dashboard...");
       router.push("/dashboard");
     } catch (err) {
-      console.error("Login error:", err);
       const errorMessage =
         err instanceof Error ? err.message : "An error occurred";
       setError(errorMessage);
