@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { Discussion } from "@/lib/models/Discussion";
+import { auth } from "@/lib/auth";
 
 export async function POST(
   req: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    // TODO: Add custom authentication/authorization here
-    // Remove session-based checks
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     await connectToDatabase();
 
@@ -20,18 +23,15 @@ export async function POST(
       );
     }
 
-    // TODO: Replace with actual user ID from your custom auth
-    const userId = "mock-user-id";
-    const hasLiked = discussion.likes.includes(userId);
+    const userId = session.user.id;
+    const hasLiked = discussion.likes.includes(userId as any);
 
     if (hasLiked) {
-      // Remove user's like
       discussion.likes = discussion.likes.filter(
-        (id) => id.toString() !== userId
+        (id: string) => id.toString() !== userId
       );
     } else {
-      // Add user's like
-      discussion.likes.push(userId);
+      discussion.likes.push(userId as any);
     }
 
     await discussion.save();
