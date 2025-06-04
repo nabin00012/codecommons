@@ -131,20 +131,20 @@ export default function QuestionPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     const initParams = async () => {
       try {
-        console.log("Initializing params:", params);
-        const resolvedParams = await params;
-        console.log("Resolved params:", resolvedParams);
-        setQuestionId(resolvedParams.id);
+        setQuestionId(params.id);
       } catch (error) {
-        console.error("Error initializing params:", error);
+        toast({
+          title: "Error",
+          description: "Failed to initialize question parameters",
+          variant: "destructive",
+        });
       }
     };
     initParams();
-  }, [params]);
+  }, [params, toast]);
 
   useEffect(() => {
     if (questionId) {
-      console.log("Fetching question for ID:", questionId);
       fetchQuestion();
     }
   }, [questionId]);
