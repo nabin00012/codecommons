@@ -81,6 +81,10 @@ export const discussionService = {
   async addComment(discussionId: string, content: string) {
     try {
       const token = await authService.getToken();
+      if (!token) {
+        throw new Error("Authentication required to add comments");
+      }
+
       const response = await fetch(
         `${API_URL}/api/discussions/${discussionId}/comments`,
         {
@@ -92,14 +96,18 @@ export const discussionService = {
           body: JSON.stringify({ content }),
         }
       );
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Failed to add comment");
       }
+
       return response.json();
     } catch (error) {
-      console.error("Error adding comment:", error);
-      throw error;
+      if (error instanceof Error) {
+        throw new Error(`Failed to add comment: ${error.message}`);
+      }
+      throw new Error("An unexpected error occurred while adding comment");
     }
   },
 
@@ -168,6 +176,10 @@ export const discussionService = {
   async getComments(discussionId: string) {
     try {
       const token = await authService.getToken();
+      if (!token) {
+        throw new Error("Authentication required to fetch comments");
+      }
+
       const response = await fetch(
         `${API_URL}/api/discussions/${discussionId}/comments`,
         {
@@ -176,14 +188,18 @@ export const discussionService = {
           },
         }
       );
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Failed to fetch comments");
       }
+
       return response.json();
     } catch (error) {
-      console.error("Error fetching comments:", error);
-      throw error;
+      if (error instanceof Error) {
+        throw new Error(`Failed to fetch comments: ${error.message}`);
+      }
+      throw new Error("An unexpected error occurred while fetching comments");
     }
   },
 };
