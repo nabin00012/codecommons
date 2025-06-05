@@ -51,7 +51,12 @@ export const discussionController = {
   // Get a single discussion by ID
   async getById(req: Request, res: Response) {
     try {
-      const discussion = await Discussion.findById(req.params.id)
+      const { id } = req.params;
+      if (!id) {
+        return res.status(400).json({ message: "Discussion ID is required" });
+      }
+
+      const discussion = await Discussion.findById(id)
         .populate("author", "name department avatar")
         .populate("comments.author", "name department avatar");
 
@@ -61,18 +66,39 @@ export const discussionController = {
 
       res.json(discussion);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching discussion", error });
+      console.error("Error fetching discussion:", error);
+      res.status(500).json({
+        message: "Error fetching discussion",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
     }
   },
 
   // Add a comment to a discussion
   async addComment(req: Request, res: Response) {
     try {
+      const { id } = req.params;
       const { content } = req.body;
-      const author = req.user._id;
+      const author = req.user?._id;
+
+      if (!id) {
+        return res.status(400).json({ message: "Discussion ID is required" });
+      }
+
+      if (!content || typeof content !== "string") {
+        return res
+          .status(400)
+          .json({ message: "Valid comment content is required" });
+      }
+
+      if (!author) {
+        return res
+          .status(401)
+          .json({ message: "User authentication required" });
+      }
 
       const discussion = await Discussion.findByIdAndUpdate(
-        req.params.id,
+        id,
         {
           $push: {
             comments: {
@@ -90,7 +116,11 @@ export const discussionController = {
 
       res.json(discussion);
     } catch (error) {
-      res.status(500).json({ message: "Error adding comment", error });
+      console.error("Error adding comment:", error);
+      res.status(500).json({
+        message: "Error adding comment",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
     }
   },
 
