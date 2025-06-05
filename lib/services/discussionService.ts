@@ -31,6 +31,10 @@ export const discussionService = {
   async getAllDiscussions(page = 1, limit = 10) {
     try {
       const token = await authService.getToken();
+      if (!token) {
+        throw new Error("Authentication required to fetch discussions");
+      }
+
       const response = await fetch(
         `${API_URL}/api/discussions?page=${page}&limit=${limit}`,
         {
@@ -39,14 +43,20 @@ export const discussionService = {
           },
         }
       );
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Failed to fetch discussions");
       }
+
       return response.json();
     } catch (error) {
-      console.error("Error fetching discussions:", error);
-      throw error;
+      if (error instanceof Error) {
+        throw new Error(`Failed to fetch discussions: ${error.message}`);
+      }
+      throw new Error(
+        "An unexpected error occurred while fetching discussions"
+      );
     }
   },
 
@@ -58,6 +68,14 @@ export const discussionService = {
   }) {
     try {
       const token = await authService.getToken();
+      if (!token) {
+        throw new Error("Authentication required to create discussions");
+      }
+
+      if (!data.title || !data.content) {
+        throw new Error("Title and content are required");
+      }
+
       const response = await fetch(`${API_URL}/api/discussions`, {
         method: "POST",
         headers: {
@@ -66,14 +84,18 @@ export const discussionService = {
         },
         body: JSON.stringify(data),
       });
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Failed to create discussion");
       }
+
       return response.json();
     } catch (error) {
-      console.error("Error creating discussion:", error);
-      throw error;
+      if (error instanceof Error) {
+        throw new Error(`Failed to create discussion: ${error.message}`);
+      }
+      throw new Error("An unexpected error occurred while creating discussion");
     }
   },
 
@@ -115,6 +137,14 @@ export const discussionService = {
   async toggleLike(discussionId: string) {
     try {
       const token = await authService.getToken();
+      if (!token) {
+        throw new Error("Authentication required to like discussions");
+      }
+
+      if (!discussionId) {
+        throw new Error("Discussion ID is required");
+      }
+
       const response = await fetch(
         `${API_URL}/api/discussions/${discussionId}/like`,
         {
@@ -124,14 +154,18 @@ export const discussionService = {
           },
         }
       );
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Failed to toggle like");
       }
+
       return response.json();
     } catch (error) {
-      console.error("Error toggling like:", error);
-      throw error;
+      if (error instanceof Error) {
+        throw new Error(`Failed to toggle like: ${error.message}`);
+      }
+      throw new Error("An unexpected error occurred while toggling like");
     }
   },
 
@@ -144,6 +178,14 @@ export const discussionService = {
   ) {
     try {
       const token = await authService.getToken();
+      if (!token) {
+        throw new Error("Authentication required to search discussions");
+      }
+
+      if (!query) {
+        throw new Error("Search query is required");
+      }
+
       const params = new URLSearchParams({
         query,
         page: page.toString(),
@@ -161,14 +203,20 @@ export const discussionService = {
           },
         }
       );
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Failed to search discussions");
       }
+
       return response.json();
     } catch (error) {
-      console.error("Error searching discussions:", error);
-      throw error;
+      if (error instanceof Error) {
+        throw new Error(`Failed to search discussions: ${error.message}`);
+      }
+      throw new Error(
+        "An unexpected error occurred while searching discussions"
+      );
     }
   },
 
