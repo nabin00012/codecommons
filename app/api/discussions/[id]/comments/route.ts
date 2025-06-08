@@ -1,16 +1,22 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { Discussion } from "@/lib/models/Discussion";
+import { auth } from "@/lib/auth";
 
 export async function POST(
   req: Request,
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { content } = await req.json();
     if (!content) {
       return NextResponse.json(
-        { error: "Content is required" },
+        { error: "Comment content is required" },
         { status: 400 }
       );
     }
@@ -25,20 +31,15 @@ export async function POST(
       );
     }
 
-    const comment = {
+    discussion.comments.push({
       content,
       author: session.user.id,
       createdAt: new Date(),
-    };
+    });
 
-    discussion.comments.push(comment);
     await discussion.save();
 
-    await discussion.populate("comments.author", "name department avatar");
-
-    return NextResponse.json({
-      comment: discussion.comments[discussion.comments.length - 1],
-    });
+    return NextResponse.json(discussion);
   } catch (error) {
     console.error("Error adding comment:", error);
     return NextResponse.json(
@@ -53,6 +54,11 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     await connectToDatabase();
 
     const discussion = await Discussion.findById(params.id).populate(
@@ -67,9 +73,7 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({
-      comments: discussion.comments,
-    });
+    return NextResponse.json(discussion.comments);
   } catch (error) {
     console.error("Error fetching comments:", error);
     return NextResponse.json(

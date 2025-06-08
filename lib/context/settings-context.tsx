@@ -1,28 +1,39 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 
-interface Settings {
+export interface Settings {
   theme: string;
-  language: string;
   notifications: boolean;
+  language: string;
+  editor: {
+    theme: string;
+    fontSize: number;
+    tabSize: number;
+    wordWrap: boolean;
+  };
   sound: boolean;
-  fontSize: number;
+  enabled: boolean;
 }
 
 interface SettingsContextType {
   settings: Settings;
-  updateSettings: (updates: Partial<Settings>) => void;
-  resetSettings: () => void;
+  updateSettings: (settings: Partial<Settings>) => void;
 }
 
 const defaultSettings: Settings = {
   theme: "system",
-  language: "en",
   notifications: true,
+  language: "en",
+  editor: {
+    theme: "vs-dark",
+    fontSize: 14,
+    tabSize: 2,
+    wordWrap: true,
+  },
   sound: true,
-  fontSize: 16,
+  enabled: true,
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(
@@ -41,38 +52,27 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   }, [resolvedTheme, settings.theme, setTheme]);
 
   useEffect(() => {
-    const storedSettings = localStorage.getItem("settings");
-    if (storedSettings) {
+    const savedSettings = localStorage.getItem("settings");
+    if (savedSettings) {
       try {
-        const parsedSettings = JSON.parse(storedSettings);
-        setSettings((prev) => ({ ...prev, ...parsedSettings }));
+        const parsedSettings = JSON.parse(savedSettings);
+        setSettings({ ...defaultSettings, ...parsedSettings });
       } catch (error) {
-        console.error("Failed to parse stored settings:", error);
+        console.error("Error loading settings:", error);
       }
     }
   }, []);
 
-  const updateSettings = (updates: Partial<Settings>) => {
+  const updateSettings = (newSettings: Partial<Settings>) => {
     setSettings((prev) => {
-      const newSettings = { ...prev, ...updates };
-      localStorage.setItem("settings", JSON.stringify(newSettings));
-      return newSettings;
+      const updated = { ...prev, ...newSettings };
+      localStorage.setItem("settings", JSON.stringify(updated));
+      return updated;
     });
   };
 
-  const resetSettings = () => {
-    setSettings(defaultSettings);
-    localStorage.removeItem("settings");
-  };
-
   return (
-    <SettingsContext.Provider
-      value={{
-        settings,
-        updateSettings,
-        resetSettings,
-      }}
-    >
+    <SettingsContext.Provider value={{ settings, updateSettings }}>
       {children}
     </SettingsContext.Provider>
   );
