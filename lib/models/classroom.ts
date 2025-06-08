@@ -1,6 +1,6 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose from "mongoose";
 
-export interface IMaterial {
+export interface Material {
   id: string;
   title: string;
   type: string;
@@ -9,60 +9,78 @@ export interface IMaterial {
   fileUrl: string;
 }
 
-export interface IClassroom extends Document {
+export interface Assignment {
+  id: string;
+  title: string;
+  description: string;
+  dueDate: Date;
+  points: number;
+  submissions: {
+    student: string;
+    fileUrl: string;
+    submittedAt: Date;
+    grade?: number;
+    feedback?: string;
+  }[];
+}
+
+export interface Classroom {
+  id: string;
   name: string;
   description: string;
-  code: string;
-  semester: string;
-  teacher: mongoose.Types.ObjectId;
-  instructor: {
-    name: string;
-    avatar: string;
-    department: string;
-  };
-  students: Array<{
-    _id: mongoose.Types.ObjectId;
-    name: string;
-    email: string;
-  }>;
-  materials: IMaterial[];
+  teacher: string;
+  students: string[];
+  materials: Material[];
+  assignments: Assignment[];
   createdAt: Date;
   updatedAt: Date;
 }
 
-const classroomSchema = new Schema<IClassroom>(
+const materialSchema = new mongoose.Schema({
+  id: { type: String, required: true },
+  title: { type: String, required: true },
+  type: { type: String, required: true },
+  size: { type: String, required: true },
+  uploadedOn: { type: String, required: true },
+  fileUrl: { type: String, required: true },
+});
+
+const submissionSchema = new mongoose.Schema({
+  student: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  fileUrl: { type: String, required: true },
+  submittedAt: { type: Date, required: true },
+  grade: { type: Number },
+  feedback: { type: String },
+});
+
+const assignmentSchema = new mongoose.Schema({
+  id: { type: String, required: true },
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  dueDate: { type: Date, required: true },
+  points: { type: Number, required: true },
+  submissions: [submissionSchema],
+});
+
+const classroomSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     description: { type: String, required: true },
-    code: { type: String, required: true, unique: true },
-    semester: { type: String, required: true },
-    teacher: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    instructor: {
-      name: { type: String, required: true },
-      avatar: { type: String, required: true },
-      department: { type: String, required: true },
+    teacher: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
-    students: [
-      {
-        _id: { type: Schema.Types.ObjectId, ref: "User" },
-        name: { type: String, required: true },
-        email: { type: String, required: true },
-      },
-    ],
-    materials: [
-      {
-        id: { type: String, required: true },
-        title: { type: String, required: true },
-        type: { type: String, required: true },
-        size: { type: String, required: true },
-        uploadedOn: { type: String, required: true },
-        fileUrl: { type: String, required: true },
-      },
-    ],
+    students: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    materials: [materialSchema],
+    assignments: [assignmentSchema],
   },
   { timestamps: true }
 );
 
 export const Classroom =
-  mongoose.models.Classroom ||
-  mongoose.model<IClassroom>("Classroom", classroomSchema);
+  mongoose.models.Classroom || mongoose.model("Classroom", classroomSchema);

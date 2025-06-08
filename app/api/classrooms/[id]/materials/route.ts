@@ -5,114 +5,84 @@ import { ObjectId } from "mongodb";
 import { writeFile } from "fs/promises";
 import { join } from "path";
 import { v4 as uuidv4 } from "uuid";
+import { auth } from "@/lib/auth";
+import { Classroom } from "@/lib/models/Classroom";
 
 export async function POST(
-  request: NextRequest,
+  req: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    // Verify authentication
-    const token = request.headers.get("authorization")?.split(" ")[1];
-    if (!token) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 }
-      );
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await authService.verifyToken(token);
-    if (!user) {
+    const { title, type, fileUrl, size } = await req.json();
+    if (!title || !type || !fileUrl) {
       return NextResponse.json(
-        { success: false, message: "Invalid token" },
-        { status: 401 }
-      );
-    }
-
-    // Verify user is a teacher
-    if (user.role !== "teacher") {
-      return NextResponse.json(
-        { success: false, message: "Only teachers can upload materials" },
-        { status: 403 }
-      );
-    }
-
-    // Get form data
-    const formData = await request.formData();
-    const file = formData.get("file") as File;
-    const title = formData.get("title") as string;
-
-    if (!file || !title) {
-      return NextResponse.json(
-        { success: false, message: "File and title are required" },
+        { error: "Title, type, and file URL are required" },
         { status: 400 }
       );
     }
 
-    // Connect to database
-    const { db } = await connectToDatabase();
+    await connectToDatabase();
 
-    // Verify classroom exists and user is the teacher
-    const classroom = await db.collection("classrooms").findOne({
-      _id: new ObjectId(params.id),
-    });
-
+    const classroom = await Classroom.findById(params.id);
     if (!classroom) {
       return NextResponse.json(
-        { success: false, message: "Classroom not found" },
+        { error: "Classroom not found" },
         { status: 404 }
       );
     }
 
-    if (classroom.teacher.toString() !== user.id) {
+    const material = {
+      id: new Date().getTime().toString(),
+      title,
+      type,
+      size: size || "0",
+      uploadedOn: new Date().toISOString(),
+      fileUrl,
+    };
+
+    classroom.materials.push(material);
+    await classroom.save();
+
+    return NextResponse.json({ materials: classroom.materials });
+  } catch (error) {
+    console.error("Error adding material:", error);
+    return NextResponse.json(
+      { error: "Failed to add material" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    await connectToDatabase();
+
+    const classroom = await Classroom.findById(params.id);
+    if (!classroom) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "You are not the teacher of this classroom",
-        },
-        { status: 403 }
+        { error: "Classroom not found" },
+        { status: 404 }
       );
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), "public", "uploads", "materials");
-    await writeFile(join(uploadsDir, ".gitkeep"), "");
-
-    // Generate unique filename
-    const fileExtension = file.name.split(".").pop();
-    const fileName = `${uuidv4()}.${fileExtension}`;
-    const filePath = join(uploadsDir, fileName);
-
-    // Save file
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
-
-    // Create material record
-    const material = {
-      id: uuidv4(),
-      title,
-      type: file.type,
-      size: `${(file.size / 1024).toFixed(2)} KB`,
-      uploadedOn: new Date().toISOString(),
-      fileUrl: `/uploads/materials/${fileName}`,
-    };
-
-    // Update classroom with new material
-    await db
-      .collection("classrooms")
-      .updateOne(
-        { _id: new ObjectId(params.id) },
-        { $push: { materials: material } }
-      );
-
-    return NextResponse.json(
-      { success: true, data: material },
-      { status: 201 }
-    );
+    return NextResponse.json({ materials: classroom.materials });
   } catch (error) {
-    console.error("Error uploading material:", error);
+    console.error("Error fetching materials:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to upload material" },
+      { error: "Failed to fetch materials" },
       { status: 500 }
     );
   }
