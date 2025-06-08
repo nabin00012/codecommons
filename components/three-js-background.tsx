@@ -34,19 +34,13 @@ export default function ThreeJsBackground() {
   // Initialize the scene once THREE is loaded
   useEffect(() => {
     if (!threeLoaded || !containerRef.current) {
-      console.log("ThreeJsBackground - Not ready:", {
-        threeLoaded,
-        container: !!containerRef.current,
-      });
       return;
     }
 
-    console.log("ThreeJsBackground - Theme changed:", resolvedTheme);
     const isCosmicMode = resolvedTheme === "cosmic";
 
     // Clean up previous scene if it exists
     if (sceneRef.current) {
-      console.log("ThreeJsBackground - Cleaning up previous scene");
       if (starsRef.current) {
         sceneRef.current.remove(starsRef.current);
         starsRef.current.geometry.dispose();
@@ -58,9 +52,6 @@ export default function ThreeJsBackground() {
     }
 
     if (!isCosmicMode) {
-      console.log(
-        "ThreeJsBackground - Not in cosmic mode, skipping scene creation"
-      );
       return;
     }
 

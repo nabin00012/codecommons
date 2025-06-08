@@ -4,6 +4,7 @@ import type { Session as NextAuthSession } from "next-auth";
 import type { User as NextAuthUser } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { authService } from "./services/auth";
+import NextAuth from "next-auth";
 
 interface User extends NextAuthUser {
   id: string;
@@ -107,3 +108,5 @@ export const authOptions: NextAuthConfig = {
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
+
+export const { auth, signIn, signOut } = NextAuth(authOptions);

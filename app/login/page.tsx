@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { authService } from "@/lib/services/auth";
+import { signIn } from "next-auth/react";
 import { useUser, UserRole } from "@/lib/context/user-context";
 import { motion } from "framer-motion";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -47,31 +47,28 @@ export default function LoginPage() {
         throw new Error("Please enter both email and password");
       }
 
-      const response = await authService.login(email, password);
-
-      if (!response?.token) {
-        throw new Error("Invalid credentials");
-      }
-
-      if (!isValidRole(response.role)) {
-        throw new Error("Invalid user role");
-      }
-
-      login({
-        id: response._id,
-        _id: response._id,
-        name: response.name,
-        email: response.email,
-        role: response.role,
-        preferences: response.preferences || defaultPreferences,
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
       });
 
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+
+      if (!result?.ok) {
+        throw new Error("Login failed");
+      }
+
+      // The session will be automatically updated by NextAuth
       toast({
         title: "Welcome back!",
-        description: `Welcome back, ${response.name}!`,
+        description: "You have been successfully logged in.",
       });
 
       router.push("/dashboard");
+      router.refresh();
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "An error occurred";
