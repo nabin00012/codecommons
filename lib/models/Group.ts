@@ -1,46 +1,29 @@
 import mongoose from "mongoose";
 
+export interface Group {
+  id: string;
+  name: string;
+  description: string;
+  owner: string;
+  members: string[];
+  tags: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 const groupSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    description: {
-      type: String,
-      required: true,
-    },
-    tags: [
-      {
-        type: String,
-        trim: true,
-      },
-    ],
-    creator: {
+    name: { type: String, required: true },
+    description: { type: String, required: true },
+    owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    members: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
-    memberCount: {
-      type: Number,
-      default: 1,
-    },
-    activityLevel: {
-      type: String,
-      enum: ["High", "Medium", "Low"],
-      default: "Medium",
-    },
+    members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    tags: [{ type: String }],
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 export const Group =

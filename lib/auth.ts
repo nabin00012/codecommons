@@ -5,6 +5,10 @@ import type { User as NextAuthUser } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { authService } from "./services/auth";
 import NextAuth from "next-auth";
+import { authConfig } from "./auth.config";
+import { MongoDBAdapter } from "@auth/mongodb-adapter";
+import { connectToDatabase } from "./mongodb";
+import { User } from "./models/user";
 
 interface User extends NextAuthUser {
   id: string;
@@ -109,4 +113,28 @@ export const authOptions: NextAuthConfig = {
   secret: process.env.NEXTAUTH_SECRET,
 };
 
-export const { auth, signIn, signOut } = NextAuth(authOptions);
+export const { auth, signIn, signOut } = NextAuth({
+  ...authConfig,
+  adapter: MongoDBAdapter(connectToDatabase()),
+  callbacks: {
+    async session({ session, user }) {
+      if (session.user) {
+        session.user.id = user.id;
+        session.user.role = user.role;
+        session.user.department = user.department;
+      }
+      return session;
+    },
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+        token.department = user.department;
+      }
+      return token;
+    },
+  },
+});
+
+export type Session = Awaited<ReturnType<typeof auth>>;
+export type User = NonNullable<Session>["user"];

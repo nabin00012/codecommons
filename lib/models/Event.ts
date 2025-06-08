@@ -1,5 +1,17 @@
 import mongoose from "mongoose";
 
+export interface Event {
+  id: string;
+  title: string;
+  description: string;
+  date: Date;
+  location: string;
+  organizer: string;
+  attendees: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 const eventSchema = new mongoose.Schema(
   {
     title: {

@@ -10,6 +10,14 @@ export interface CodeEditorProps {
   onChange: (value: string | undefined) => void;
   height?: string;
   theme?: string;
+  options?: {
+    fontSize?: number;
+    tabSize?: number;
+    wordWrap?: "off" | "on" | "wordWrapColumn" | "bounded";
+    minimap?: { enabled: boolean };
+    scrollBeyondLastLine?: boolean;
+    automaticLayout?: boolean;
+  };
 }
 
 export function CodeEditor({
@@ -18,6 +26,7 @@ export function CodeEditor({
   onChange,
   height = "500px",
   theme,
+  options,
 }: CodeEditorProps) {
   const { settings } = useSettings();
 
@@ -29,12 +38,13 @@ export function CodeEditor({
       onChange={onChange}
       theme={theme || settings.editor.theme}
       options={{
-        fontSize: settings.editor.fontSize,
-        tabSize: settings.editor.tabSize,
-        wordWrap: settings.editor.wordWrap ? "on" : "off",
-        minimap: { enabled: false },
-        scrollBeyondLastLine: false,
-        automaticLayout: true,
+        fontSize: options?.fontSize || settings.editor.fontSize,
+        tabSize: options?.tabSize || settings.editor.tabSize,
+        wordWrap:
+          options?.wordWrap || (settings.editor.wordWrap ? "on" : "off"),
+        minimap: options?.minimap || { enabled: false },
+        scrollBeyondLastLine: options?.scrollBeyondLastLine || false,
+        automaticLayout: options?.automaticLayout || true,
       }}
     />
   );
