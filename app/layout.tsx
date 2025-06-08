@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { UserProvider } from "@/lib/context/user-context";
 import { AuthProvider } from "@/lib/context/AuthContext";
 import { NextAuthProvider } from "@/components/providers/next-auth-provider";
+import { SettingsProvider } from "@/lib/context/settings-context";
 import "@/lib/monaco-config";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -36,9 +37,11 @@ export default function RootLayout({
           >
             <AuthProvider>
               <UserProvider>
-                <main className="relative flex min-h-screen flex-col overflow-x-hidden">
-                  <div className="flex-1">{children}</div>
-                </main>
+                <SettingsProvider>
+                  <main className="relative flex min-h-screen flex-col overflow-x-hidden">
+                    <div className="flex-1">{children}</div>
+                  </main>
+                </SettingsProvider>
               </UserProvider>
             </AuthProvider>
             <Toaster />
