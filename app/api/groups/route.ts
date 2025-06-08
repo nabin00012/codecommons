@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
-import { Group } from "@/lib/models/Group";
+import { Group } from "@/lib/models/group";
 
 export async function GET(req: Request) {
   try {

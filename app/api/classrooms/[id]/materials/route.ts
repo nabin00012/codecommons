@@ -6,7 +6,7 @@ import { writeFile } from "fs/promises";
 import { join } from "path";
 import { v4 as uuidv4 } from "uuid";
 import { auth } from "@/lib/auth";
-import { Classroom } from "@/lib/models/Classroom";
+import { Classroom } from "@/lib/models/classroom";
 
 export async function POST(
   req: Request,

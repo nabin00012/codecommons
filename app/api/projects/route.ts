@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { authService } from "@/lib/services/auth";
 import { headers } from "next/headers";
-import Project from "@/lib/models/Project";
-import { connectDB } from "@/lib/db";
+import { connectToDatabase } from "@/lib/mongodb";
+import { Project } from "@/lib/models/project";
 
 // Connect to MongoDB
-connectDB();
+connectToDatabase();
 
 export async function GET(request: Request) {
   try {
