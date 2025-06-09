@@ -1,157 +1,215 @@
 "use client";
 
-import React from "react";
+import { useState } from "react";
 import { useSettings } from "@/lib/context/settings-context";
-import { CodeEditor } from "@/components/code-editor";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function SettingsPage() {
   const { settings, updateSettings } = useSettings();
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleThemeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    updateSettings({ theme: e.target.value });
-  };
-
-  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    updateSettings({ language: e.target.value });
-  };
-
-  const handleEditorThemeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    updateSettings({
-      editor: { ...settings.editor, theme: e.target.value },
-    });
-  };
-
-  const handleFontSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateSettings({
-      editor: { ...settings.editor, fontSize: parseInt(e.target.value) },
-    });
-  };
-
-  const handleTabSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateSettings({
-      editor: { ...settings.editor, tabSize: parseInt(e.target.value) },
-    });
-  };
-
-  const handleWordWrapChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateSettings({
-      editor: { ...settings.editor, wordWrap: e.target.checked },
-    });
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await updateSettings(settings);
+    } catch (error) {
+      console.error("Failed to save settings:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-8">Settings</h1>
 
-      <div className="grid gap-8">
-        <section className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Appearance</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Theme
-              </label>
-              <select
-                value={settings.theme}
-                onChange={handleThemeChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              >
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-                <option value="system">System</option>
-              </select>
-            </div>
+      <Tabs defaultValue="general" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="editor">Editor</TabsTrigger>
+          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+        </TabsList>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Language
-              </label>
-              <select
-                value={settings.language}
-                onChange={handleLanguageChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              >
-                <option value="en">English</option>
-                <option value="es">Spanish</option>
-                <option value="fr">French</option>
-              </select>
-            </div>
-          </div>
-        </section>
+        <TabsContent value="general">
+          <Card>
+            <CardHeader>
+              <CardTitle>General Settings</CardTitle>
+              <CardDescription>Manage your general preferences</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="theme">Theme</Label>
+                <Select
+                  value={settings.theme}
+                  onValueChange={(value) =>
+                    updateSettings({ ...settings, theme: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select theme" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="light">Light</SelectItem>
+                    <SelectItem value="dark">Dark</SelectItem>
+                    <SelectItem value="system">System</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-        <section className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Editor Settings</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Editor Theme
-              </label>
-              <select
-                value={settings.editor.theme}
-                onChange={handleEditorThemeChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              >
-                <option value="vs-dark">Dark</option>
-                <option value="vs-light">Light</option>
-                <option value="hc-black">High Contrast</option>
-              </select>
-            </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="notifications">Enable Notifications</Label>
+                <Switch
+                  id="notifications"
+                  checked={settings.notifications.enabled}
+                  onCheckedChange={(checked) =>
+                    updateSettings({
+                      ...settings,
+                      notifications: {
+                        ...settings.notifications,
+                        enabled: checked,
+                      },
+                    })
+                  }
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Font Size: {settings.editor.fontSize}px
-              </label>
-              <input
-                type="range"
-                min="8"
-                max="24"
-                value={settings.editor.fontSize}
-                onChange={handleFontSizeChange}
-                className="w-full"
-              />
-            </div>
+        <TabsContent value="editor">
+          <Card>
+            <CardHeader>
+              <CardTitle>Editor Settings</CardTitle>
+              <CardDescription>
+                Customize your code editor experience
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="fontSize">Font Size</Label>
+                <Input
+                  id="fontSize"
+                  type="number"
+                  value={settings.editor.fontSize}
+                  onChange={(e) =>
+                    updateSettings({
+                      ...settings,
+                      editor: {
+                        ...settings.editor,
+                        fontSize: parseInt(e.target.value),
+                      },
+                    })
+                  }
+                />
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Tab Size: {settings.editor.tabSize} spaces
-              </label>
-              <input
-                type="range"
-                min="2"
-                max="8"
-                value={settings.editor.tabSize}
-                onChange={handleTabSizeChange}
-                className="w-full"
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="tabSize">Tab Size</Label>
+                <Input
+                  id="tabSize"
+                  type="number"
+                  value={settings.editor.tabSize}
+                  onChange={(e) =>
+                    updateSettings({
+                      ...settings,
+                      editor: {
+                        ...settings.editor,
+                        tabSize: parseInt(e.target.value),
+                      },
+                    })
+                  }
+                />
+              </div>
 
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="wordWrap"
-                checked={settings.editor.wordWrap}
-                onChange={handleWordWrapChange}
-                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-              />
-              <label
-                htmlFor="wordWrap"
-                className="ml-2 block text-sm text-gray-700"
-              >
-                Enable Word Wrap
-              </label>
-            </div>
-          </div>
-        </section>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="wordWrap">Word Wrap</Label>
+                <Switch
+                  id="wordWrap"
+                  checked={settings.editor.wordWrap}
+                  onCheckedChange={(checked) =>
+                    updateSettings({
+                      ...settings,
+                      editor: {
+                        ...settings.editor,
+                        wordWrap: checked,
+                      },
+                    })
+                  }
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-        <section className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Preview</h2>
-          <CodeEditor
-            value="// Your code here\nfunction example() {\n  console.log('Hello, World!');\n}"
-            language="typescript"
-            onChange={() => {}}
-            height="200px"
-          />
-        </section>
+        <TabsContent value="notifications">
+          <Card>
+            <CardHeader>
+              <CardTitle>Notification Settings</CardTitle>
+              <CardDescription>
+                Manage your notification preferences
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="emailNotifications">Email Notifications</Label>
+                <Switch
+                  id="emailNotifications"
+                  checked={settings.notifications.email}
+                  onCheckedChange={(checked) =>
+                    updateSettings({
+                      ...settings,
+                      notifications: {
+                        ...settings.notifications,
+                        email: checked,
+                      },
+                    })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="pushNotifications">Push Notifications</Label>
+                <Switch
+                  id="pushNotifications"
+                  checked={settings.notifications.push}
+                  onCheckedChange={(checked) =>
+                    updateSettings({
+                      ...settings,
+                      notifications: {
+                        ...settings.notifications,
+                        push: checked,
+                      },
+                    })
+                  }
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      <div className="mt-8 flex justify-end">
+        <Button onClick={handleSave} disabled={isSaving}>
+          {isSaving ? "Saving..." : "Save Changes"}
+        </Button>
       </div>
     </div>
   );

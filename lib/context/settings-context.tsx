@@ -1,72 +1,72 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { useTheme } from "next-themes";
 
-export interface Settings {
+interface EditorSettings {
   theme: string;
-  notifications: boolean;
-  language: string;
-  editor: {
-    theme: string;
-    fontSize: number;
-    tabSize: number;
-    wordWrap: boolean;
-  };
-  sound: boolean;
-  enabled: boolean;
+  fontSize: number;
+  tabSize: number;
+  wordWrap: boolean;
 }
 
-interface SettingsContextType {
-  settings: Settings;
-  updateSettings: (settings: Partial<Settings>) => void;
+interface NotificationSettings {
+  enabled: boolean;
+  email: boolean;
+  push: boolean;
+}
+
+interface Settings {
+  theme: "light" | "dark" | "system";
+  editor: EditorSettings;
+  notifications: NotificationSettings;
 }
 
 const defaultSettings: Settings = {
   theme: "system",
-  notifications: true,
-  language: "en",
   editor: {
     theme: "vs-dark",
     fontSize: 14,
     tabSize: 2,
     wordWrap: true,
   },
-  sound: true,
-  enabled: true,
+  notifications: {
+    enabled: true,
+    email: true,
+    push: true,
+  },
 };
+
+interface SettingsContextType {
+  settings: Settings;
+  updateSettings: (newSettings: Partial<Settings>) => Promise<void>;
+}
 
 const SettingsContext = createContext<SettingsContextType | undefined>(
   undefined
 );
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<Settings>(defaultSettings);
-  const { resolvedTheme, setTheme } = useTheme();
-
-  useEffect(() => {
-    console.log("SettingsProvider - Theme changed:", resolvedTheme);
-    if (settings.theme !== resolvedTheme) {
-      setTheme(settings.theme);
-    }
-  }, [resolvedTheme, settings.theme, setTheme]);
-
-  useEffect(() => {
-    const savedSettings = localStorage.getItem("settings");
-    if (savedSettings) {
-      try {
-        const parsedSettings = JSON.parse(savedSettings);
-        setSettings({ ...defaultSettings, ...parsedSettings });
-      } catch (error) {
-        console.error("Error loading settings:", error);
+  const [settings, setSettings] = useState<Settings>(() => {
+    // Initialize settings from localStorage or use defaults
+    if (typeof window !== "undefined") {
+      const savedSettings = localStorage.getItem("settings");
+      if (savedSettings) {
+        try {
+          return { ...defaultSettings, ...JSON.parse(savedSettings) };
+        } catch (error) {
+          console.error("Failed to parse saved settings:", error);
+        }
       }
     }
-  }, []);
+    return defaultSettings;
+  });
 
-  const updateSettings = (newSettings: Partial<Settings>) => {
+  const updateSettings = async (newSettings: Partial<Settings>) => {
     setSettings((prev) => {
       const updated = { ...prev, ...newSettings };
-      localStorage.setItem("settings", JSON.stringify(updated));
+      if (typeof window !== "undefined") {
+        localStorage.setItem("settings", JSON.stringify(updated));
+      }
       return updated;
     });
   };

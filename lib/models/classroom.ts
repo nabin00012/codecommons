@@ -32,6 +32,7 @@ export interface Classroom {
   students: string[];
   materials: Material[];
   assignments: Assignment[];
+  discussions: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -78,6 +79,7 @@ const classroomSchema = new mongoose.Schema(
     students: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     materials: [materialSchema],
     assignments: [assignmentSchema],
+    discussions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Discussion" }],
   },
   { timestamps: true }
 );
