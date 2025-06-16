@@ -20,6 +20,8 @@ export interface Question {
   isSolved: boolean;
   createdAt: Date;
   updatedAt: Date;
+  upvotes: string[];
+  downvotes: string[];
 }
 
 const questionSchema = new mongoose.Schema(
@@ -49,9 +51,11 @@ const questionSchema = new mongoose.Schema(
       },
     ],
     isSolved: { type: Boolean, default: false },
+    upvotes: [{ type: String, default: [] }],
+    downvotes: [{ type: String, default: [] }],
   },
   { timestamps: true }
 );
 
-export const QuestionModel =
+export const Question =
   mongoose.models.Question || mongoose.model("Question", questionSchema);

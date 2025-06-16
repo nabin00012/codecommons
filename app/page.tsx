@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -189,6 +189,26 @@ export default function HomePage() {
   const { theme } = useTheme();
   const heroRef = useRef(null);
 
+  // Generate consistent random values for each dot
+  const dotPositions = useMemo(() => {
+    return Array.from({ length: 20 }, (_, i) => ({
+      left: `${(i * 5) % 100}%`,
+      top: `${(i * 7) % 100}%`,
+      animationDelay: `${(i * 0.25) % 5}s`,
+      opacity: 0.2 + ((i * 0.15) % 0.5),
+    }));
+  }, []);
+
+  // Generate consistent random values for footer dots
+  const footerDotPositions = useMemo(() => {
+    return Array.from({ length: 10 }, (_, i) => ({
+      left: `${(i * 11) % 100}%`,
+      top: `${(i * 13) % 100}%`,
+      animationDelay: `${(i * 0.5) % 5}s`,
+      opacity: 0.1 + ((i * 0.2) % 0.3),
+    }));
+  }, []);
+
   // Parallax effects
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
@@ -223,7 +243,7 @@ export default function HomePage() {
           } animate-pulse`}
         />
         <div className="absolute top-0 left-0 w-full h-full">
-          {[...Array(20)].map((_, i) => (
+          {dotPositions.map((position, i) => (
             <div
               key={i}
               className={`absolute w-2 h-2 rounded-full animate-float ${
@@ -233,12 +253,7 @@ export default function HomePage() {
                   ? "bg-gray-400"
                   : "bg-slate-600"
               }`}
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 5}s`,
-                opacity: Math.random() * 0.5 + 0.2,
-              }}
+              style={position}
             />
           ))}
         </div>
@@ -662,16 +677,11 @@ export default function HomePage() {
         <div className="absolute inset-0 -z-10">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-purple-900/10 via-indigo-900/10 to-blue-900/10 animate-pulse" />
           <div className="absolute top-0 left-0 w-full h-full">
-            {[...Array(10)].map((_, i) => (
+            {footerDotPositions.map((position, i) => (
               <div
                 key={i}
                 className="absolute w-1 h-1 bg-white rounded-full animate-float"
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  animationDelay: `${Math.random() * 5}s`,
-                  opacity: Math.random() * 0.3 + 0.1,
-                }}
+                style={position}
               />
             ))}
           </div>

@@ -6,31 +6,6 @@ export type ProjectStatus =
   | "completed"
   | "overdue";
 
-export interface Project {
-  id: string;
-  _id: string;
-  title: string;
-  description: string;
-  status: ProjectStatus;
-  progress: number;
-  dueDate: Date;
-  members: number;
-  owner: {
-    id: string;
-    name: string;
-    avatar?: string;
-    role: "student" | "teacher";
-  };
-  collaborators?: {
-    id: string;
-    name: string;
-    avatar?: string;
-    role: "student" | "teacher";
-  }[];
-  createdAt: Date;
-  updatedAt: Date;
-}
-
 export interface IProject extends Document {
   title: string;
   description: string;
@@ -61,6 +36,17 @@ export interface IProject extends Document {
   createdAt: Date;
   updatedAt: Date;
   isPublic: boolean;
+  status: ProjectStatus;
+  progress: number;
+  dueDate: Date;
+  owner: mongoose.Types.ObjectId;
+  collaborators: mongoose.Types.ObjectId[];
+  files: Array<{
+    name: string;
+    url: string;
+    type: string;
+    size: number;
+  }>;
 }
 
 const projectSchema = new Schema<IProject>(
@@ -162,11 +148,32 @@ const projectSchema = new Schema<IProject>(
       type: Boolean,
       default: false,
     },
+    status: {
+      type: String,
+      enum: ["not-started", "in-progress", "completed", "overdue"],
+      default: "not-started",
+    },
+    progress: { type: Number, default: 0 },
+    dueDate: { type: Date, required: true },
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    collaborators: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    files: [
+      {
+        name: String,
+        url: String,
+        type: String,
+        size: Number,
+      },
+    ],
   },
   {
     timestamps: true,
   }
 );
 
-export default mongoose.models.Project ||
-  mongoose.model<IProject>("Project", projectSchema);
+export const Project =
+  mongoose.models.Project || mongoose.model<IProject>("Project", projectSchema);
