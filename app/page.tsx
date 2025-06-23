@@ -310,124 +310,27 @@ export default function HomePage() {
                 ></span>
               </span>
             </h1>
-          </motion.div>
-
-          <motion.p
-            className={`text-2xl md:text-3xl mb-10 max-w-3xl mx-auto drop-shadow-lg ${
-              theme === "cosmic"
-                ? "text-indigo-100"
-                : theme === "dark"
-                ? "text-gray-200"
-                : "text-gray-700"
-            }`}
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            Your collaborative platform for learning, sharing, and growing
-            together in the world of programming.
-          </motion.p>
-
-          <motion.div
-            className="flex flex-col sm:flex-row gap-6 justify-center"
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-          >
-            <Button
-              size="lg"
-              className={`relative group shadow-xl hover:scale-105 transition-all duration-300 text-xl px-8 py-6 rounded-full font-bold ${
-                theme === "cosmic"
-                  ? "bg-gradient-to-r from-fuchsia-500 to-indigo-500 text-white"
-                  : theme === "dark"
-                  ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white"
-                  : "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
-              }`}
-              onClick={() => router.push("/register")}
-            >
-              <span
-                className={`absolute -inset-1 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-gradient-x ${
-                  theme === "cosmic"
-                    ? "bg-gradient-to-r from-fuchsia-500 to-indigo-500"
-                    : theme === "dark"
-                    ? "bg-gradient-to-r from-blue-500 to-purple-500"
-                    : "bg-gradient-to-r from-blue-600 to-purple-600"
-                }`}
-              ></span>
-              <span className="relative flex items-center">
-                Get Started{" "}
-                <ArrowRight className="ml-2 h-5 w-5 animate-bounce-x" />
-              </span>
-            </Button>
-
-            <Button
-              size="lg"
-              variant="outline"
-              className={`relative group border-2 shadow-lg text-xl px-8 py-6 rounded-full font-bold transition-all duration-300 hover:scale-105 ${
-                theme === "cosmic"
-                  ? "border-fuchsia-400 text-fuchsia-200 hover:bg-fuchsia-900/20"
-                  : theme === "dark"
-                  ? "border-blue-400 text-blue-200 hover:bg-blue-900/20"
-                  : "border-blue-600 text-blue-600 hover:bg-blue-50"
-              }`}
-            >
-              <span
-                className={`absolute -inset-1 rounded-full blur opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 ${
-                  theme === "cosmic"
-                    ? "bg-gradient-to-r from-fuchsia-500/20 to-indigo-500/20"
-                    : theme === "dark"
-                    ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20"
-                    : "bg-gradient-to-r from-blue-600/20 to-purple-600/20"
-                }`}
-              ></span>
-              <span className="relative">Learn More</span>
-            </Button>
-          </motion.div>
-
-          {/* Floating Features */}
-          <motion.div
-            className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16"
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-          >
-            {[
-              {
-                icon: <Code className="h-8 w-8" />,
-                title: "Code Together",
-                description: "Collaborate in real-time with your peers",
-              },
-              {
-                icon: <Trophy className="h-8 w-8" />,
-                title: "Earn Points",
-                description: "Gain recognition for your contributions",
-              },
-              {
-                icon: <Users className="h-8 w-8" />,
-                title: "Join Community",
-                description: "Connect with fellow developers",
-              },
-            ].map((feature, index) => (
-              <motion.div
-                key={index}
-                className="relative group"
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.2 }}
-              >
-                <div className="absolute -inset-1 bg-gradient-to-r from-fuchsia-500 to-indigo-500 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
-                <div className="relative p-6 bg-black/40 backdrop-blur-sm rounded-lg border border-white/10">
-                  <div className="text-fuchsia-400 mb-4">{feature.icon}</div>
-                  <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                  <p className="text-indigo-200">{feature.description}</p>
-                </div>
-              </motion.div>
-            ))}
+            <p className="max-w-xl mx-auto text-lg text-gray-300 mb-8">
+              A collaborative platform for students to learn, share, and grow
+              together.
+            </p>
+            <div className="flex justify-center space-x-4">
+              <Link href="/register">
+                <Button
+                  variant="default"
+                  size="lg"
+                  className="group cosmic-button"
+                >
+                  Get Started <ArrowRight className="h-5 w-5 ml-2" />
+                </Button>
+              </Link>
+            </div>
           </motion.div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-24 bg-transparent">
+      <section id="features" className="py-24 bg-transparent">
         <div className="container mx-auto">
           <div className="text-center mb-20">
             <h2 className="text-4xl md:text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 via-indigo-300 to-sky-400 drop-shadow-lg">
@@ -500,107 +403,118 @@ export default function HomePage() {
       </section>
 
       {/* Point System Section */}
-      <section className="py-24 bg-transparent">
-        <div className="container mx-auto">
-          <div className="text-center mb-20">
+      <section
+        id="point-system"
+        className={`py-24 ${
+          theme === "cosmic"
+            ? "bg-gradient-to-t from-[#0f172a] via-[#1e1b4b] to-[#0f172a]"
+            : theme === "dark"
+            ? "bg-gray-900"
+            : "bg-white"
+        }`}
+      >
+        <div className="container">
+          <motion.div
+            className="text-center mb-20"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
             <h2 className="text-4xl md:text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 via-indigo-300 to-sky-400 drop-shadow-lg">
               Point System
             </h2>
-            <p className="text-xl text-indigo-100 max-w-2xl mx-auto">
-              Earn points and unlock new privileges as you contribute to the
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Earn points and gain reputation by contributing to the CodeCommons
               community.
             </p>
-          </div>
+          </motion.div>
           <div className="grid gap-10 md:grid-cols-3">
             {pointSystemData.map((category, index) => (
-              <Card
-                key={index}
-                className="cosmic-card bg-gradient-to-br from-indigo-800/80 via-fuchsia-800/60 to-transparent border-0 shadow-2xl hover:scale-105 transition-transform duration-300"
+              <motion.div
+                key={category.category}
+                className="cosmic-card p-8 rounded-2xl shadow-2xl"
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: index * 0.2 + 0.3 }}
               >
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-fuchsia-200 font-bold">
-                    {category.category === "Asking Questions" && (
-                      <HelpCircle className="h-5 w-5 text-yellow-400" />
-                    )}
-                    {category.category === "Answering Questions" && (
-                      <MessageSquare className="h-5 w-5 text-green-400" />
-                    )}
-                    {category.category === "Community Engagement" && (
-                      <Users className="h-5 w-5 text-blue-400" />
-                    )}
-                    {category.category}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-4">
-                    {category.items.map((item, itemIndex) => (
-                      <li
-                        key={itemIndex}
-                        className="flex justify-between items-center text-indigo-100"
-                      >
-                        <span>{item.action}</span>
-                        <Badge
-                          variant="secondary"
-                          className="cosmic-glow bg-fuchsia-700/80 text-yellow-300 border-fuchsia-400"
-                        >
-                          {item.points} pts
-                        </Badge>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+                <h3 className="text-2xl font-bold mb-6 cosmic-text">
+                  {category.category}
+                </h3>
+                <ul className="space-y-4">
+                  {category.items.map((item) => (
+                    <li key={item.action} className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        {item.action}
+                      </span>
+                      <span className="font-bold cosmic-text">
+                        {item.points}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
             ))}
           </div>
+          <motion.div
+            className="text-center mt-12"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+          >
+            <Button variant="default" size="lg" className="group cosmic-button">
+              Learn More <ArrowRight className="h-5 w-5 ml-2" />
+            </Button>
+          </motion.div>
         </div>
       </section>
 
       {/* Reputation Tiers Section */}
-      <section className="py-24 bg-gradient-to-br from-indigo-900/60 via-fuchsia-900/40 to-transparent">
-        <div className="container mx-auto">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 via-pink-400 to-fuchsia-400 drop-shadow-lg">
+      <section
+        className={`py-24 ${
+          theme === "cosmic"
+            ? "bg-gradient-to-t from-[#0f172a] via-[#1e1b4b] to-[#0f172a]"
+            : theme === "dark"
+            ? "bg-gray-900"
+            : "bg-white"
+        }`}
+      >
+        <div className="container">
+          <motion.div
+            className="text-center mb-20"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            <h2 className="text-4xl md:text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 via-indigo-300 to-sky-400 drop-shadow-lg">
               Reputation Tiers
             </h2>
-            <p className="text-xl text-indigo-100 max-w-2xl mx-auto">
-              Progress through different tiers and unlock new privileges.
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Unlock new privileges and showcase your expertise as you climb the
+              ranks.
             </p>
-          </div>
+          </motion.div>
           <div className="grid gap-10 md:grid-cols-3">
             {reputationTiers.map((tier, index) => (
-              <Card
-                key={index}
-                className="cosmic-card bg-gradient-to-br from-indigo-800/80 via-fuchsia-800/60 to-transparent border-0 shadow-2xl hover:scale-105 transition-transform duration-300"
+              <motion.div
+                key={tier.name}
+                className="cosmic-card p-8 rounded-2xl shadow-2xl"
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: index * 0.2 + 0.3 }}
               >
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-fuchsia-200 font-bold">
-                    {tier.name === "Bronze" && (
-                      <Award className="h-5 w-5 text-amber-400" />
-                    )}
-                    {tier.name === "Silver" && (
-                      <Award className="h-5 w-5 text-gray-300" />
-                    )}
-                    {tier.name === "Gold" && (
-                      <Award className="h-5 w-5 text-yellow-400" />
-                    )}
-                    {tier.name}
-                  </CardTitle>
-                  <p className="text-sm text-indigo-200">{tier.range}</p>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {tier.privileges.map((privilege, privilegeIndex) => (
-                      <li
-                        key={privilegeIndex}
-                        className="flex items-center gap-2 text-indigo-100"
-                      >
-                        <CheckCircle className="h-4 w-4 text-fuchsia-400" />
-                        <span className="text-sm">{privilege}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+                <h3 className="text-2xl font-bold mb-4 cosmic-text">
+                  {tier.name}
+                </h3>
+                <p className="text-muted-foreground mb-6">{tier.range}</p>
+                <ul className="space-y-3">
+                  {tier.privileges.map((privilege) => (
+                    <li key={privilege} className="flex items-center">
+                      <CheckCircle className="h-5 w-5 mr-3 text-green-400" />
+                      <span className="text-muted-foreground">{privilege}</span>
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
             ))}
           </div>
         </div>

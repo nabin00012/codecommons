@@ -115,7 +115,7 @@ export function EnhancedFeaturesSection() {
       : allFeatures.filter((feature) => feature.category === activeCategory);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" id="features">
       <div className="flex flex-wrap justify-center gap-4">
         {featureCategories.map((category) => (
           <Button

@@ -16,10 +16,10 @@ export function Navbar() {
   const { theme } = useTheme();
 
   const navItems = [
-    { name: "Features", href: "/features" },
-    { name: "Questions", href: "/questions" },
+    { name: "Features", href: "/#features" },
+    { name: "Questions", href: "/dashboard/questions" },
     { name: "Leaderboard", href: "/leaderboard" },
-    { name: "Point System", href: "/point-system" },
+    { name: "Point System", href: "/#point-system" },
   ];
 
   return (
