@@ -89,7 +89,7 @@ class AuthService {
     password: string;
     role: string;
   }): Promise<AuthResponse> {
-    return this.request<AuthResponse>("/api/auth/register", {
+    return this.request<AuthResponse>("/auth/register", {
       method: "POST",
       body: JSON.stringify(userData),
     });
