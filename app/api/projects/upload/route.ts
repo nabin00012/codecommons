@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authService } from "@/lib/services/auth";
 import { connectDB } from "@/lib/db";
-import Project from "@/lib/models/Project";
+import { Project } from "@/lib/models/project";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { v4 as uuidv4 } from "uuid";

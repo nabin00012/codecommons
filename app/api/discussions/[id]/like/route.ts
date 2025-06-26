@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
-import { Discussion } from "@/lib/models/Discussion";
+import { Discussion } from "@/lib/models/discussion";
 import { auth } from "@/lib/auth";
 
 export async function POST(

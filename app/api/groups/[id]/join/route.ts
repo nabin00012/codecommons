@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
-import { Group } from "@/lib/models/Group";
+import { Group } from "@/lib/models/group";
 
 // TODO: Add authentication logic here if needed
 
