@@ -91,36 +91,41 @@ export default function LoginPage() {
   }, [user, router]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background/90">
-      <div className="absolute top-4 right-4">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background/90 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <div className="absolute top-4 right-4 z-10">
         <ModeToggle />
       </div>
-      <div className="container mx-auto px-4 py-16">
+
+      <div className="w-full max-w-sm sm:max-w-md mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="max-w-md mx-auto"
         >
-          <Card className="cosmic-card">
-            <CardHeader className="space-y-1">
+          <Card className="cosmic-card shadow-xl border-0">
+            <CardHeader className="space-y-3 pb-6">
               <div className="text-center">
-                <h1 className="text-3xl font-bold mb-2">Welcome Back</h1>
-                <p className="text-muted-foreground">
+                <h1 className="text-2xl sm:text-3xl font-bold mb-2 bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                  Welcome Back
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground">
                   Sign in to your account to continue
                 </p>
               </div>
             </CardHeader>
-            <CardContent>
+
+            <CardContent className="space-y-4">
               <form onSubmit={handleLogin} className="space-y-4">
                 {error && (
-                  <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+                  <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
                     {error}
                   </div>
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email" className="text-sm font-medium">
+                    Email
+                  </Label>
                   <Input
                     id="email"
                     type="email"
@@ -130,11 +135,14 @@ export default function LoginPage() {
                     required
                     autoComplete="email"
                     inputMode="email"
+                    className="h-11 text-base"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password" className="text-sm font-medium">
+                    Password
+                  </Label>
                   <Input
                     id="password"
                     type="password"
@@ -143,20 +151,26 @@ export default function LoginPage() {
                     placeholder="Enter your password"
                     required
                     autoComplete="current-password"
+                    className="h-11 text-base"
                   />
                 </div>
 
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button
+                  type="submit"
+                  className="w-full h-11 text-base font-medium mt-6"
+                  disabled={loading}
+                >
                   {loading ? "Signing in..." : "Sign In"}
                 </Button>
               </form>
             </CardContent>
-            <CardFooter className="flex flex-col space-y-4">
+
+            <CardFooter className="flex flex-col space-y-4 pt-6">
               <div className="text-sm text-center text-muted-foreground">
                 Don't have an account?{" "}
                 <Link
                   href="/register"
-                  className="text-primary hover:text-primary/90 underline-offset-4 hover:underline"
+                  className="text-primary hover:text-primary/90 underline-offset-4 hover:underline font-medium"
                 >
                   Sign up
                 </Link>

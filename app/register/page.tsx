@@ -224,42 +224,47 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-muted/30">
-      <div className="w-full max-w-md">
-        <Card className="border-none shadow-lg">
-          <CardHeader className="space-y-1">
-            <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background/90 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <div className="w-full max-w-sm sm:max-w-md mx-auto">
+        <Card className="border-none shadow-xl cosmic-card">
+          <CardHeader className="space-y-4 pb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
               <Link
                 href="/"
-                className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
+                className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Home
               </Link>
               <Link
                 href="/login"
-                className="text-sm text-muted-foreground hover:text-foreground"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Already have an account?
               </Link>
             </div>
             <div className="space-y-2 text-center">
-              <h1 className="text-2xl font-bold">Create an account</h1>
-              <p className="text-sm text-muted-foreground">
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                Create an account
+              </h1>
+              <p className="text-sm sm:text-base text-muted-foreground">
                 Enter your details to create your account
               </p>
             </div>
           </CardHeader>
-          <CardContent>
+
+          <CardContent className="space-y-4">
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
-                <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
                   {error}
                 </div>
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name" className="text-sm font-medium">
+                  Name
+                </Label>
                 <Input
                   id="name"
                   name="name"
@@ -268,6 +273,7 @@ export default function RegisterPage() {
                   placeholder="Enter your name"
                   required
                   autoComplete="name"
+                  className="h-11 text-base"
                 />
                 {errors.name && (
                   <p className="text-sm text-destructive">{errors.name}</p>
@@ -275,14 +281,16 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="email">Email</Label>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+                  <Label htmlFor="email" className="text-sm font-medium">
+                    Email
+                  </Label>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     onClick={generateRandomEmail}
-                    className="h-8 px-2 text-xs"
+                    className="h-8 px-2 text-xs self-start sm:self-auto"
                   >
                     <RefreshCw className="mr-1 h-3 w-3" />
                     Generate
@@ -298,6 +306,7 @@ export default function RegisterPage() {
                   required
                   autoComplete="email"
                   inputMode="email"
+                  className="h-11 text-base"
                 />
                 {errors.email && (
                   <p className="text-sm text-destructive">{errors.email}</p>
@@ -305,7 +314,9 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-sm font-medium">
+                  Password
+                </Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -316,12 +327,13 @@ export default function RegisterPage() {
                     placeholder="Enter your password"
                     required
                     autoComplete="new-password"
+                    className="h-11 text-base pr-12"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-0 top-0 h-full px-3"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
@@ -337,7 +349,12 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label
+                  htmlFor="confirmPassword"
+                  className="text-sm font-medium"
+                >
+                  Confirm Password
+                </Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
@@ -348,12 +365,13 @@ export default function RegisterPage() {
                     placeholder="Confirm your password"
                     required
                     autoComplete="new-password"
+                    className="h-11 text-base pr-12"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-0 top-0 h-full px-3"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
                     {showConfirmPassword ? (
@@ -370,29 +388,37 @@ export default function RegisterPage() {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label>Role</Label>
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Role</Label>
                 <RadioGroup
                   value={formData.role}
                   onValueChange={(value) => handleRoleChange(value as UserRole)}
-                  className="flex flex-col space-y-1"
+                  className="flex flex-col space-y-2"
                 >
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
                     <RadioGroupItem value="student" id="student" />
-                    <Label htmlFor="student">Student</Label>
+                    <Label htmlFor="student" className="text-sm cursor-pointer">
+                      Student
+                    </Label>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
                     <RadioGroupItem value="teacher" id="teacher" />
-                    <Label htmlFor="teacher">Teacher</Label>
+                    <Label htmlFor="teacher" className="text-sm cursor-pointer">
+                      Teacher
+                    </Label>
                   </div>
                 </RadioGroup>
-                <p className="text-sm text-muted-foreground mt-2">
+                <p className="text-xs sm:text-sm text-muted-foreground mt-2 leading-relaxed">
                   For developers: Use any email for teacher role. For student
                   role, use @jainuniversity.ac.in email.
                 </p>
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button
+                type="submit"
+                className="w-full h-11 text-base font-medium mt-6"
+                disabled={isLoading}
+              >
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -404,19 +430,20 @@ export default function RegisterPage() {
               </Button>
             </form>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <div className="text-sm text-center text-muted-foreground">
+
+          <CardFooter className="flex flex-col space-y-4 pt-6">
+            <div className="text-xs sm:text-sm text-center text-muted-foreground leading-relaxed">
               By creating an account, you agree to our{" "}
               <Link
                 href="/terms"
-                className="text-primary hover:text-primary/90 underline-offset-4 hover:underline"
+                className="text-primary hover:text-primary/90 underline-offset-4 hover:underline font-medium"
               >
                 Terms of Service
               </Link>{" "}
               and{" "}
               <Link
                 href="/privacy"
-                className="text-primary hover:text-primary/90 underline-offset-4 hover:underline"
+                className="text-primary hover:text-primary/90 underline-offset-4 hover:underline font-medium"
               >
                 Privacy Policy
               </Link>
