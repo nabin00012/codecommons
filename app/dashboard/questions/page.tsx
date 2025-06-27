@@ -295,11 +295,11 @@ export default function QuestionsPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
+        <div className="container flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
             <Link href="/dashboard" className="flex items-center gap-2">
-              <Code className="h-6 w-6 text-primary" />
-              <span className="text-xl font-bold">CodeCommons</span>
+              <Code className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+              <span className="text-lg sm:text-xl font-bold">CodeCommons</span>
             </Link>
           </div>
           <nav className="hidden md:flex gap-6">
@@ -322,11 +322,13 @@ export default function QuestionsPage() {
               Leaderboard
             </Link>
           </nav>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <Link href="/dashboard/ask">
-              <Button size="sm">Ask Question</Button>
+              <Button size="sm" className="hidden sm:inline-flex">
+                Ask Question
+              </Button>
             </Link>
-            <Avatar className="h-8 w-8 cursor-pointer">
+            <Avatar className="h-7 w-7 sm:h-8 sm:w-8 cursor-pointer">
               <AvatarImage
                 src="/placeholder.svg?height=32&width=32"
                 alt="@user"
@@ -337,16 +339,18 @@ export default function QuestionsPage() {
         </div>
       </header>
 
-      <div className="container py-8">
-        <div className="flex flex-col gap-6">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="flex flex-col gap-4 sm:gap-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className="flex flex-col gap-2"
           >
-            <h1 className="text-3xl font-bold tracking-tight">Questions</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Questions
+            </h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Browse, search, and filter questions from the CodeCommons
               community
             </p>
@@ -357,34 +361,34 @@ export default function QuestionsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.5 }}
           >
-            <div className="flex flex-col md:flex-row gap-4 mb-8">
+            <div className="flex flex-col gap-4 mb-6 sm:mb-8">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search questions..."
-                  className="pl-9"
+                  className="pl-9 h-10 sm:h-11"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" className="gap-2">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                <Button variant="outline" className="gap-2 h-10 sm:h-11">
                   <Filter className="h-4 w-4" /> Filters
                 </Button>
-                <Link href="/dashboard/ask">
-                  <Button className="gap-1">
+                <Link href="/dashboard/ask" className="w-full sm:w-auto">
+                  <Button className="gap-1 w-full sm:w-auto h-10 sm:h-11">
                     <Plus className="h-4 w-4" /> Ask Question
                   </Button>
                 </Link>
               </div>
             </div>
 
-            <div className="mb-6 overflow-x-auto pb-2">
+            <div className="mb-4 sm:mb-6 overflow-x-auto pb-2">
               <div className="flex gap-2 min-w-max">
                 {availableTags.map((tag, index) => (
                   <Badge
                     key={index}
-                    className={`px-3 py-1 cursor-pointer ${
+                    className={`px-3 py-1 cursor-pointer text-xs sm:text-sm ${
                       activeTag === tag
                         ? "bg-primary/10 text-primary hover:bg-primary/20"
                         : "bg-transparent text-foreground hover:bg-muted"
@@ -403,13 +407,19 @@ export default function QuestionsPage() {
               className="w-full"
               onValueChange={setActiveTab}
             >
-              <TabsList className="mb-6">
-                <TabsTrigger value="recent">Recent Questions</TabsTrigger>
-                <TabsTrigger value="popular">Most Popular</TabsTrigger>
-                <TabsTrigger value="unanswered">Unanswered</TabsTrigger>
+              <TabsList className="mb-4 sm:mb-6 w-full sm:w-auto">
+                <TabsTrigger value="recent" className="text-xs sm:text-sm">
+                  Recent Questions
+                </TabsTrigger>
+                <TabsTrigger value="popular" className="text-xs sm:text-sm">
+                  Most Popular
+                </TabsTrigger>
+                <TabsTrigger value="unanswered" className="text-xs sm:text-sm">
+                  Unanswered
+                </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="recent" className="space-y-4">
+              <TabsContent value="recent" className="space-y-3 sm:space-y-4">
                 <AnimatePresence>
                   {sortedQuestions.map((question, index) => (
                     <motion.div
@@ -418,107 +428,58 @@ export default function QuestionsPage() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ delay: index * 0.05, duration: 0.3 }}
-                      className="bg-background rounded-xl p-5 shadow-sm hover:shadow-md transition-all border border-border/50"
+                      className="bg-background rounded-xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-all border border-border/50"
                     >
-                      <div className="flex justify-between items-start">
-                        <div>
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4">
+                        <div className="flex-1">
                           <Link href={`/dashboard/questions/${question.id}`}>
-                            <h3 className="font-semibold text-lg hover:text-primary transition-colors cursor-pointer">
+                            <h3 className="font-semibold text-base sm:text-lg hover:text-primary transition-colors cursor-pointer leading-tight">
                               {question.title}
                             </h3>
                           </Link>
-                          <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                            <Avatar className="h-5 w-5">
+                          <div className="flex items-center gap-2 mt-2 text-xs sm:text-sm text-muted-foreground">
+                            <Avatar className="h-4 w-4 sm:h-5 sm:w-5">
                               <AvatarImage
                                 src={question.author.avatar}
                                 alt={question.author.name}
                               />
-                              <AvatarFallback>
+                              <AvatarFallback className="text-xs">
                                 {question.author.initials}
                               </AvatarFallback>
                             </Avatar>
-                            <span>
-                              {question.author.name} • {question.timeAgo}
-                            </span>
+                            <span>{question.author.name}</span>
+                            <span>•</span>
+                            <span>{question.timeAgo}</span>
+                          </div>
+                          <p className="text-sm sm:text-base text-muted-foreground mt-2 line-clamp-2 sm:line-clamp-3">
+                            {question.description}
+                          </p>
+                          <div className="flex flex-wrap gap-1 mt-3">
+                            {question.tags.map((tag, tagIndex) => (
+                              <Badge
+                                key={tagIndex}
+                                className={`text-xs px-2 py-1 ${question.tagColors[tagIndex]}`}
+                                variant="outline"
+                              >
+                                {tag}
+                              </Badge>
+                            ))}
                           </div>
                         </div>
-                        <div className="flex gap-2">
-                          {question.tags.map((tag, tagIndex) => (
-                            <Badge
-                              key={tagIndex}
-                              variant="outline"
-                              className={question.tagColors[tagIndex]}
-                            >
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                      <p className="mt-3 text-muted-foreground line-clamp-2">
-                        {question.description}
-                      </p>
-                      <div className="flex justify-between items-center mt-4 pt-3 border-t">
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
-                            <MessageSquare className="h-4 w-4" />
-                            <span>
-                              {Array.isArray(question.answers)
-                                ? question.answers.length
-                                : 0}{" "}
-                              answers
-                            </span>
+                            <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <span>{question.answers}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <Eye className="h-4 w-4" />
-                            <span>{question.views} views</span>
+                            <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <span>{question.views}</span>
                           </div>
                         </div>
-                        <Link href={`/dashboard/questions/${question.id}`}>
-                          <Button variant="ghost" size="sm" className="gap-1">
-                            View Question <ArrowRight className="h-3 w-3" />
-                          </Button>
-                        </Link>
                       </div>
                     </motion.div>
                   ))}
                 </AnimatePresence>
-
-                {sortedQuestions.length === 0 && (
-                  <div className="bg-background rounded-xl p-8 shadow-sm border border-border/50 text-center">
-                    <h3 className="font-semibold text-lg mb-2">
-                      No questions found
-                    </h3>
-                    <p className="text-muted-foreground mb-4">
-                      Try adjusting your search or filters to find what you're
-                      looking for.
-                    </p>
-                    <Link href="/dashboard/ask">
-                      <Button>Ask a Question</Button>
-                    </Link>
-                  </div>
-                )}
-
-                {hasMore && sortedQuestions.length > 0 && (
-                  <div className="mt-6 text-center">
-                    <Button
-                      variant="outline"
-                      className="gap-1"
-                      onClick={handleLoadMore}
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <>
-                          <Spinner className="h-4 w-4 animate-spin" />
-                          Loading...
-                        </>
-                      ) : (
-                        <>
-                          Load More <ArrowRight className="h-3 w-3" />
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                )}
               </TabsContent>
 
               <TabsContent value="popular" className="space-y-4">

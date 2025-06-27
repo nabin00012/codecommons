@@ -38,12 +38,12 @@ export function Navbar() {
           : "border-gray-200"
       }`}
     >
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
             <Code
-              className={`h-6 w-6 ${
+              className={`h-5 w-5 sm:h-6 sm:w-6 ${
                 theme === "cosmic"
                   ? "text-fuchsia-400"
                   : theme === "dark"
@@ -52,7 +52,7 @@ export function Navbar() {
               }`}
             />
             <span
-              className={`text-xl font-bold ${
+              className={`text-lg sm:text-xl font-bold ${
                 theme === "cosmic"
                   ? "text-white"
                   : theme === "dark"
@@ -65,12 +65,12 @@ export function Navbar() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`text-sm font-medium transition-colors ${
+                className={`text-sm font-medium transition-colors hover:scale-105 ${
                   pathname === item.href
                     ? theme === "cosmic"
                       ? "text-fuchsia-400"
@@ -90,13 +90,14 @@ export function Navbar() {
           </div>
 
           {/* Right Side Items */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <ModeToggle />
             {!user && (
               <Link href="/login">
                 <Button
                   variant="ghost"
-                  className={`${
+                  size="sm"
+                  className={`hidden sm:inline-flex ${
                     theme === "cosmic"
                       ? "text-gray-300 hover:text-fuchsia-400"
                       : theme === "dark"
@@ -110,7 +111,8 @@ export function Navbar() {
             )}
             <Button
               variant="ghost"
-              className={`md:hidden ${
+              size="sm"
+              className={`md:hidden h-9 w-9 p-0 ${
                 theme === "cosmic"
                   ? "text-gray-300 hover:text-fuchsia-400"
                   : theme === "dark"
@@ -120,9 +122,9 @@ export function Navbar() {
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? (
-                <X className="h-6 w-6" />
+                <X className="h-5 w-5" />
               ) : (
-                <Menu className="h-6 w-6" />
+                <Menu className="h-5 w-5" />
               )}
             </Button>
           </div>
@@ -130,13 +132,13 @@ export function Navbar() {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1">
+          <div className="md:hidden border-t border-border/50">
+            <div className="px-2 pt-2 pb-4 space-y-1">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`block px-3 py-2 rounded-md text-base font-medium ${
+                  className={`block px-3 py-3 rounded-md text-base font-medium transition-colors ${
                     pathname === item.href
                       ? theme === "cosmic"
                         ? "text-fuchsia-400 bg-fuchsia-900/20"
@@ -157,7 +159,7 @@ export function Navbar() {
               {!user && (
                 <Link
                   href="/login"
-                  className={`block px-3 py-2 rounded-md text-base font-medium ${
+                  className={`block px-3 py-3 rounded-md text-base font-medium transition-colors ${
                     theme === "cosmic"
                       ? "text-gray-300 hover:text-fuchsia-400 hover:bg-fuchsia-900/20"
                       : theme === "dark"

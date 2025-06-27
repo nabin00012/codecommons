@@ -237,133 +237,161 @@ export default function ProjectsPage() {
 
   return (
     <ProtectedRoute>
-      <div className="container py-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Projects</h1>
-            <p className="text-muted-foreground">
-              Showcase your work and explore projects from the community
-            </p>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="flex flex-col gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold mb-2">Projects</h1>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                Showcase your work and explore projects from the community
+              </p>
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2 w-full sm:w-auto h-10 sm:h-11">
+                  <Plus className="h-4 w-4" />
+                  Add Project
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Add New Project</DialogTitle>
+                  <DialogDescription>
+                    Share your project with the community. Add a title,
+                    description, and GitHub link.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <label htmlFor="title" className="text-sm font-medium">
+                      Project Title
+                    </label>
+                    <Input
+                      id="title"
+                      value={newProject.title}
+                      onChange={(e) =>
+                        setNewProject({ ...newProject, title: e.target.value })
+                      }
+                      placeholder="Enter project title"
+                      className="h-10 sm:h-11"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <label
+                      htmlFor="description"
+                      className="text-sm font-medium"
+                    >
+                      Description
+                    </label>
+                    <Textarea
+                      id="description"
+                      value={newProject.description}
+                      onChange={(e) =>
+                        setNewProject({
+                          ...newProject,
+                          description: e.target.value,
+                        })
+                      }
+                      placeholder="Describe your project"
+                      className="min-h-[80px]"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <label htmlFor="githubLink" className="text-sm font-medium">
+                      GitHub Link
+                    </label>
+                    <Input
+                      id="githubLink"
+                      value={newProject.githubLink}
+                      onChange={(e) =>
+                        setNewProject({
+                          ...newProject,
+                          githubLink: e.target.value,
+                        })
+                      }
+                      placeholder="https://github.com/username/repo"
+                      className="h-10 sm:h-11"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <label htmlFor="tags" className="text-sm font-medium">
+                      Tags
+                    </label>
+                    <Input
+                      id="tags"
+                      value={newProject.tags.join(", ")}
+                      onChange={(e) =>
+                        setNewProject({
+                          ...newProject,
+                          tags: e.target.value
+                            .split(",")
+                            .map((tag) => tag.trim()),
+                        })
+                      }
+                      placeholder="Enter tags separated by commas"
+                      className="h-10 sm:h-11"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <label
+                      htmlFor="longDescription"
+                      className="text-sm font-medium"
+                    >
+                      Long Description
+                    </label>
+                    <Textarea
+                      id="longDescription"
+                      value={newProject.longDescription}
+                      onChange={(e) =>
+                        setNewProject({
+                          ...newProject,
+                          longDescription: e.target.value,
+                        })
+                      }
+                      placeholder="Write a detailed description of your project"
+                      className="min-h-[100px]"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    onClick={handleCreateProject}
+                    className="w-full sm:w-auto h-10 sm:h-11"
+                  >
+                    Create Project
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add Project
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Add New Project</DialogTitle>
-                <DialogDescription>
-                  Share your project with the community. Add a title,
-                  description, and GitHub link.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <label htmlFor="title">Project Title</label>
-                  <Input
-                    id="title"
-                    value={newProject.title}
-                    onChange={(e) =>
-                      setNewProject({ ...newProject, title: e.target.value })
-                    }
-                    placeholder="Enter project title"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <label htmlFor="description">Description</label>
-                  <Textarea
-                    id="description"
-                    value={newProject.description}
-                    onChange={(e) =>
-                      setNewProject({
-                        ...newProject,
-                        description: e.target.value,
-                      })
-                    }
-                    placeholder="Describe your project"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <label htmlFor="githubLink">GitHub Link</label>
-                  <Input
-                    id="githubLink"
-                    value={newProject.githubLink}
-                    onChange={(e) =>
-                      setNewProject({
-                        ...newProject,
-                        githubLink: e.target.value,
-                      })
-                    }
-                    placeholder="https://github.com/username/repo"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <label htmlFor="tags">Tags</label>
-                  <Input
-                    id="tags"
-                    value={newProject.tags.join(", ")}
-                    onChange={(e) =>
-                      setNewProject({
-                        ...newProject,
-                        tags: e.target.value
-                          .split(",")
-                          .map((tag) => tag.trim()),
-                      })
-                    }
-                    placeholder="Enter tags separated by commas"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <label htmlFor="longDescription">Long Description</label>
-                  <Textarea
-                    id="longDescription"
-                    value={newProject.longDescription}
-                    onChange={(e) =>
-                      setNewProject({
-                        ...newProject,
-                        longDescription: e.target.value,
-                      })
-                    }
-                    placeholder="Write a detailed description of your project"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button onClick={handleCreateProject}>Create Project</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <div className="relative flex-1">
+              <Input
+                placeholder="Search projects..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-10 sm:h-11"
+              />
+              <Code2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            </div>
+            <Select value={selectedTag} onValueChange={setSelectedTag}>
+              <SelectTrigger className="w-full sm:w-[180px] h-10 sm:h-11">
+                <SelectValue placeholder="Filter by tag" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Tags</SelectItem>
+                {allTags.map((tag) => (
+                  <SelectItem key={tag} value={tag}>
+                    {tag}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <div className="relative flex-1">
-            <Input
-              placeholder="Search projects..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-            <Code2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          </div>
-          <Select value={selectedTag} onValueChange={setSelectedTag}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by tag" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Tags</SelectItem>
-              {allTags.map((tag) => (
-                <SelectItem key={tag} value={tag}>
-                  {tag}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {filteredProjects.map((project, index) => (
             <motion.div
               key={project._id}
@@ -372,11 +400,11 @@ export default function ProjectsPage() {
               transition={{ duration: 0.3, delay: index * 0.1 }}
             >
               <div
-                className="relative group rounded-2xl overflow-hidden shadow-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 cursor-pointer transition-transform hover:scale-[1.03] hover:shadow-2xl"
+                className="relative group rounded-xl sm:rounded-2xl overflow-hidden shadow-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 cursor-pointer transition-transform hover:scale-[1.02] hover:shadow-2xl"
                 onClick={() => router.push(`/projects/${project._id}`)}
               >
                 {/* Thumbnail */}
-                <div className="relative h-40 w-full bg-gradient-to-br from-purple-500/30 to-blue-500/20 flex items-center justify-center">
+                <div className="relative h-32 sm:h-40 w-full bg-gradient-to-br from-purple-500/30 to-blue-500/20 flex items-center justify-center">
                   <img
                     src={
                       project.thumbnail ||
@@ -387,66 +415,73 @@ export default function ProjectsPage() {
                   />
                   {/* Gradient overlay on hover */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center">
-                    <button className="mb-4 px-4 py-2 bg-white/90 dark:bg-zinc-800/90 text-primary font-semibold rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors">
+                    <button className="mb-3 sm:mb-4 px-3 sm:px-4 py-1.5 sm:py-2 bg-white/90 dark:bg-zinc-800/90 text-primary font-semibold rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors text-sm">
                       View Details
                     </button>
                   </div>
                 </div>
                 {/* Card Content */}
-                <div className="p-5 flex flex-col gap-3">
+                <div className="p-4 sm:p-5 flex flex-col gap-2 sm:gap-3">
                   <div className="flex items-center justify-between mb-1">
-                    <h2 className="text-xl font-bold truncate text-zinc-900 dark:text-zinc-100">
+                    <h2 className="text-lg sm:text-xl font-bold truncate text-zinc-900 dark:text-zinc-100">
                       {project.title}
                     </h2>
-                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow">
-                      {project.author.role}
-                    </span>
                   </div>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-300 line-clamp-2 mb-1">
+                  <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 line-clamp-2 sm:line-clamp-3">
                     {project.description}
                   </p>
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {project.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs text-zinc-700 dark:text-zinc-300 font-medium"
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {project.tags.slice(0, 3).map((tag, tagIndex) => (
+                      <Badge
+                        key={tagIndex}
+                        variant="secondary"
+                        className="text-xs px-2 py-1"
                       >
-                        <Tag className="h-3 w-3 text-purple-500" />
                         {tag}
-                      </span>
+                      </Badge>
                     ))}
+                    {project.tags.length > 3 && (
+                      <Badge variant="outline" className="text-xs px-2 py-1">
+                        +{project.tags.length - 3}
+                      </Badge>
+                    )}
                   </div>
-                  {/* Stats */}
-                  <div className="flex items-center gap-4 text-xs text-zinc-500 dark:text-zinc-400 mb-2">
-                    <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4 text-yellow-400" />
-                      <span>{project.stars}</span>
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-700">
+                    <div className="flex items-center gap-3 text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+                      <div className="flex items-center gap-1">
+                        <Star className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <span>{project.stars}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <span>{project.contributors}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4" />
-                      <span>{project.contributors}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      <span>
-                        {new Date(project.createdAt).toLocaleDateString()}
-                      </span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(project.githubLink, "_blank");
+                        }}
+                      >
+                        <Github className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/projects/${project._id}`);
+                        }}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-                  {/* GitHub Button */}
-                  <Button
-                    variant="outline"
-                    className="w-full gap-2 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      window.open(project.githubLink, "_blank");
-                    }}
-                  >
-                    <Github className="h-4 w-4" />
-                    View on GitHub
-                    <ExternalLink className="h-4 w-4" />
-                  </Button>
                 </div>
               </div>
             </motion.div>
