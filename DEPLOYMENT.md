@@ -1,9 +1,5 @@
 # Deployment Guide
 
-## The Problem
-Your frontend is deployed on Vercel but your backend is running locally. When users try to sign up, they get "unable to fetch" because the frontend can't reach your local backend.
-
-## Solution: Deploy Backend to Railway
 
 ### Step 1: Set up MongoDB Atlas (Free Cloud Database)
 1. Go to [MongoDB Atlas](https://www.mongodb.com/atlas)
