@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 import { authService } from "@/lib/services/auth";
 import { headers } from "next/headers";
 import { connectToDatabase } from "@/lib/mongodb";
-import { Project } from "@/lib/models/project";
-
-// Connect to MongoDB
-connectToDatabase();
+import { ObjectId } from "mongodb";
 
 export async function GET(request: Request) {
   try {
+    // Connect to MongoDB only when needed
+    const { db } = await connectToDatabase();
+
     const headersList = await headers();
     const token = headersList.get("authorization")?.split(" ")[1];
     const { searchParams } = new URL(request.url);
@@ -26,7 +26,9 @@ export async function GET(request: Request) {
 
     // If ID is provided, get specific project
     if (id) {
-      const project = await Project.findById(id);
+      const project = await db
+        .collection("projects")
+        .findOne({ _id: new ObjectId(id) });
       if (!project) {
         return NextResponse.json(
           { error: "Project not found" },
@@ -37,12 +39,16 @@ export async function GET(request: Request) {
     }
 
     // Otherwise get all projects
-    const projects = await Project.find({
-      $or: [
-        { "author._id": user.user._id }, // User's own projects
-        { isPublic: true }, // Public projects
-      ],
-    }).sort({ createdAt: -1 });
+    const projects = await db
+      .collection("projects")
+      .find({
+        $or: [
+          { "author._id": user._id }, // User's own projects
+          { isPublic: true }, // Public projects
+        ],
+      })
+      .sort({ createdAt: -1 })
+      .toArray();
     return NextResponse.json(projects);
   } catch (error) {
     console.error("Error fetching projects:", error);
@@ -55,6 +61,9 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    // Connect to MongoDB only when needed
+    const { db } = await connectToDatabase();
+
     const headersList = await headers();
     const token = headersList.get("authorization")?.split(" ")[1];
 
@@ -88,7 +97,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const project = await Project.create({
+    const project = {
       title,
       description,
       longDescription,
@@ -99,13 +108,20 @@ export async function POST(request: Request) {
       screenshots: screenshots || [],
       screenRecordings: screenRecordings || [],
       author: {
-        _id: user.user._id,
-        name: user.user.name,
-        role: user.user.role,
+        _id: user._id,
+        name: user.name,
+        role: user.role,
       },
-    });
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
-    return NextResponse.json(project);
+    const result = await db.collection("projects").insertOne(project);
+    const createdProject = await db
+      .collection("projects")
+      .findOne({ _id: result.insertedId });
+
+    return NextResponse.json(createdProject);
   } catch (error) {
     console.error("Error creating project:", error);
     return NextResponse.json(
