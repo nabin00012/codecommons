@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node dist/server.js",
     "dev": "nodemon src/server.ts",
-    "build": "tsc",
+    "build": "npm install --include=dev && tsc",
+    "build:prod": "tsc",
     "type-check": "tsc --noEmit",
     "lint": "eslint . --ext .ts",
     "test": "jest"
