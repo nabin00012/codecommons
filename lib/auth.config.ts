@@ -7,6 +7,8 @@ import { JWT } from "next-auth/jwt";
 
 export type UserRole = "student" | "teacher" | "admin";
 
+const isProd = process.env.NODE_ENV === "production";
+
 declare module "next-auth" {
   interface User {
     id: string;
@@ -42,9 +44,9 @@ export const authConfig: NextAuthConfig = {
         params: {
           prompt: "consent",
           access_type: "offline",
-          response_type: "code"
-        }
-      }
+          response_type: "code",
+        },
+      },
     }),
     Credentials({
       name: "credentials",
@@ -55,20 +57,21 @@ export const authConfig: NextAuthConfig = {
       async authorize(credentials) {
         try {
           if (!credentials?.email || !credentials?.password) {
-            console.log("Missing credentials");
+            if (!isProd) console.log("Missing credentials");
             return null;
           }
 
           const { db } = await connectToDatabase();
-          console.log("Connected to database for auth");
+          if (!isProd) console.log("Connected to database for auth");
 
           const user = await db
             .collection("users")
             .findOne({ email: credentials.email });
-          console.log("User found:", user ? "yes" : "no");
+          if (!isProd) console.log("User found:", user ? "yes" : "no");
 
           if (!user || !user.password) {
-            console.log("No user found with email:", credentials.email);
+            if (!isProd)
+              console.log("No user found with email:", credentials.email);
             return null;
           }
 
@@ -76,10 +79,11 @@ export const authConfig: NextAuthConfig = {
             credentials.password.toString(),
             user.password.toString()
           );
-          console.log("Password valid:", isValid);
+          if (!isProd) console.log("Password valid:", isValid);
 
           if (!isValid) {
-            console.log("Invalid password for user:", credentials.email);
+            if (!isProd)
+              console.log("Invalid password for user:", credentials.email);
             return null;
           }
 
@@ -98,25 +102,21 @@ export const authConfig: NextAuthConfig = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
-      // Check if this is a Google OAuth sign-in
+    async signIn({ user, account }) {
       if (account?.provider === "google") {
-        // Validate email domain
         if (!user.email?.endsWith("@jainuniversity.ac.in")) {
-          console.log("Unauthorized email domain:", user.email);
+          if (!isProd) console.log("Unauthorized email domain:", user.email);
           throw new Error("AccessDenied");
         }
 
         try {
           const { db } = await connectToDatabase();
-          
-          // Check if user already exists
+
           const existingUser = await db
             .collection("users")
             .findOne({ email: user.email });
 
           if (existingUser) {
-            // Update user info if needed
             await db.collection("users").updateOne(
               { email: user.email },
               {
@@ -127,13 +127,11 @@ export const authConfig: NextAuthConfig = {
                 },
               }
             );
-            
-            // Set user role and department from existing user
+
             user.role = existingUser.role as UserRole;
             user.department = existingUser.department || "";
             user.id = existingUser._id.toString();
           } else {
-            // Create new user with default role
             const newUser = {
               email: user.email,
               name: user.name,
@@ -157,10 +155,9 @@ export const authConfig: NextAuthConfig = {
         }
       }
 
-      // For credentials provider, just return true (existing logic)
       return true;
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
