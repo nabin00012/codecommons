@@ -32,7 +32,14 @@ let clientPromise: Promise<MongoClient>;
 const getClientPromise = () => {
   if (!clientPromise) {
     const config = getMongoConfig();
-    console.log("MongoDB URI:", config.uri); // Log the URI (without credentials)
+    if (process.env.NODE_ENV !== "production") {
+      try {
+        const masked = config.uri.replace(/:\w+@/, ":****@");
+        console.log("MongoDB connecting to:", masked);
+      } catch {
+        // noop
+      }
+    }
 
     if (process.env.NODE_ENV === "development") {
       let globalWithMongo = global as typeof globalThis & {
@@ -43,10 +50,7 @@ const getClientPromise = () => {
         client = new MongoClient(config.uri, options);
         globalWithMongo._mongoClientPromise = client
           .connect()
-          .then((client) => {
-            console.log("MongoDB connected successfully");
-            return client;
-          })
+          .then((client) => client)
           .catch((err) => {
             console.error("MongoDB connection error:", err);
             throw err;
@@ -57,10 +61,7 @@ const getClientPromise = () => {
       client = new MongoClient(config.uri, options);
       clientPromise = client
         .connect()
-        .then((client) => {
-          console.log("MongoDB connected successfully");
-          return client;
-        })
+        .then((client) => client)
         .catch((err) => {
           console.error("MongoDB connection error:", err);
           throw err;
@@ -72,11 +73,9 @@ const getClientPromise = () => {
 
 export async function connectToDatabase() {
   try {
-    console.log("Attempting to connect to database...");
     const config = getMongoConfig();
     const client = await getClientPromise();
     const db = client.db(config.dbName);
-    console.log("Successfully connected to database:", config.dbName);
     return { client, db };
   } catch (error) {
     console.error("Error connecting to database:", error);
@@ -84,4 +83,6 @@ export async function connectToDatabase() {
   }
 }
 
-export default getClientPromise;
+// Export a client promise for adapters that expect a promise instance
+const clientPromiseDefault = getClientPromise();
+export default clientPromiseDefault;

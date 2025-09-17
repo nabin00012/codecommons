@@ -1,66 +1,42 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Add paths that don't require authentication
-const publicPaths = [
+const isProd = process.env.NODE_ENV === "production";
+
+const publicPrefixes = [
   "/",
   "/login",
   "/register",
-  "/api/auth/login",
-  "/api/auth/register",
-  "/api/auth/verify",
-  "/placeholder.svg",
-  "/favicon.ico",
+  "/api/auth",
   "/_next",
   "/static",
+  "/favicon.ico",
+  "/placeholder.svg",
 ];
 
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
-  console.log("Middleware processing path:", path);
 
-  // Check if the path is public
-  const isPublicPath = publicPaths.some((publicPath) =>
-    path.startsWith(publicPath)
-  );
+  // Allow static and public prefixes
+  const isPublic = publicPrefixes.some((p) => path.startsWith(p));
+  if (isPublic) return NextResponse.next();
 
-  if (isPublicPath) {
-    console.log("Path is public, allowing access");
-    return NextResponse.next();
-  }
-
-  // Check for token in cookies
-  const token = request.cookies.get("token")?.value;
-  console.log("Checking for token in cookies:", token ? "exists" : "none");
+  // JWT cookie set by NextAuth
+  const token = request.cookies.get("next-auth.session-token")?.value ||
+    request.cookies.get("__Secure-next-auth.session-token")?.value ||
+    request.cookies.get("token")?.value;
 
   if (!token) {
-    console.log("No token found, redirecting to login");
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirectTo", path);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Verify token format
-  if (token === "null" || token === "undefined") {
-    console.log("Invalid token format, redirecting to login");
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirectTo", path);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  console.log("Token found, allowing access");
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|_next/image|favicon.ico|public).*)",
   ],
 };
