@@ -99,7 +99,7 @@ export default function DashboardSidebar({ isOpen, setIsOpen }: SidebarProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.5 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm xl:hidden"
             onClick={() => setIsOpen(false)}
           />
         )}
@@ -112,7 +112,7 @@ export default function DashboardSidebar({ isOpen, setIsOpen }: SidebarProps) {
         transition={{ type: "spring", damping: 20 }}
         className={cn(
           "fixed left-0 top-0 z-50 h-full w-[280px] border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-          !isOpen && "hidden lg:block"
+          !isOpen && "hidden xl:block"
         )}
       >
         <div className="flex h-full flex-col">
@@ -213,7 +213,7 @@ export default function DashboardSidebar({ isOpen, setIsOpen }: SidebarProps) {
           {/* Collapse button */}
           <button
             onClick={() => setIsOpen(false)}
-            className="absolute -right-3 top-20 hidden h-6 w-6 items-center justify-center rounded-full border bg-background shadow-sm lg:flex"
+            className="absolute -right-3 top-20 hidden h-6 w-6 items-center justify-center rounded-full border bg-background shadow-sm xl:flex"
           >
             <ChevronRight className="h-3 w-3" />
           </button>

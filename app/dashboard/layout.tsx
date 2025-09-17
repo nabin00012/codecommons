@@ -22,13 +22,13 @@ export default function DashboardLayout({
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto bg-background">
-          {/* Mobile Header */}
-          <div className="lg:hidden flex items-center justify-between p-4 border-b">
+          {/* Mobile/Laptop Header */}
+          <div className="xl:hidden flex items-center justify-between p-4 border-b">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsSidebarOpen(true)}
-              className="lg:hidden"
+              className="xl:hidden"
             >
               <Menu className="h-5 w-5" />
             </Button>
