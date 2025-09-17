@@ -20,6 +20,7 @@ dotenv.config();
 
 // Initialize express app
 const app = express();
+const isProd = process.env.NODE_ENV === "production";
 
 // CORS configuration
 const corsOptions = {
@@ -45,13 +46,15 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
-// Add request logging middleware
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  console.log("Headers:", req.headers);
-  console.log("Cookies:", req.cookies);
-  next();
-});
+// Add request logging middleware (development only)
+if (!isProd) {
+  app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    console.log("Headers:", req.headers);
+    console.log("Cookies:", req.cookies);
+    next();
+  });
+}
 
 // Connect to MongoDB
 connectDB();
