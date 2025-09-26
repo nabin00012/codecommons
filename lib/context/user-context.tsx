@@ -11,6 +11,11 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  department: string;
+  section?: string;
+  year?: string;
+  specialization?: string;
+  onboardingCompleted?: boolean;
   preferences?: {
     theme: string;
     notifications: boolean;
@@ -47,6 +52,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         name: sessionUser.name || "",
         email: sessionUser.email || "",
         role: (sessionUser.role as UserRole) || "user",
+        department: sessionUser.department || "",
+        section: sessionUser.section || "",
+        year: sessionUser.year || "",
+        specialization: sessionUser.specialization || "",
+        onboardingCompleted: sessionUser.onboardingCompleted ?? false,
         preferences: sessionUser.preferences,
       });
     } else {

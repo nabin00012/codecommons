@@ -1,6 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 
+export async function GET(request: NextRequest) {
+  try {
+    const email = request.nextUrl.searchParams.get("email");
+
+    if (!email) {
+      return NextResponse.json(
+        { error: "Email query parameter is required" },
+        { status: 400 }
+      );
+    }
+
+    const { db } = await connectToDatabase();
+    const user = await db.collection("users").findOne({ email });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    const { password, ...userWithoutPassword } = user;
+    return NextResponse.json(userWithoutPassword);
+  } catch (error) {
+    console.error("Profile fetch error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
@@ -21,9 +53,9 @@ export async function PUT(request: NextRequest) {
 
     if (role) updateData.role = role;
     if (department) updateData.department = department;
-    if (section) updateData.section = section;
-    if (year) updateData.year = year;
-    if (specialization) updateData.specialization = specialization;
+    if (section !== undefined) updateData.section = section;
+    if (year !== undefined) updateData.year = year;
+    if (specialization !== undefined) updateData.specialization = specialization;
     if (onboardingCompleted !== undefined) updateData.onboardingCompleted = onboardingCompleted;
 
     const result = await db.collection("users").updateOne(

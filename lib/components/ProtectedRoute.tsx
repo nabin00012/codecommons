@@ -30,6 +30,16 @@ export default function ProtectedRoute({
         router.push("/dashboard");
         return;
       }
+
+      const needsOnboarding =
+        user.role !== "admin" &&
+        (!user.onboardingCompleted || !user.department || user.department === "");
+
+      if (needsOnboarding && router.asPath !== "/onboarding") {
+        setIsRedirecting(true);
+        router.push("/onboarding");
+        return;
+      }
     }
   }, [user, loading, router, requireTeacher, isRedirecting]);
 

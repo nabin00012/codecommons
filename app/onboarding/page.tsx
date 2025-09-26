@@ -23,17 +23,24 @@ export default function OnboardingPage() {
     specialization: ""
   });
 
-  // Check if user already completed onboarding
   useEffect(() => {
     const checkOnboardingStatus = async () => {
       try {
         const sessionResponse = await fetch("/api/auth/session");
         const sessionData = await sessionResponse.json();
-        
+
         if (sessionData.user?.email) {
-          // Check if user has department and role (onboarding completed)
-          if (sessionData.user.department && sessionData.user.role) {
-            // Already completed onboarding, redirect to dashboard
+          const { role, department, section, year, specialization } = sessionData.user;
+
+          setFormData((prev) => ({
+            role: role || prev.role,
+            department: department || prev.department,
+            section: section || prev.section,
+            year: year || prev.year,
+            specialization: specialization || prev.specialization,
+          }));
+
+          if (role && department && (role === "teacher" || section)) {
             router.push("/dashboard");
             return;
           }
@@ -55,12 +62,15 @@ export default function OnboardingPage() {
     setLoading(true);
 
     try {
-      // Get user email from session
       const sessionResponse = await fetch("/api/auth/session");
       const sessionData = await sessionResponse.json();
-      
+
       if (!sessionData.user?.email) {
         throw new Error("No user session found");
+      }
+
+      if (formData.role === "student" && (!formData.section || !formData.year)) {
+        throw new Error("Please select your section and year");
       }
 
       const response = await fetch("/api/users/profile", {
@@ -89,7 +99,7 @@ export default function OnboardingPage() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update profile. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to update profile. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -119,11 +129,10 @@ export default function OnboardingPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Role Selection */}
             <div className="space-y-2">
               <Label htmlFor="role">I am a:</Label>
-              <Select 
-                value={formData.role} 
+              <Select
+                value={formData.role}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}
               >
                 <SelectTrigger>
@@ -139,11 +148,10 @@ export default function OnboardingPage() {
               </Select>
             </div>
 
-            {/* Department Selection */}
             <div className="space-y-2">
               <Label htmlFor="department">Department:</Label>
-              <Select 
-                value={formData.department} 
+              <Select
+                value={formData.department}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, department: value, section: "", specialization: "" }))}
               >
                 <SelectTrigger>
@@ -159,56 +167,53 @@ export default function OnboardingPage() {
               </Select>
             </div>
 
-            {/* Section Selection (for students) */}
             {formData.department && formData.role === "student" && (
-              <div className="space-y-2">
-                <Label htmlFor="section">Section:</Label>
-                <Select 
-                  value={formData.section} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, section: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your section" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {selectedDept?.sections.map((section) => (
-                      <SelectItem key={section} value={section}>
-                        Section {section}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="section">Section:</Label>
+                  <Select
+                    value={formData.section}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, section: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your section" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectedDept?.sections.map((section) => (
+                        <SelectItem key={section} value={section}>
+                          Section {section}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="year">Academic Year:</Label>
+                  <Select
+                    value={formData.year}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, year: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ACADEMIC_YEARS.map((year) => (
+                        <SelectItem key={year.value} value={year.value.toString()}>
+                          {year.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
             )}
 
-            {/* Year Selection (for students) */}
-            {formData.department && formData.role === "student" && (
-              <div className="space-y-2">
-                <Label htmlFor="year">Academic Year:</Label>
-                <Select 
-                  value={formData.year} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, year: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your year" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ACADEMIC_YEARS.map((year) => (
-                      <SelectItem key={year.value} value={year.value.toString()}>
-                        {year.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Specialization Selection */}
             {formData.department && selectedDept && (
               <div className="space-y-2">
                 <Label htmlFor="specialization">Area of Interest/Specialization:</Label>
-                <Select 
-                  value={formData.specialization} 
+                <Select
+                  value={formData.specialization}
                   onValueChange={(value) => setFormData(prev => ({ ...prev, specialization: value }))}
                 >
                   <SelectTrigger>
@@ -226,9 +231,9 @@ export default function OnboardingPage() {
             )}
 
             <div className="pt-4">
-              <Button 
-                type="submit" 
-                className="w-full" 
+              <Button
+                type="submit"
+                className="w-full"
                 disabled={loading || !formData.role || !formData.department}
               >
                 {loading ? "Setting up your profile..." : "Complete Setup"}

@@ -15,6 +15,10 @@ declare module "next-auth" {
     name: string;
     role: UserRole;
     department: string;
+    section?: string;
+    year?: string;
+    specialization?: string;
+    onboardingCompleted?: boolean;
   }
 
   interface Session {
@@ -22,6 +26,10 @@ declare module "next-auth" {
       id: string;
       role: UserRole;
       department: string;
+      section?: string;
+      year?: string;
+      specialization?: string;
+      onboardingCompleted?: boolean;
     };
   }
 }
@@ -31,6 +39,10 @@ declare module "next-auth/jwt" {
     id: string;
     role: UserRole;
     department: string;
+    section?: string;
+    year?: string;
+    specialization?: string;
+    onboardingCompleted?: boolean;
   }
 }
 
@@ -95,6 +107,27 @@ export const authConfig: NextAuthConfig = {
         token.id = user.id;
         token.role = user.role;
         token.department = user.department;
+        token.section = user.section;
+        token.year = (user as any).year;
+        token.specialization = (user as any).specialization;
+        token.onboardingCompleted = (user as any).onboardingCompleted ?? false;
+      } else if (token.email) {
+        try {
+          const { db } = await connectToDatabase();
+          const dbUser = await db
+            .collection("users")
+            .findOne({ email: token.email });
+          if (dbUser) {
+            token.role = (dbUser.role as UserRole) || token.role;
+            token.department = dbUser.department || "";
+            token.section = dbUser.section || "";
+            token.year = dbUser.year ? String(dbUser.year) : "";
+            token.specialization = dbUser.specialization || "";
+            token.onboardingCompleted = dbUser.onboardingCompleted ?? false;
+          }
+        } catch (error) {
+          console.error("JWT callback error:", error);
+        }
       }
       return token;
     },
@@ -103,6 +136,10 @@ export const authConfig: NextAuthConfig = {
         session.user.id = token.id;
         session.user.role = token.role as UserRole;
         session.user.department = token.department;
+        session.user.section = token.section;
+        session.user.year = token.year;
+        session.user.specialization = token.specialization;
+        session.user.onboardingCompleted = token.onboardingCompleted;
       }
       return session;
     },
