@@ -78,9 +78,7 @@ export default function LoginPage() {
       }
       
       // Force reload to update auth state
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
+      window.location.reload();
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "An error occurred";

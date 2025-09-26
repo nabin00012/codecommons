@@ -182,14 +182,12 @@ export default function RegisterPage() {
           description: "Setting up your profile...",
         });
 
-        setTimeout(() => {
-          if (formData.email === "admin@jainuniversity.ac.in") {
-            router.push("/dashboard");
-          } else {
-            router.push("/onboarding");
-          }
-          window.location.reload(); // Force reload to update auth state
-        }, 1000);
+        if (formData.email === "admin@jainuniversity.ac.in") {
+          router.push("/dashboard");
+        } else {
+          router.push("/onboarding");
+        }
+        window.location.reload(); // Force reload to update auth state
       } else {
         setTimeout(() => {
           router.push("/login");

@@ -52,7 +52,7 @@ export class ClassroomService {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = `${API_URL}/api/classrooms`;
+    this.baseUrl = `/api/classrooms`;
   }
 
   private async getAuthHeader(): Promise<HeadersInit> {
@@ -109,9 +109,11 @@ export class ClassroomService {
   async createClassroom(data: CreateClassroomData): Promise<Classroom> {
     try {
       console.log("Creating classroom:", data);
-      const response = await fetch(this.baseUrl, {
+      const response = await fetch(`/api/classrooms`, {
         method: "POST",
-        headers: await this.getAuthHeader(),
+        headers: {
+          "Content-Type": "application/json",
+        },
         credentials: "include",
         body: JSON.stringify(data),
       });
