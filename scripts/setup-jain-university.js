@@ -171,7 +171,12 @@ async function setupJainUniversityData() {
           name: 'Dr. Academic Admin',
           role: 'admin',
           department: 'administration',
+          section: '',
+          year: '',
+          specialization: 'Academic Administration',
+          onboardingCompleted: true,
           password: hashedPassword,
+          createdAt: new Date(),
           updatedAt: new Date()
         }
       },

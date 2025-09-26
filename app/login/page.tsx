@@ -63,14 +63,24 @@ export default function LoginPage() {
         throw new Error("Login failed");
       }
 
-      // The session will be automatically updated by NextAuth
-      toast({
-        title: "Welcome back!",
-        description: "You have been successfully logged in.",
-      });
+      // Check if user needs onboarding
+      const sessionResponse = await fetch("/api/auth/session");
+      if (sessionResponse.ok) {
+        const sessionData = await sessionResponse.json();
+        const needsOnboarding = !sessionData.user?.department || !sessionData.user?.role;
+        
+        toast({
+          title: "Welcome back!",
+          description: "You have been successfully logged in.",
+        });
 
-      router.push("/dashboard");
-      router.refresh();
+        if (needsOnboarding && email !== "admin@jainuniversity.ac.in") {
+          router.push("/onboarding");
+        } else {
+          router.push("/dashboard");
+        }
+        router.refresh();
+      }
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "An error occurred";
