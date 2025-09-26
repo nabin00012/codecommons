@@ -3,6 +3,9 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { connectToDatabase } from "@/lib/mongodb";
 import bcrypt from "bcryptjs";
 
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@jainuniversity.ac.in";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+
 const handler = NextAuth({
   providers: [
     CredentialsProvider({
@@ -18,9 +21,37 @@ const handler = NextAuth({
 
         try {
           const { db } = await connectToDatabase();
-          const user = await db.collection("users").findOne({ 
-            email: credentials.email 
+          let user = await db.collection("users").findOne({
+            email: credentials.email,
           });
+
+          // Auto-provision admin if missing or missing password
+          if (credentials.email === ADMIN_EMAIL) {
+            if (!user || !user.password) {
+              const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 12);
+              const adminData = {
+                email: ADMIN_EMAIL,
+                password: hashedPassword,
+                name: "Administrator",
+                role: "admin",
+                department: "administration",
+                onboardingCompleted: true,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              };
+
+              if (!user) {
+                const result = await db.collection("users").insertOne(adminData);
+                user = { _id: result.insertedId, ...adminData };
+              } else {
+                await db.collection("users").updateOne(
+                  { _id: user._id },
+                  { $set: adminData }
+                );
+                user = { ...user, ...adminData };
+              }
+            }
+          }
 
           if (!user || !user.password) {
             return null;
