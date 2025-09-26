@@ -1,42 +1,43 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
-import { Discussion } from "@/lib/models/discussion";
+import jwt from "jsonwebtoken";
 
-export async function GET(req: Request) {
+export const dynamic = 'force-dynamic';
+
+// Get all discussions
+export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
-    const query = searchParams.get("query") || "";
-    const tags = searchParams.get("tags")?.split(",") || [];
-
-    await connectToDatabase();
-
-    const filter: any = {};
-    if (query) {
-      filter.$or = [
-        { title: { $regex: query, $options: "i" } },
-        { content: { $regex: query, $options: "i" } },
-      ];
-    }
-    if (tags.length > 0) {
-      filter.tags = { $in: tags };
+    console.log("Fetching discussions...");
+    
+    const token = request.cookies.get("auth-token")?.value;
+    if (!token) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
     }
 
-    const discussions = await Discussion.find(filter)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .populate("author", "name department avatar")
-      .populate("comments.author", "name department avatar");
+    const { db } = await connectToDatabase();
+    
+    // Get all questions/discussions
+    const discussions = await db.collection("questions").find({}).toArray();
 
-    const total = await Discussion.countDocuments(filter);
+    const formattedDiscussions = discussions.map(discussion => ({
+      _id: discussion._id.toString(),
+      title: discussion.title,
+      content: discussion.content,
+      author: discussion.author,
+      department: discussion.department,
+      tags: discussion.tags || [],
+      votes: discussion.votes || 0,
+      answers: discussion.answers || [],
+      createdAt: discussion.createdAt,
+      updatedAt: discussion.updatedAt,
+    }));
 
     return NextResponse.json({
-      discussions,
-      total,
-      page,
-      totalPages: Math.ceil(total / limit),
+      success: true,
+      data: formattedDiscussions,
     });
   } catch (error) {
     console.error("Error fetching discussions:", error);
@@ -47,9 +48,21 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+// Create new discussion
+export async function POST(request: NextRequest) {
   try {
-    const { title, content, tags } = await req.json();
+    console.log("Creating new discussion...");
+    
+    const token = request.cookies.get("auth-token")?.value;
+    if (!token) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    const decoded = jwt.verify(token, process.env.NEXTAUTH_SECRET || "fallback-secret") as any;
+    const { title, content, tags, department } = await request.json();
 
     if (!title || !content) {
       return NextResponse.json(
@@ -58,20 +71,39 @@ export async function POST(req: Request) {
       );
     }
 
-    await connectToDatabase();
-
-    const discussion = await Discussion.create({
+    const { db } = await connectToDatabase();
+    
+    const newDiscussion = {
       title,
       content,
-      tags,
-      author: session.user.id,
-      likes: [],
-      comments: [],
+      author: decoded.email,
+      department: department || "general",
+      tags: tags || [],
+      votes: 0,
+      answers: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const result = await db.collection("questions").insertOne(newDiscussion);
+
+    const formattedDiscussion = {
+      _id: result.insertedId.toString(),
+      title: newDiscussion.title,
+      content: newDiscussion.content,
+      author: newDiscussion.author,
+      department: newDiscussion.department,
+      tags: newDiscussion.tags,
+      votes: newDiscussion.votes,
+      answers: newDiscussion.answers,
+      createdAt: newDiscussion.createdAt,
+      updatedAt: newDiscussion.updatedAt,
+    };
+
+    return NextResponse.json({
+      success: true,
+      data: formattedDiscussion,
     });
-
-    await discussion.populate("author", "name department avatar");
-
-    return NextResponse.json(discussion);
   } catch (error) {
     console.error("Error creating discussion:", error);
     return NextResponse.json(

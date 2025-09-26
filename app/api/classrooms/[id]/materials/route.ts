@@ -1,88 +1,113 @@
 import { NextRequest, NextResponse } from "next/server";
-import { authService } from "@/lib/services/auth";
 import { connectToDatabase } from "@/lib/mongodb";
-import { ObjectId } from "mongodb";
-import { writeFile } from "fs/promises";
-import { join } from "path";
-import { v4 as uuidv4 } from "uuid";
-import { auth } from "@/lib/auth";
-import { Classroom } from "@/lib/models/classroom";
+import jwt from "jsonwebtoken";
 
-export async function POST(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export const dynamic = 'force-dynamic';
+
+// Get materials for a classroom
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { title, type, fileUrl, size } = await req.json();
-    if (!title || !type || !fileUrl) {
+    const { id } = params;
+    console.log("Fetching materials for classroom:", id);
+    
+    const token = request.cookies.get("auth-token")?.value;
+    if (!token) {
       return NextResponse.json(
-        { error: "Title, type, and file URL are required" },
-        { status: 400 }
+        { error: "Authentication required" },
+        { status: 401 }
       );
     }
 
-    await connectToDatabase();
+    const { db } = await connectToDatabase();
+    
+    // Get materials for this classroom
+    const materials = await db.collection("materials").find({ 
+      classroomId: id 
+    }).toArray();
 
-    const classroom = await Classroom.findById(params.id);
-    if (!classroom) {
-      return NextResponse.json(
-        { error: "Classroom not found" },
-        { status: 404 }
-      );
-    }
+    const formattedMaterials = materials.map(material => ({
+      id: material._id.toString(),
+      title: material.title,
+      type: material.type || "document",
+      size: material.size || "Unknown",
+      uploadedOn: material.createdAt,
+      fileUrl: material.fileUrl || "#",
+      uploadedBy: material.uploadedBy,
+    }));
 
-    const material = {
-      id: new Date().getTime().toString(),
-      title,
-      type,
-      size: size || "0",
-      uploadedOn: new Date().toISOString(),
-      fileUrl,
-    };
-
-    classroom.materials.push(material);
-    await classroom.save();
-
-    return NextResponse.json({ materials: classroom.materials });
+    return NextResponse.json({
+      success: true,
+      data: formattedMaterials,
+    });
   } catch (error) {
-    console.error("Error adding material:", error);
+    console.error("Error fetching materials:", error);
     return NextResponse.json(
-      { error: "Failed to add material" },
+      { error: "Failed to fetch materials" },
       { status: 500 }
     );
   }
 }
 
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+// Upload new material
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    await connectToDatabase();
-
-    const classroom = await Classroom.findById(params.id);
-    if (!classroom) {
+    const { id } = params;
+    console.log("Uploading material to classroom:", id);
+    
+    const token = request.cookies.get("auth-token")?.value;
+    if (!token) {
       return NextResponse.json(
-        { error: "Classroom not found" },
-        { status: 404 }
+        { error: "Authentication required" },
+        { status: 401 }
       );
     }
 
-    return NextResponse.json({ materials: classroom.materials });
+    const decoded = jwt.verify(token, process.env.NEXTAUTH_SECRET || "fallback-secret") as any;
+    
+    // For now, we'll handle text-based materials
+    const { title, content, type } = await request.json();
+
+    if (!title || !content) {
+      return NextResponse.json(
+        { error: "Title and content are required" },
+        { status: 400 }
+      );
+    }
+
+    const { db } = await connectToDatabase();
+    
+    const newMaterial = {
+      title,
+      content,
+      type: type || "document",
+      size: `${content.length} chars`,
+      classroomId: id,
+      uploadedBy: decoded.email,
+      fileUrl: "#",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const result = await db.collection("materials").insertOne(newMaterial);
+
+    const formattedMaterial = {
+      id: result.insertedId.toString(),
+      title: newMaterial.title,
+      type: newMaterial.type,
+      size: newMaterial.size,
+      uploadedOn: newMaterial.createdAt,
+      fileUrl: newMaterial.fileUrl,
+      uploadedBy: newMaterial.uploadedBy,
+    };
+
+    return NextResponse.json({
+      success: true,
+      data: formattedMaterial,
+    });
   } catch (error) {
-    console.error("Error fetching materials:", error);
+    console.error("Error uploading material:", error);
     return NextResponse.json(
-      { error: "Failed to fetch materials" },
+      { error: "Failed to upload material" },
       { status: 500 }
     );
   }
