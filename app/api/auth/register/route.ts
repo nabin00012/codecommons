@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import bcrypt from "bcryptjs";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password, role } = await request.json();
+    console.log("Registration request received");
+    const body = await request.json();
+    console.log("Request body:", body);
+    
+    const { name, email, password, role } = body;
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -21,11 +27,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log("Connecting to database...");
     const { db } = await connectToDatabase();
+    console.log("Database connected successfully");
 
     // Check if user already exists
+    console.log("Checking if user exists:", email);
     const existingUser = await db.collection("users").findOne({ email });
     if (existingUser) {
+      console.log("User already exists");
       return NextResponse.json(
         { error: "User already exists with this email" },
         { status: 409 }
@@ -33,7 +43,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Hash password
+    console.log("Hashing password...");
     const hashedPassword = await bcrypt.hash(password, 12);
+    console.log("Password hashed successfully");
 
     // Create user
     const newUser = {
@@ -50,7 +62,9 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     };
 
+    console.log("Creating user in database...");
     const result = await db.collection("users").insertOne(newUser);
+    console.log("User created with ID:", result.insertedId);
 
     // Return user data (without password)
     const { password: _, ...userWithoutPassword } = newUser;
@@ -61,9 +75,14 @@ export async function POST(request: NextRequest) {
       message: "User registered successfully",
     });
   } catch (error) {
-    console.error("Registration error:", error);
+    console.error("Registration error details:", error);
+    console.error("Error stack:", error instanceof Error ? error.stack : "No stack");
+    
     return NextResponse.json(
-      { error: "Internal server error" },
+      { 
+        error: "Registration failed", 
+        details: error instanceof Error ? error.message : "Unknown error"
+      },
       { status: 500 }
     );
   }

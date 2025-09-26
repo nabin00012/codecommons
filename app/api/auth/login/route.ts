@@ -3,9 +3,15 @@ import { connectToDatabase } from "@/lib/mongodb";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    console.log("Login request received");
+    const body = await request.json();
+    console.log("Login body:", body);
+    
+    const { email, password } = body;
 
     if (!email || !password) {
       return NextResponse.json(
