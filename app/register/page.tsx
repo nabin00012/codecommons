@@ -427,7 +427,11 @@ export default function RegisterPage() {
                         />
                         <Label
                           htmlFor="student"
-                          className="flex cursor-pointer flex-col items-center gap-3 rounded-2xl border border-white/20 bg-white/5 p-6 text-center transition hover:bg-white/10 peer-checked:border-blue-400 peer-checked:bg-blue-500/20"
+                          className={`flex cursor-pointer flex-col items-center gap-3 rounded-2xl border p-6 text-center transition hover:bg-white/10 ${
+                            formData.role === "student" 
+                              ? "border-blue-400 bg-blue-500/20" 
+                              : "border-white/20 bg-white/5"
+                          }`}
                         >
                           <GraduationCap className="h-8 w-8 text-blue-300" />
                           <div>
@@ -444,7 +448,11 @@ export default function RegisterPage() {
                         />
                         <Label
                           htmlFor="teacher"
-                          className="flex cursor-pointer flex-col items-center gap-3 rounded-2xl border border-white/20 bg-white/5 p-6 text-center transition hover:bg-white/10 peer-checked:border-purple-400 peer-checked:bg-purple-500/20"
+                          className={`flex cursor-pointer flex-col items-center gap-3 rounded-2xl border p-6 text-center transition hover:bg-white/10 ${
+                            formData.role === "teacher" 
+                              ? "border-purple-400 bg-purple-500/20" 
+                              : "border-white/20 bg-white/5"
+                          }`}
                         >
                           <Users className="h-8 w-8 text-purple-300" />
                           <div>
