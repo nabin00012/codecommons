@@ -135,6 +135,16 @@ export default function ClassroomDetailPage() {
           setMaterials(materialsData.data || []);
         }
 
+        // Fetch classroom discussions
+        const discussionsResponse = await fetch(`/api/classrooms/${classroomId}/discussions`, {
+          credentials: "include",
+        });
+        
+        if (discussionsResponse.ok) {
+          const discussionsData = await discussionsResponse.json();
+          setDiscussions(discussionsData.data || []);
+        }
+
       } catch (error) {
         console.error("Error fetching classroom data:", error);
         toast({
@@ -228,6 +238,39 @@ export default function ClassroomDetailPage() {
       toast({
         title: "Error",
         description: "Failed to upload material",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCreateDiscussion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const response = await fetch(`/api/classrooms/${classroomId}/discussions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(newDiscussion),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setDiscussions(prev => [data.data, ...prev]);
+        setNewDiscussion({ title: "", content: "" });
+        setShowDiscussionForm(false);
+        toast({
+          title: "Success",
+          description: "Discussion created successfully",
+        });
+      }
+    } catch (error) {
+      console.error("Error creating discussion:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create discussion",
         variant: "destructive",
       });
     }
@@ -649,7 +692,7 @@ export default function ClassroomDetailPage() {
                   <CardTitle>Start a Discussion</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <form className="space-y-4">
+                  <form onSubmit={handleCreateDiscussion} className="space-y-4">
                     <div>
                       <Input
                         placeholder="Discussion topic"
@@ -682,15 +725,49 @@ export default function ClassroomDetailPage() {
             )}
 
             {/* Discussions List */}
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <MessageSquare className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-xl font-semibold mb-2">No discussions yet</h3>
-                <p className="text-gray-600 dark:text-gray-300">
-                  Start the first discussion in this classroom!
-                </p>
-              </CardContent>
-            </Card>
+            {discussions.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <MessageSquare className="h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">No discussions yet</h3>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    Start the first discussion in this classroom!
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {discussions.map((discussion) => (
+                  <Card key={discussion._id}>
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <CardTitle className="text-lg">{discussion.title}</CardTitle>
+                        <Badge variant={discussion.authorRole === "teacher" ? "default" : "secondary"}>
+                          {discussion.authorRole === "teacher" ? "👨‍🏫 Teacher" : "👨‍🎓 Student"}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        by {discussion.authorName} • {new Date(discussion.createdAt).toLocaleString()}
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-700 dark:text-gray-300 mb-4">
+                        {discussion.content}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <MessageCircle className="h-4 w-4" />
+                          {discussion.replies.length} replies
+                        </div>
+                        <Button size="sm" variant="outline">
+                          Reply
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
