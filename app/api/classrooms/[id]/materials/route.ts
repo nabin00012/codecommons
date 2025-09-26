@@ -64,40 +64,73 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     const decoded = jwt.verify(token, process.env.NEXTAUTH_SECRET || "fallback-secret") as any;
     
-    // For now, we'll handle text-based materials
-    const { title, content, type } = await request.json();
+    const formData = await request.formData();
+    const title = formData.get("title") as string;
+    const file = formData.get("file") as File;
+    const materialType = formData.get("type") as string;
+    const textContent = formData.get("content") as string;
 
-    if (!title || !content) {
+    if (!title) {
       return NextResponse.json(
-        { error: "Title and content are required" },
+        { error: "Title is required" },
         { status: 400 }
       );
     }
 
     const { db } = await connectToDatabase();
     
-    const newMaterial = {
+    let materialData: any = {
       title,
-      content,
-      type: type || "document",
-      size: `${content.length} chars`,
+      type: materialType || "document",
       classroomId: id,
       uploadedBy: decoded.email,
-      fileUrl: "#",
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    const result = await db.collection("materials").insertOne(newMaterial);
+    if (file && file.size > 0) {
+      // Handle file upload
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      
+      // For demo purposes, we'll store file info and content as base64
+      // In production, you'd upload to cloud storage (AWS S3, Cloudinary, etc.)
+      materialData = {
+        ...materialData,
+        fileName: file.name,
+        fileSize: file.size,
+        mimeType: file.type,
+        fileContent: buffer.toString('base64'),
+        size: `${(file.size / 1024).toFixed(1)} KB`,
+        fileUrl: `/api/classrooms/${id}/materials/download/${title}`,
+      };
+    } else if (textContent) {
+      // Handle text content
+      materialData = {
+        ...materialData,
+        content: textContent,
+        size: `${textContent.length} chars`,
+        fileUrl: "#",
+      };
+    } else {
+      return NextResponse.json(
+        { error: "Either file or content is required" },
+        { status: 400 }
+      );
+    }
+
+    const result = await db.collection("materials").insertOne(materialData);
 
     const formattedMaterial = {
       id: result.insertedId.toString(),
-      title: newMaterial.title,
-      type: newMaterial.type,
-      size: newMaterial.size,
-      uploadedOn: newMaterial.createdAt,
-      fileUrl: newMaterial.fileUrl,
-      uploadedBy: newMaterial.uploadedBy,
+      title: materialData.title,
+      type: materialData.type,
+      size: materialData.size,
+      uploadedOn: materialData.createdAt,
+      fileUrl: materialData.fileUrl,
+      uploadedBy: materialData.uploadedBy,
+      fileName: materialData.fileName,
+      mimeType: materialData.mimeType,
     };
 
     return NextResponse.json({

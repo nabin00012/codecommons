@@ -92,6 +92,7 @@ export default function ClassroomDetailPage() {
     content: "",
     type: "document",
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
   const [newDiscussion, setNewDiscussion] = useState({
     title: "",
@@ -188,19 +189,34 @@ export default function ClassroomDetailPage() {
     e.preventDefault();
     
     try {
+      const formData = new FormData();
+      formData.append("title", newMaterial.title);
+      formData.append("type", newMaterial.type);
+      
+      if (selectedFile) {
+        formData.append("file", selectedFile);
+      } else if (newMaterial.content) {
+        formData.append("content", newMaterial.content);
+      } else {
+        toast({
+          title: "Error",
+          description: "Please select a file or enter content",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const response = await fetch(`/api/classrooms/${classroomId}/materials`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         credentials: "include",
-        body: JSON.stringify(newMaterial),
+        body: formData,
       });
 
       if (response.ok) {
         const data = await response.json();
         setMaterials(prev => [data.data, ...prev]);
         setNewMaterial({ title: "", content: "", type: "document" });
+        setSelectedFile(null);
         setShowMaterialForm(false);
         toast({
           title: "Success",
@@ -488,7 +504,7 @@ export default function ClassroomDetailPage() {
                       <select
                         value={newMaterial.type}
                         onChange={(e) => setNewMaterial(prev => ({ ...prev, type: e.target.value }))}
-                        className="w-full p-2 border rounded-md"
+                        className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600"
                       >
                         <option value="document">📄 Document/PDF</option>
                         <option value="video">🎥 Video Resource</option>
@@ -496,20 +512,57 @@ export default function ClassroomDetailPage() {
                         <option value="code">💻 Code Sample</option>
                       </select>
                     </div>
-                    <div>
-                      <Textarea
-                        placeholder={
-                          newMaterial.type === "video" ? "Video URL or embed code" :
-                          newMaterial.type === "link" ? "External link URL" :
-                          newMaterial.type === "code" ? "Code content" :
-                          "Document content or description"
-                        }
-                        value={newMaterial.content}
-                        onChange={(e) => setNewMaterial(prev => ({ ...prev, content: e.target.value }))}
-                        rows={6}
-                        required
-                      />
+                    
+                    {/* File Upload */}
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium">
+                        Upload File (Optional)
+                      </label>
+                      <div className="flex items-center gap-4">
+                        <input
+                          type="file"
+                          onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                          accept={
+                            newMaterial.type === "video" ? "video/*" :
+                            newMaterial.type === "document" ? ".pdf,.doc,.docx,.txt" :
+                            "*/*"
+                          }
+                          className="flex-1 p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600"
+                        />
+                        {selectedFile && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedFile(null)}
+                          >
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                      {selectedFile && (
+                        <p className="text-sm text-gray-500">
+                          Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+                        </p>
+                      )}
                     </div>
+
+                    {/* Text Content (alternative to file) */}
+                    {!selectedFile && (
+                      <div>
+                        <Textarea
+                          placeholder={
+                            newMaterial.type === "video" ? "Video URL or embed code" :
+                            newMaterial.type === "link" ? "External link URL" :
+                            newMaterial.type === "code" ? "Code content" :
+                            "Document content or description"
+                          }
+                          value={newMaterial.content}
+                          onChange={(e) => setNewMaterial(prev => ({ ...prev, content: e.target.value }))}
+                          rows={6}
+                        />
+                      </div>
+                    )}
                     <div className="flex gap-2">
                       <Button type="submit">Add Material</Button>
                       <Button type="button" variant="outline" onClick={() => setShowMaterialForm(false)}>
@@ -551,9 +604,27 @@ export default function ClassroomDetailPage() {
                       <p className="text-sm text-gray-500 mb-2">
                         Uploaded: {new Date(material.uploadedOn).toLocaleDateString()}
                       </p>
-                      <Button size="sm" className="w-full">
-                        View Material
-                      </Button>
+                      <div className="flex gap-2">
+                        {material.content && (
+                          <Button size="sm" variant="outline" className="flex-1">
+                            View Content
+                          </Button>
+                        )}
+                        {(material as any).fileName && (
+                          <Button 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={() => window.open(`/api/classrooms/${classroomId}/materials/download/${encodeURIComponent(material.title)}`, '_blank')}
+                          >
+                            Download File
+                          </Button>
+                        )}
+                        {!(material as any).fileName && !material.content && (
+                          <Button size="sm" className="w-full">
+                            View Material
+                          </Button>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
