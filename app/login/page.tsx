@@ -49,19 +49,21 @@ export default function LoginPage() {
         throw new Error("Please enter both email and password");
       }
 
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (result?.error) {
-        throw new Error(result.error);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Login failed" }));
+        throw new Error(errorData.error || "Login failed");
       }
 
-      if (!result?.ok) {
-        throw new Error("Login failed");
-      }
+      const data = await response.json();
+      console.log("Login successful:", data);
 
       toast({
         title: "Welcome back!",
@@ -72,11 +74,13 @@ export default function LoginPage() {
       if (email === "admin@jainuniversity.ac.in") {
         router.push("/dashboard");
       } else {
-        // For now, redirect to onboarding for all non-admin users
-        // The onboarding page will check if it's needed
         router.push("/onboarding");
       }
-      router.refresh();
+      
+      // Force reload to update auth state
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "An error occurred";

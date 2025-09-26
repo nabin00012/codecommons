@@ -34,37 +34,45 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const { data: session, status } = useSession();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (status === "loading") {
-      setLoading(true);
-      return;
-    }
+    const checkAuth = async () => {
+      try {
+        const response = await fetch("/api/auth/session");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.user) {
+            setUser({
+              id: data.user._id || data.user.id,
+              _id: data.user._id || data.user.id,
+              name: data.user.name || "",
+              email: data.user.email || "",
+              role: (data.user.role as UserRole) || "user",
+              department: data.user.department || "",
+              section: data.user.section || "",
+              year: data.user.year || "",
+              specialization: data.user.specialization || "",
+              onboardingCompleted: data.user.onboardingCompleted ?? false,
+              preferences: data.user.preferences,
+            });
+          } else {
+            setUser(null);
+          }
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("Auth check error:", error);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    if (session?.user) {
-      const sessionUser = session.user as any;
-      setUser({
-        id: sessionUser.id || sessionUser._id,
-        _id: sessionUser.id || sessionUser._id,
-        name: sessionUser.name || "",
-        email: sessionUser.email || "",
-        role: (sessionUser.role as UserRole) || "user",
-        department: sessionUser.department || "",
-        section: sessionUser.section || "",
-        year: sessionUser.year || "",
-        specialization: sessionUser.specialization || "",
-        onboardingCompleted: sessionUser.onboardingCompleted ?? false,
-        preferences: sessionUser.preferences,
-      });
-    } else {
-      setUser(null);
-    }
-
-    setLoading(false);
-  }, [session, status]);
+    checkAuth();
+  }, []);
 
   const login = (userData: User) => {
     setUser(userData);

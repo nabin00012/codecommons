@@ -148,20 +148,53 @@ export default function RegisterPage() {
         }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || "Registration failed");
+        const errorData = await response.json().catch(() => ({ error: "Registration failed" }));
+        throw new Error(errorData.error || "Registration failed");
       }
 
+      const data = await response.json();
+      console.log("Registration successful:", data);
+
       toast({
-        title: "Registration successful!",
-        description: "Welcome to CodeCommons! Please sign in to continue.",
+        title: "Account created successfully!",
+        description: "Welcome to CodeCommons! You can now sign in.",
       });
 
-      setTimeout(() => {
-        router.push("/login");
-      }, 1000);
+      // Auto-login after registration
+      const loginResponse = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      if (loginResponse.ok) {
+        const loginData = await loginResponse.json();
+        console.log("Auto-login successful:", loginData);
+        
+        toast({
+          title: "Logged in successfully!",
+          description: "Setting up your profile...",
+        });
+
+        setTimeout(() => {
+          if (formData.email === "admin@jainuniversity.ac.in") {
+            router.push("/dashboard");
+          } else {
+            router.push("/onboarding");
+          }
+          window.location.reload(); // Force reload to update auth state
+        }, 1000);
+      } else {
+        setTimeout(() => {
+          router.push("/login");
+        }, 1000);
+      }
     } catch (error) {
       console.error("Registration error:", error);
       const errorMessage =
