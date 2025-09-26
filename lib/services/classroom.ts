@@ -284,9 +284,11 @@ export class ClassroomService {
   async joinClassroomByCode(code: string): Promise<Classroom> {
     try {
       console.log("Joining classroom with code:", code);
-      const response = await fetch(`${this.baseUrl}/join`, {
+      const response = await fetch(`/api/classrooms/join`, {
         method: "POST",
-        headers: await this.getAuthHeader(),
+        headers: {
+          "Content-Type": "application/json",
+        },
         credentials: "include",
         body: JSON.stringify({ code }),
       });

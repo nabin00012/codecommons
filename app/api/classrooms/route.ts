@@ -108,12 +108,17 @@ export async function GET(request: NextRequest) {
 
     const { db } = await connectToDatabase();
     
-    // Get all classrooms
-    const classrooms = await db.collection("classrooms").find({}).toArray();
-    console.log("Found classrooms:", classrooms.length);
+    // Get user's classrooms only (created by them or enrolled in)
+    const userClassrooms = await db.collection("classrooms").find({
+      $or: [
+        { instructorId: decoded.email }, // Classrooms created by user
+        { students: decoded.email }      // Classrooms user is enrolled in
+      ]
+    }).toArray();
+    console.log("Found user's classrooms:", userClassrooms.length);
 
     // Format classrooms for frontend
-    const formattedClassrooms = classrooms.map(classroom => ({
+    const formattedClassrooms = userClassrooms.map(classroom => ({
       _id: classroom._id.toString(),
       name: classroom.name,
       description: classroom.description,
