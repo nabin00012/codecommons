@@ -1,6 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import Google from "next-auth/providers/google";
 import { connectToDatabase } from "./mongodb";
 import bcrypt from "bcryptjs";
 import { JWT } from "next-auth/jwt";
@@ -37,17 +36,6 @@ declare module "next-auth/jwt" {
 
 export const authConfig: NextAuthConfig = {
   providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code",
-        },
-      },
-    }),
     Credentials({
       name: "credentials",
       credentials: {
@@ -102,61 +90,6 @@ export const authConfig: NextAuthConfig = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
-      if (account?.provider === "google") {
-        if (!user.email?.endsWith("@jainuniversity.ac.in")) {
-          if (!isProd) console.log("Unauthorized email domain:", user.email);
-          throw new Error("AccessDenied");
-        }
-
-        try {
-          const { db } = await connectToDatabase();
-
-          const existingUser = await db
-            .collection("users")
-            .findOne({ email: user.email });
-
-          if (existingUser) {
-            await db.collection("users").updateOne(
-              { email: user.email },
-              {
-                $set: {
-                  name: user.name,
-                  image: user.image,
-                  updatedAt: new Date(),
-                },
-              }
-            );
-
-            user.role = existingUser.role as UserRole;
-            user.department = existingUser.department || "";
-            user.id = existingUser._id.toString();
-          } else {
-            const newUser = {
-              email: user.email,
-              name: user.name,
-              image: user.image,
-              role: "student" as UserRole,
-              department: "",
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            };
-
-            const result = await db.collection("users").insertOne(newUser);
-            user.role = "student";
-            user.department = "";
-            user.id = result.insertedId.toString();
-          }
-
-          return true;
-        } catch (error) {
-          console.error("Error during Google sign-in:", error);
-          return false;
-        }
-      }
-
-      return true;
-    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
