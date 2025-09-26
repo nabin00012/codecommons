@@ -100,8 +100,9 @@ export async function POST(request: NextRequest) {
 
     const { db } = await connectToDatabase();
     
-    // Generate classroom code
-    const code = `${name.replace(/\s+/g, "").toUpperCase()}-${Date.now().toString().slice(-4)}`;
+    // Generate short classroom code (6 characters)
+    const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const code = randomCode;
     
     // Create classroom
     const newClassroom = {
