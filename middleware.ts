@@ -5,8 +5,9 @@ const isProd = process.env.NODE_ENV === "production";
 
 const publicPrefixes = [
   "/",
-  "/login",
+  "/login", 
   "/register",
+  "/onboarding",
   "/api/auth",
   "/_next",
   "/static",
