@@ -3,9 +3,6 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { connectToDatabase } from "@/lib/mongodb";
 import bcrypt from "bcryptjs";
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@jainuniversity.ac.in";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
-
 const handler = NextAuth({
   providers: [
     CredentialsProvider({
@@ -21,37 +18,31 @@ const handler = NextAuth({
 
         try {
           const { db } = await connectToDatabase();
-          let user = await db.collection("users").findOne({
+          
+          // Auto-provision admin if it's admin email
+          if (credentials.email === "admin@jainuniversity.ac.in") {
+            const hashedPassword = await bcrypt.hash("admin123", 12);
+            await db.collection("users").updateOne(
+              { email: "admin@jainuniversity.ac.in" },
+              {
+                $set: {
+                  email: "admin@jainuniversity.ac.in",
+                  password: hashedPassword,
+                  name: "Jain University Admin",
+                  role: "admin",
+                  department: "administration",
+                  onboardingCompleted: true,
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                }
+              },
+              { upsert: true }
+            );
+          }
+
+          const user = await db.collection("users").findOne({
             email: credentials.email,
           });
-
-          // Auto-provision admin if missing or missing password
-          if (credentials.email === ADMIN_EMAIL) {
-            if (!user || !user.password) {
-              const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 12);
-              const adminData = {
-                email: ADMIN_EMAIL,
-                password: hashedPassword,
-                name: "Administrator",
-                role: "admin",
-                department: "administration",
-                onboardingCompleted: true,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              };
-
-              if (!user) {
-                const result = await db.collection("users").insertOne(adminData);
-                user = { _id: result.insertedId, ...adminData };
-              } else {
-                await db.collection("users").updateOne(
-                  { _id: user._id },
-                  { $set: adminData }
-                );
-                user = { ...user, ...adminData };
-              }
-            }
-          }
 
           if (!user || !user.password) {
             return null;
@@ -72,6 +63,10 @@ const handler = NextAuth({
             name: user.name,
             role: user.role || "student",
             department: user.department || "",
+            section: user.section || "",
+            year: user.year || "",
+            specialization: user.specialization || "",
+            onboardingCompleted: user.onboardingCompleted || false,
           };
         } catch (error) {
           console.error("Auth error:", error);
@@ -82,7 +77,7 @@ const handler = NextAuth({
   ],
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60,
   },
   pages: {
     signIn: "/login",
@@ -93,6 +88,10 @@ const handler = NextAuth({
       if (user) {
         token.role = user.role;
         token.department = user.department;
+        token.section = (user as any).section;
+        token.year = (user as any).year;
+        token.specialization = (user as any).specialization;
+        token.onboardingCompleted = (user as any).onboardingCompleted;
       }
       return token;
     },
@@ -101,11 +100,16 @@ const handler = NextAuth({
         session.user.id = token.sub as string;
         session.user.role = token.role as string;
         session.user.department = token.department as string;
+        session.user.section = token.section as string;
+        session.user.year = token.year as string;
+        session.user.specialization = token.specialization as string;
+        session.user.onboardingCompleted = token.onboardingCompleted as boolean;
       }
       return session;
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
+  debug: false,
 });
 
 export { handler as GET, handler as POST };
