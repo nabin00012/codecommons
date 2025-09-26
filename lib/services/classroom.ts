@@ -56,13 +56,8 @@ export class ClassroomService {
   }
 
   private async getAuthHeader(): Promise<HeadersInit> {
-    const token = await authService.getToken();
-    if (!token || typeof token !== "string") {
-      console.error("No authentication token found in classroom service");
-      throw new Error("No authentication token found");
-    }
+    // For now, just return basic headers since we're using frontend API
     return {
-      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     };
   }
@@ -72,9 +67,10 @@ export class ClassroomService {
       console.log("Fetching classrooms...");
       const headers = await this.getAuthHeader();
 
-      const response = await fetch(`${API_URL}/api/classrooms`, {
+      const response = await fetch(`/api/classrooms`, {
         method: "GET",
         headers,
+        credentials: "include",
       });
 
       console.log("Classrooms response status:", response.status);
