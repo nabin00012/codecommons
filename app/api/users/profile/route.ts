@@ -1,56 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
 import { connectToDatabase } from "@/lib/mongodb";
-
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession();
-    
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
-    const { db } = await connectToDatabase();
-    const user = await db.collection("users").findOne({
-      email: session.user.email
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
-    }
-
-    // Remove password from response
-    const { password, ...userWithoutPassword } = user;
-    
-    return NextResponse.json(userWithoutPassword);
-  } catch (error) {
-    console.error("Profile fetch error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
 
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession();
-    
-    if (!session?.user?.email) {
+    const body = await request.json();
+    const { email, role, department, section, year, specialization, onboardingCompleted } = body;
+
+    if (!email) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+        { error: "Email is required" },
+        { status: 400 }
       );
     }
-
-    const body = await request.json();
-    const { role, department, section, year, specialization, onboardingCompleted } = body;
 
     const { db } = await connectToDatabase();
     
@@ -66,7 +27,7 @@ export async function PUT(request: NextRequest) {
     if (onboardingCompleted !== undefined) updateData.onboardingCompleted = onboardingCompleted;
 
     const result = await db.collection("users").updateOne(
-      { email: session.user.email },
+      { email: email },
       { $set: updateData }
     );
 
@@ -79,7 +40,7 @@ export async function PUT(request: NextRequest) {
 
     // Get updated user
     const updatedUser = await db.collection("users").findOne({
-      email: session.user.email
+      email: email
     });
 
     if (!updatedUser) {

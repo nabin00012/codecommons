@@ -63,24 +63,20 @@ export default function LoginPage() {
         throw new Error("Login failed");
       }
 
-      // Check if user needs onboarding
-      const sessionResponse = await fetch("/api/auth/session");
-      if (sessionResponse.ok) {
-        const sessionData = await sessionResponse.json();
-        const needsOnboarding = !sessionData.user?.department || !sessionData.user?.role;
-        
-        toast({
-          title: "Welcome back!",
-          description: "You have been successfully logged in.",
-        });
+      toast({
+        title: "Welcome back!",
+        description: "You have been successfully logged in.",
+      });
 
-        if (needsOnboarding && email !== "admin@jainuniversity.ac.in") {
-          router.push("/onboarding");
-        } else {
-          router.push("/dashboard");
-        }
-        router.refresh();
+      // Simple redirect logic - admin goes to dashboard, others may need onboarding
+      if (email === "admin@jainuniversity.ac.in") {
+        router.push("/dashboard");
+      } else {
+        // For now, redirect to onboarding for all non-admin users
+        // The onboarding page will check if it's needed
+        router.push("/onboarding");
       }
+      router.refresh();
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "An error occurred";

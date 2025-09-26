@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const { user, updateUser } = useUser();
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [formData, setFormData] = useState({
     role: "",
     department: "",
@@ -22,6 +23,31 @@ export default function OnboardingPage() {
     specialization: ""
   });
 
+  // Check if user already completed onboarding
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      try {
+        const sessionResponse = await fetch("/api/auth/session");
+        const sessionData = await sessionResponse.json();
+        
+        if (sessionData.user?.email) {
+          // Check if user has department and role (onboarding completed)
+          if (sessionData.user.department && sessionData.user.role) {
+            // Already completed onboarding, redirect to dashboard
+            router.push("/dashboard");
+            return;
+          }
+        }
+      } catch (error) {
+        console.error("Error checking onboarding status:", error);
+      } finally {
+        setChecking(false);
+      }
+    };
+
+    checkOnboardingStatus();
+  }, [router]);
+
   const selectedDept = JAIN_ENGINEERING_DEPARTMENTS.find(dept => dept.id === formData.department);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,12 +55,21 @@ export default function OnboardingPage() {
     setLoading(true);
 
     try {
+      // Get user email from session
+      const sessionResponse = await fetch("/api/auth/session");
+      const sessionData = await sessionResponse.json();
+      
+      if (!sessionData.user?.email) {
+        throw new Error("No user session found");
+      }
+
       const response = await fetch("/api/users/profile", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          email: sessionData.user.email,
           ...formData,
           onboardingCompleted: true,
         }),
@@ -61,6 +96,17 @@ export default function OnboardingPage() {
       setLoading(false);
     }
   };
+
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Checking your profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
