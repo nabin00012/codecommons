@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   ArrowLeft,
   BookOpen,
@@ -25,6 +26,14 @@ import {
   File,
   Link as LinkIcon,
   Send,
+  Pin,
+  Trash2,
+  Download,
+  Eye,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Megaphone,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -53,6 +62,17 @@ interface Material {
   size: string;
   uploadedOn: string;
   content?: string;
+  fileName?: string;
+}
+
+interface Announcement {
+  _id: string;
+  title: string;
+  content: string;
+  author: string;
+  authorName: string;
+  isPinned: boolean;
+  createdAt: string;
 }
 
 interface Discussion {
@@ -60,8 +80,19 @@ interface Discussion {
   title: string;
   content: string;
   author: string;
-  createdAt: string;
+  authorName: string;
+  authorRole: string;
   replies: any[];
+  createdAt: string;
+}
+
+interface Member {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  department: string;
+  joinedAt: string;
 }
 
 export default function ClassroomDetailPage() {
@@ -73,13 +104,22 @@ export default function ClassroomDetailPage() {
   const [classroom, setClassroom] = useState<Classroom | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Form states
+  const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
   const [showAssignmentForm, setShowAssignmentForm] = useState(false);
   const [showMaterialForm, setShowMaterialForm] = useState(false);
   const [showDiscussionForm, setShowDiscussionForm] = useState(false);
+
+  const [newAnnouncement, setNewAnnouncement] = useState({
+    title: "",
+    content: "",
+    isPinned: false,
+  });
 
   const [newAssignment, setNewAssignment] = useState({
     title: "",
@@ -93,12 +133,13 @@ export default function ClassroomDetailPage() {
     content: "",
     type: "document",
   });
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const [newDiscussion, setNewDiscussion] = useState({
     title: "",
     content: "",
   });
+
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const classroomId = params.id as string;
   const isTeacher = user?.role === "teacher" || user?.role === "admin";
@@ -117,6 +158,19 @@ export default function ClassroomDetailPage() {
         if (classroomResponse.ok) {
           const classroomData = await classroomResponse.json();
           setClassroom(classroomData.data);
+        }
+
+        // Fetch announcements
+        const announcementsResponse = await fetch(
+          `/api/classrooms/${classroomId}/announcements`,
+          {
+            credentials: "include",
+          }
+        );
+
+        if (announcementsResponse.ok) {
+          const announcementsData = await announcementsResponse.json();
+          setAnnouncements(announcementsData.data || []);
         }
 
         // Fetch assignments
@@ -157,6 +211,19 @@ export default function ClassroomDetailPage() {
           const discussionsData = await discussionsResponse.json();
           setDiscussions(discussionsData.data || []);
         }
+
+        // Fetch members
+        const membersResponse = await fetch(
+          `/api/classrooms/${classroomId}/members`,
+          {
+            credentials: "include",
+          }
+        );
+
+        if (membersResponse.ok) {
+          const membersData = await membersResponse.json();
+          setMembers(membersData.data || []);
+        }
       } catch (error) {
         console.error("Error fetching classroom data:", error);
         toast({
@@ -173,6 +240,42 @@ export default function ClassroomDetailPage() {
       fetchData();
     }
   }, [classroomId, toast]);
+
+  const handleCreateAnnouncement = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const response = await fetch(
+        `/api/classrooms/${classroomId}/announcements`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(newAnnouncement),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setAnnouncements((prev) => [data.data, ...prev]);
+        setNewAnnouncement({ title: "", content: "", isPinned: false });
+        setShowAnnouncementForm(false);
+        toast({
+          title: "Success",
+          description: "Announcement created successfully",
+        });
+      }
+    } catch (error) {
+      console.error("Error creating announcement:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create announcement",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleCreateAssignment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -329,7 +432,7 @@ export default function ClassroomDetailPage() {
 
   return (
     <ProtectedRoute>
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
@@ -339,7 +442,9 @@ export default function ClassroomDetailPage() {
                 Back to Classrooms
               </Link>
             </Button>
-            <Badge variant="outline">{classroom.code}</Badge>
+            <Badge variant="outline" className="font-mono text-lg px-3 py-1">
+              {classroom.code}
+            </Badge>
           </div>
 
           <div className="flex items-start justify-between">
@@ -364,79 +469,165 @@ export default function ClassroomDetailPage() {
 
             {isTeacher && (
               <div className="text-right">
-                <p className="text-sm text-gray-500 mb-2">Classroom Code</p>
-                <p className="text-2xl font-mono font-bold text-blue-600 dark:text-blue-400">
-                  {classroom.code}
+                <p className="text-sm text-gray-500 mb-2">
+                  Share this code with students
                 </p>
-                <p className="text-xs text-gray-500">Share with students</p>
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <p className="text-3xl font-mono font-bold text-blue-600 dark:text-blue-400">
+                    {classroom.code}
+                  </p>
+                </div>
               </div>
             )}
           </div>
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
+        <Tabs defaultValue="announcements" className="w-full">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="announcements">Announcements</TabsTrigger>
             <TabsTrigger value="assignments">Assignments</TabsTrigger>
             <TabsTrigger value="materials">Materials</TabsTrigger>
             <TabsTrigger value="discussions">Discussions</TabsTrigger>
+            <TabsTrigger value="members">Members</TabsTrigger>
           </TabsList>
 
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Assignments
-                  </CardTitle>
-                  <Calendar className="h-4 w-4 ml-auto text-blue-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{assignments.length}</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Study Materials
-                  </CardTitle>
-                  <FileText className="h-4 w-4 ml-auto text-green-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{materials.length}</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Students Enrolled
-                  </CardTitle>
-                  <Users className="h-4 w-4 ml-auto text-purple-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {classroom.students.length}
-                  </div>
-                </CardContent>
-              </Card>
+          {/* Announcements Tab */}
+          <TabsContent value="announcements" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Class Announcements</h2>
+              {isTeacher && (
+                <Button
+                  onClick={() => setShowAnnouncementForm(!showAnnouncementForm)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Announcement
+                </Button>
+              )}
             </div>
 
-            {/* Recent Activity */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 dark:text-gray-300">
-                  Classroom activity will appear here as students and teachers
-                  interact.
-                </p>
-              </CardContent>
-            </Card>
+            {/* Create Announcement Form */}
+            {showAnnouncementForm && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Create Announcement</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form
+                    onSubmit={handleCreateAnnouncement}
+                    className="space-y-4"
+                  >
+                    <div>
+                      <Input
+                        placeholder="Announcement title"
+                        value={newAnnouncement.title}
+                        onChange={(e) =>
+                          setNewAnnouncement((prev) => ({
+                            ...prev,
+                            title: e.target.value,
+                          }))
+                        }
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Textarea
+                        placeholder="Announcement content"
+                        value={newAnnouncement.content}
+                        onChange={(e) =>
+                          setNewAnnouncement((prev) => ({
+                            ...prev,
+                            content: e.target.value,
+                          }))
+                        }
+                        rows={4}
+                        required
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="pinned"
+                        checked={newAnnouncement.isPinned}
+                        onChange={(e) =>
+                          setNewAnnouncement((prev) => ({
+                            ...prev,
+                            isPinned: e.target.checked,
+                          }))
+                        }
+                      />
+                      <label htmlFor="pinned" className="text-sm">
+                        Pin this announcement
+                      </label>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button type="submit">Post Announcement</Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowAnnouncementForm(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Announcements List */}
+            {announcements.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <Megaphone className="h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">
+                    No announcements yet
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    {isTeacher
+                      ? "Create your first announcement"
+                      : "Announcements will appear here"}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {announcements.map((announcement) => (
+                  <Card
+                    key={announcement._id}
+                    className={
+                      announcement.isPinned
+                        ? "border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10"
+                        : ""
+                    }
+                  >
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2">
+                          {announcement.isPinned && (
+                            <Pin className="h-4 w-4 text-yellow-500" />
+                          )}
+                          <CardTitle className="text-lg">
+                            {announcement.title}
+                          </CardTitle>
+                        </div>
+                        <Badge variant="outline">
+                          👨‍🏫 {announcement.authorName}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        {new Date(announcement.createdAt).toLocaleString()}
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-700 dark:text-gray-300">
+                        {announcement.content}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           {/* Assignments Tab */}
@@ -490,6 +681,9 @@ export default function ClassroomDetailPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Due Date
+                        </label>
                         <Input
                           type="datetime-local"
                           value={newAssignment.dueDate}
@@ -503,6 +697,9 @@ export default function ClassroomDetailPage() {
                         />
                       </div>
                       <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Points
+                        </label>
                         <Input
                           type="number"
                           placeholder="Points"
@@ -568,7 +765,7 @@ export default function ClassroomDetailPage() {
                           Due: {new Date(assignment.dueDate).toLocaleString()}
                         </div>
                         <Button size="sm">
-                          {isTeacher ? "Manage" : "Submit"}
+                          {isTeacher ? "View Submissions" : "Submit Assignment"}
                         </Button>
                       </div>
                     </CardContent>
@@ -612,6 +809,9 @@ export default function ClassroomDetailPage() {
                       />
                     </div>
                     <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Material Type
+                      </label>
                       <select
                         value={newMaterial.type}
                         onChange={(e) =>
@@ -632,7 +832,7 @@ export default function ClassroomDetailPage() {
                     {/* File Upload */}
                     <div className="space-y-2">
                       <label className="block text-sm font-medium">
-                        Upload File (Optional)
+                        Upload File from Device
                       </label>
                       <div className="flex items-center gap-4">
                         <input
@@ -644,7 +844,7 @@ export default function ClassroomDetailPage() {
                             newMaterial.type === "video"
                               ? "video/*"
                               : newMaterial.type === "document"
-                              ? ".pdf,.doc,.docx,.txt"
+                              ? ".pdf,.doc,.docx,.txt,.ppt,.pptx"
                               : "*/*"
                           }
                           className="flex-1 p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600"
@@ -671,10 +871,13 @@ export default function ClassroomDetailPage() {
                     {/* Text Content (alternative to file) */}
                     {!selectedFile && (
                       <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Or Enter Content/Link
+                        </label>
                         <Textarea
                           placeholder={
                             newMaterial.type === "video"
-                              ? "Video URL or embed code"
+                              ? "Video URL (YouTube, Vimeo, etc.)"
                               : newMaterial.type === "link"
                               ? "External link URL"
                               : newMaterial.type === "code"
@@ -692,6 +895,7 @@ export default function ClassroomDetailPage() {
                         />
                       </div>
                     )}
+
                     <div className="flex gap-2">
                       <Button type="submit">Add Material</Button>
                       <Button
@@ -723,9 +927,12 @@ export default function ClassroomDetailPage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {materials.map((material) => (
-                  <Card key={material.id}>
+                  <Card
+                    key={material.id}
+                    className="hover:shadow-lg transition-shadow"
+                  >
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <CardTitle className="text-lg">
@@ -748,20 +955,11 @@ export default function ClassroomDetailPage() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-gray-500 mb-2">
+                      <p className="text-sm text-gray-500 mb-4">
                         Uploaded:{" "}
                         {new Date(material.uploadedOn).toLocaleDateString()}
                       </p>
                       <div className="flex gap-2">
-                        {material.content && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="flex-1"
-                          >
-                            View Content
-                          </Button>
-                        )}
                         {(material as any).fileName && (
                           <Button
                             size="sm"
@@ -775,12 +973,18 @@ export default function ClassroomDetailPage() {
                               )
                             }
                           >
-                            Download File
+                            <Download className="h-4 w-4 mr-1" />
+                            Download
                           </Button>
                         )}
-                        {!(material as any).fileName && !material.content && (
-                          <Button size="sm" className="w-full">
-                            View Material
+                        {material.content && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1"
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            View
                           </Button>
                         )}
                       </div>
@@ -913,6 +1117,61 @@ export default function ClassroomDetailPage() {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          {/* Members Tab */}
+          <TabsContent value="members" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Class Members</h2>
+              <Badge variant="outline">{members.length} total members</Badge>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {members.map((member) => (
+                <Card key={member._id}>
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarImage src="/placeholder.svg" />
+                        <AvatarFallback>
+                          {member.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <CardTitle className="text-base">
+                          {member.name}
+                        </CardTitle>
+                        <p className="text-sm text-gray-500">{member.email}</p>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <Badge
+                        variant={
+                          member.role === "teacher" ? "default" : "secondary"
+                        }
+                      >
+                        {member.role === "teacher"
+                          ? "👨‍🏫 Teacher"
+                          : "👨‍🎓 Student"}
+                      </Badge>
+                      {isTeacher && member.role === "student" && (
+                        <Button size="sm" variant="outline">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Joined: {new Date(member.joinedAt).toLocaleDateString()}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
