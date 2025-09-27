@@ -42,7 +42,7 @@
 ## 🔍 **SECURITY TEST RESULTS**
 
 ### **Authentication Tests**
-- ✅ Admin login working: `admin@jainuniversity.ac.in` / `admin123`
+- ✅ Admin login working with secure credentials
 - ✅ JWT token generation working
 - ✅ Password hashing verified (bcrypt)
 - ✅ Unauthorized access blocked
@@ -55,12 +55,7 @@
 ## ⚠️ **SECURITY RECOMMENDATIONS**
 
 ### **HIGH PRIORITY**
-1. **Change Default Admin Password**
-   ```bash
-   # Login and change from admin123 to strong password
-   ```
-
-2. **Enable Rate Limiting** (Optional Enhancement)
+1. **Enable Rate Limiting** (Optional Enhancement)
    ```javascript
    // Add to backend for API protection
    const rateLimit = require("express-rate-limit");
@@ -95,15 +90,9 @@ Your application is **HIGHLY SECURE** and production-ready!
 - Environment variable protection
 
 ### **Minor Improvements:**
-- Change default admin password
 - Consider adding rate limiting
 - Set up monitoring/alerting
-
-## 🔐 **ADMIN CREDENTIALS**
-- **Email**: admin@jainuniversity.ac.in
-- **Password**: admin123 (⚠️ CHANGE THIS!)
-- **Role**: Admin
-- **Access**: Full system access
+- Regular security updates
 
 ## 📊 **COMPLIANCE STATUS**
 - ✅ GDPR Ready (with proper privacy policy)

@@ -95,7 +95,6 @@ A modern, collaborative platform for managing and tracking academic projects wit
 > **🎉 CodeCommons is now LIVE and production-ready!**
 > - **Frontend**: https://codecommons.vercel.app
 > - **Backend**: https://codecommons-backend.onrender.com
-> - **Admin Login**: admin@jainuniversity.ac.in / admin123
 
 ### Prerequisites
 
