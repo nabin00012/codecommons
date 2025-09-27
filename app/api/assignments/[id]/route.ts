@@ -97,10 +97,10 @@ export async function PUT(
 
     const classroom = await db.collection("classrooms").findOne({
       _id: new ObjectId(assignment.classroomId),
-      instructorId: decoded.email,
     });
 
-    if (!classroom) {
+    // Check if the current user is the instructor/teacher of this classroom
+    if (!classroom || classroom.instructorId !== decoded.email) {
       return NextResponse.json(
         { error: "Not authorized to update this assignment" },
         { status: 403 }
@@ -124,6 +124,13 @@ export async function PUT(
     const updatedAssignment = await db
       .collection("assignments")
       .findOne({ _id: new ObjectId(id) });
+
+    if (!updatedAssignment) {
+      return NextResponse.json(
+        { error: "Assignment not found after update" },
+        { status: 404 }
+      );
+    }
 
     const formattedAssignment = {
       _id: updatedAssignment._id.toString(),
@@ -185,10 +192,10 @@ export async function DELETE(
 
     const classroom = await db.collection("classrooms").findOne({
       _id: new ObjectId(assignment.classroomId),
-      instructorId: decoded.email,
     });
 
-    if (!classroom) {
+    // Check if the current user is the instructor/teacher of this classroom
+    if (!classroom || classroom.instructorId !== decoded.email) {
       return NextResponse.json(
         { error: "Not authorized to delete this assignment" },
         { status: 403 }
