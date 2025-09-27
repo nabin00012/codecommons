@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     console.log("Login request received");
     const body = await request.json();
     console.log("Login body:", body);
-    
+
     const { email, password } = body;
 
     if (!email || !password) {
@@ -20,23 +20,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log("Attempting database connection...");
     const { db } = await connectToDatabase();
+    console.log("Database connected successfully");
 
     // Note: Admin user should be created manually or through registration
     // Auto-provisioning removed to allow password changes to persist
 
+    console.log("Looking up user:", email);
     const user = await db.collection("users").findOne({ email });
+    console.log("User found:", !!user);
+    console.log("User has password:", !!user?.password);
 
     if (!user || !user.password) {
+      console.log("User lookup failed - no user or no password");
       return NextResponse.json(
         { error: "Invalid credentials" },
         { status: 401 }
       );
     }
 
+    console.log("Comparing passwords...");
     const isValid = await bcrypt.compare(password, user.password);
+    console.log("Password valid:", isValid);
 
     if (!isValid) {
+      console.log("Password comparison failed");
       return NextResponse.json(
         { error: "Invalid credentials" },
         { status: 401 }
@@ -44,6 +53,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Create JWT token
+    console.log("Creating JWT token...");
+    console.log("User ID:", user._id.toString());
+    console.log("JWT Secret exists:", !!process.env.NEXTAUTH_SECRET);
+
     const token = jwt.sign(
       {
         id: user._id.toString(),
@@ -53,6 +66,7 @@ export async function POST(request: NextRequest) {
       process.env.NEXTAUTH_SECRET || "fallback-secret",
       { expiresIn: "7d" }
     );
+    console.log("JWT token created successfully");
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
