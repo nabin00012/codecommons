@@ -16,6 +16,7 @@ import {
   BookOpen,
   FileText,
   MessageSquare,
+  MessageCircle,
   Users,
   Plus,
   Calendar,
@@ -68,32 +69,32 @@ export default function ClassroomDetailPage() {
   const router = useRouter();
   const { user } = useUser();
   const { toast } = useToast();
-  
+
   const [classroom, setClassroom] = useState<Classroom | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Form states
   const [showAssignmentForm, setShowAssignmentForm] = useState(false);
   const [showMaterialForm, setShowMaterialForm] = useState(false);
   const [showDiscussionForm, setShowDiscussionForm] = useState(false);
-  
+
   const [newAssignment, setNewAssignment] = useState({
     title: "",
     description: "",
     dueDate: "",
     points: "100",
   });
-  
+
   const [newMaterial, setNewMaterial] = useState({
     title: "",
     content: "",
     type: "document",
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  
+
   const [newDiscussion, setNewDiscussion] = useState({
     title: "",
     content: "",
@@ -106,45 +107,56 @@ export default function ClassroomDetailPage() {
     const fetchData = async () => {
       try {
         // Fetch classroom details
-        const classroomResponse = await fetch(`/api/classrooms/${classroomId}`, {
-          credentials: "include",
-        });
-        
+        const classroomResponse = await fetch(
+          `/api/classrooms/${classroomId}`,
+          {
+            credentials: "include",
+          }
+        );
+
         if (classroomResponse.ok) {
           const classroomData = await classroomResponse.json();
           setClassroom(classroomData.data);
         }
 
         // Fetch assignments
-        const assignmentsResponse = await fetch(`/api/classrooms/${classroomId}/assignments`, {
-          credentials: "include",
-        });
-        
+        const assignmentsResponse = await fetch(
+          `/api/classrooms/${classroomId}/assignments`,
+          {
+            credentials: "include",
+          }
+        );
+
         if (assignmentsResponse.ok) {
           const assignmentsData = await assignmentsResponse.json();
           setAssignments(assignmentsData.data || []);
         }
 
         // Fetch materials
-        const materialsResponse = await fetch(`/api/classrooms/${classroomId}/materials`, {
-          credentials: "include",
-        });
-        
+        const materialsResponse = await fetch(
+          `/api/classrooms/${classroomId}/materials`,
+          {
+            credentials: "include",
+          }
+        );
+
         if (materialsResponse.ok) {
           const materialsData = await materialsResponse.json();
           setMaterials(materialsData.data || []);
         }
 
         // Fetch classroom discussions
-        const discussionsResponse = await fetch(`/api/classrooms/${classroomId}/discussions`, {
-          credentials: "include",
-        });
-        
+        const discussionsResponse = await fetch(
+          `/api/classrooms/${classroomId}/discussions`,
+          {
+            credentials: "include",
+          }
+        );
+
         if (discussionsResponse.ok) {
           const discussionsData = await discussionsResponse.json();
           setDiscussions(discussionsData.data || []);
         }
-
       } catch (error) {
         console.error("Error fetching classroom data:", error);
         toast({
@@ -164,21 +176,29 @@ export default function ClassroomDetailPage() {
 
   const handleCreateAssignment = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
-      const response = await fetch(`/api/classrooms/${classroomId}/assignments`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(newAssignment),
-      });
+      const response = await fetch(
+        `/api/classrooms/${classroomId}/assignments`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(newAssignment),
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
-        setAssignments(prev => [data.data, ...prev]);
-        setNewAssignment({ title: "", description: "", dueDate: "", points: "100" });
+        setAssignments((prev) => [data.data, ...prev]);
+        setNewAssignment({
+          title: "",
+          description: "",
+          dueDate: "",
+          points: "100",
+        });
         setShowAssignmentForm(false);
         toast({
           title: "Success",
@@ -197,12 +217,12 @@ export default function ClassroomDetailPage() {
 
   const handleUploadMaterial = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const formData = new FormData();
       formData.append("title", newMaterial.title);
       formData.append("type", newMaterial.type);
-      
+
       if (selectedFile) {
         formData.append("file", selectedFile);
       } else if (newMaterial.content) {
@@ -224,7 +244,7 @@ export default function ClassroomDetailPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setMaterials(prev => [data.data, ...prev]);
+        setMaterials((prev) => [data.data, ...prev]);
         setNewMaterial({ title: "", content: "", type: "document" });
         setSelectedFile(null);
         setShowMaterialForm(false);
@@ -245,20 +265,23 @@ export default function ClassroomDetailPage() {
 
   const handleCreateDiscussion = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
-      const response = await fetch(`/api/classrooms/${classroomId}/discussions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(newDiscussion),
-      });
+      const response = await fetch(
+        `/api/classrooms/${classroomId}/discussions`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(newDiscussion),
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
-        setDiscussions(prev => [data.data, ...prev]);
+        setDiscussions((prev) => [data.data, ...prev]);
         setNewDiscussion({ title: "", content: "" });
         setShowDiscussionForm(false);
         toast({
@@ -292,7 +315,8 @@ export default function ClassroomDetailPage() {
             <BookOpen className="h-12 w-12 text-gray-400 mb-4" />
             <h3 className="text-xl font-semibold mb-2">Classroom not found</h3>
             <p className="text-gray-600 dark:text-gray-300">
-              The classroom you're looking for doesn't exist or you don't have access to it.
+              The classroom you're looking for doesn't exist or you don't have
+              access to it.
             </p>
             <Button className="mt-4" asChild>
               <Link href="/dashboard/classrooms">Back to Classrooms</Link>
@@ -317,7 +341,7 @@ export default function ClassroomDetailPage() {
             </Button>
             <Badge variant="outline">{classroom.code}</Badge>
           </div>
-          
+
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -337,7 +361,7 @@ export default function ClassroomDetailPage() {
                 </div>
               </div>
             </div>
-            
+
             {isTeacher && (
               <div className="text-right">
                 <p className="text-sm text-gray-500 mb-2">Classroom Code</p>
@@ -364,31 +388,39 @@ export default function ClassroomDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Assignments</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Total Assignments
+                  </CardTitle>
                   <Calendar className="h-4 w-4 ml-auto text-blue-500" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{assignments.length}</div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader className="flex flex-row items-center space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Study Materials</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Study Materials
+                  </CardTitle>
                   <FileText className="h-4 w-4 ml-auto text-green-500" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{materials.length}</div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader className="flex flex-row items-center space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Students Enrolled</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Students Enrolled
+                  </CardTitle>
                   <Users className="h-4 w-4 ml-auto text-purple-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{classroom.students.length}</div>
+                  <div className="text-2xl font-bold">
+                    {classroom.students.length}
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -400,7 +432,8 @@ export default function ClassroomDetailPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 dark:text-gray-300">
-                  Classroom activity will appear here as students and teachers interact.
+                  Classroom activity will appear here as students and teachers
+                  interact.
                 </p>
               </CardContent>
             </Card>
@@ -411,7 +444,9 @@ export default function ClassroomDetailPage() {
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">Assignments</h2>
               {isTeacher && (
-                <Button onClick={() => setShowAssignmentForm(!showAssignmentForm)}>
+                <Button
+                  onClick={() => setShowAssignmentForm(!showAssignmentForm)}
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Create Assignment
                 </Button>
@@ -430,7 +465,12 @@ export default function ClassroomDetailPage() {
                       <Input
                         placeholder="Assignment title"
                         value={newAssignment.title}
-                        onChange={(e) => setNewAssignment(prev => ({ ...prev, title: e.target.value }))}
+                        onChange={(e) =>
+                          setNewAssignment((prev) => ({
+                            ...prev,
+                            title: e.target.value,
+                          }))
+                        }
                         required
                       />
                     </div>
@@ -438,7 +478,12 @@ export default function ClassroomDetailPage() {
                       <Textarea
                         placeholder="Assignment description and instructions"
                         value={newAssignment.description}
-                        onChange={(e) => setNewAssignment(prev => ({ ...prev, description: e.target.value }))}
+                        onChange={(e) =>
+                          setNewAssignment((prev) => ({
+                            ...prev,
+                            description: e.target.value,
+                          }))
+                        }
                         rows={4}
                         required
                       />
@@ -448,7 +493,12 @@ export default function ClassroomDetailPage() {
                         <Input
                           type="datetime-local"
                           value={newAssignment.dueDate}
-                          onChange={(e) => setNewAssignment(prev => ({ ...prev, dueDate: e.target.value }))}
+                          onChange={(e) =>
+                            setNewAssignment((prev) => ({
+                              ...prev,
+                              dueDate: e.target.value,
+                            }))
+                          }
                           required
                         />
                       </div>
@@ -457,7 +507,12 @@ export default function ClassroomDetailPage() {
                           type="number"
                           placeholder="Points"
                           value={newAssignment.points}
-                          onChange={(e) => setNewAssignment(prev => ({ ...prev, points: e.target.value }))}
+                          onChange={(e) =>
+                            setNewAssignment((prev) => ({
+                              ...prev,
+                              points: e.target.value,
+                            }))
+                          }
                           min="1"
                           max="1000"
                         />
@@ -465,7 +520,11 @@ export default function ClassroomDetailPage() {
                     </div>
                     <div className="flex gap-2">
                       <Button type="submit">Create Assignment</Button>
-                      <Button type="button" variant="outline" onClick={() => setShowAssignmentForm(false)}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowAssignmentForm(false)}
+                      >
                         Cancel
                       </Button>
                     </div>
@@ -479,9 +538,13 @@ export default function ClassroomDetailPage() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Calendar className="h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">No assignments yet</h3>
+                  <h3 className="text-xl font-semibold mb-2">
+                    No assignments yet
+                  </h3>
                   <p className="text-gray-600 dark:text-gray-300">
-                    {isTeacher ? "Create your first assignment" : "No assignments posted yet"}
+                    {isTeacher
+                      ? "Create your first assignment"
+                      : "No assignments posted yet"}
                   </p>
                 </CardContent>
               </Card>
@@ -539,14 +602,24 @@ export default function ClassroomDetailPage() {
                       <Input
                         placeholder="Material title"
                         value={newMaterial.title}
-                        onChange={(e) => setNewMaterial(prev => ({ ...prev, title: e.target.value }))}
+                        onChange={(e) =>
+                          setNewMaterial((prev) => ({
+                            ...prev,
+                            title: e.target.value,
+                          }))
+                        }
                         required
                       />
                     </div>
                     <div>
                       <select
                         value={newMaterial.type}
-                        onChange={(e) => setNewMaterial(prev => ({ ...prev, type: e.target.value }))}
+                        onChange={(e) =>
+                          setNewMaterial((prev) => ({
+                            ...prev,
+                            type: e.target.value,
+                          }))
+                        }
                         className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600"
                       >
                         <option value="document">📄 Document/PDF</option>
@@ -555,7 +628,7 @@ export default function ClassroomDetailPage() {
                         <option value="code">💻 Code Sample</option>
                       </select>
                     </div>
-                    
+
                     {/* File Upload */}
                     <div className="space-y-2">
                       <label className="block text-sm font-medium">
@@ -564,11 +637,15 @@ export default function ClassroomDetailPage() {
                       <div className="flex items-center gap-4">
                         <input
                           type="file"
-                          onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                          onChange={(e) =>
+                            setSelectedFile(e.target.files?.[0] || null)
+                          }
                           accept={
-                            newMaterial.type === "video" ? "video/*" :
-                            newMaterial.type === "document" ? ".pdf,.doc,.docx,.txt" :
-                            "*/*"
+                            newMaterial.type === "video"
+                              ? "video/*"
+                              : newMaterial.type === "document"
+                              ? ".pdf,.doc,.docx,.txt"
+                              : "*/*"
                           }
                           className="flex-1 p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600"
                         />
@@ -585,7 +662,8 @@ export default function ClassroomDetailPage() {
                       </div>
                       {selectedFile && (
                         <p className="text-sm text-gray-500">
-                          Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+                          Selected: {selectedFile.name} (
+                          {(selectedFile.size / 1024).toFixed(1)} KB)
                         </p>
                       )}
                     </div>
@@ -595,20 +673,32 @@ export default function ClassroomDetailPage() {
                       <div>
                         <Textarea
                           placeholder={
-                            newMaterial.type === "video" ? "Video URL or embed code" :
-                            newMaterial.type === "link" ? "External link URL" :
-                            newMaterial.type === "code" ? "Code content" :
-                            "Document content or description"
+                            newMaterial.type === "video"
+                              ? "Video URL or embed code"
+                              : newMaterial.type === "link"
+                              ? "External link URL"
+                              : newMaterial.type === "code"
+                              ? "Code content"
+                              : "Document content or description"
                           }
                           value={newMaterial.content}
-                          onChange={(e) => setNewMaterial(prev => ({ ...prev, content: e.target.value }))}
+                          onChange={(e) =>
+                            setNewMaterial((prev) => ({
+                              ...prev,
+                              content: e.target.value,
+                            }))
+                          }
                           rows={6}
                         />
                       </div>
                     )}
                     <div className="flex gap-2">
                       <Button type="submit">Add Material</Button>
-                      <Button type="button" variant="outline" onClick={() => setShowMaterialForm(false)}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowMaterialForm(false)}
+                      >
                         Cancel
                       </Button>
                     </div>
@@ -622,9 +712,13 @@ export default function ClassroomDetailPage() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <FileText className="h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">No materials yet</h3>
+                  <h3 className="text-xl font-semibold mb-2">
+                    No materials yet
+                  </h3>
                   <p className="text-gray-600 dark:text-gray-300">
-                    {isTeacher ? "Upload study materials for your students" : "Materials will appear here when uploaded"}
+                    {isTeacher
+                      ? "Upload study materials for your students"
+                      : "Materials will appear here when uploaded"}
                   </p>
                 </CardContent>
               </Card>
@@ -634,30 +728,52 @@ export default function ClassroomDetailPage() {
                   <Card key={material.id}>
                     <CardHeader>
                       <div className="flex items-start justify-between">
-                        <CardTitle className="text-lg">{material.title}</CardTitle>
+                        <CardTitle className="text-lg">
+                          {material.title}
+                        </CardTitle>
                         <div className="text-right">
-                          {material.type === "video" && <Video className="h-5 w-5 text-red-500" />}
-                          {material.type === "document" && <File className="h-5 w-5 text-blue-500" />}
-                          {material.type === "link" && <LinkIcon className="h-5 w-5 text-green-500" />}
-                          {material.type === "code" && <FileText className="h-5 w-5 text-purple-500" />}
+                          {material.type === "video" && (
+                            <Video className="h-5 w-5 text-red-500" />
+                          )}
+                          {material.type === "document" && (
+                            <File className="h-5 w-5 text-blue-500" />
+                          )}
+                          {material.type === "link" && (
+                            <LinkIcon className="h-5 w-5 text-green-500" />
+                          )}
+                          {material.type === "code" && (
+                            <FileText className="h-5 w-5 text-purple-500" />
+                          )}
                         </div>
                       </div>
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm text-gray-500 mb-2">
-                        Uploaded: {new Date(material.uploadedOn).toLocaleDateString()}
+                        Uploaded:{" "}
+                        {new Date(material.uploadedOn).toLocaleDateString()}
                       </p>
                       <div className="flex gap-2">
                         {material.content && (
-                          <Button size="sm" variant="outline" className="flex-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1"
+                          >
                             View Content
                           </Button>
                         )}
                         {(material as any).fileName && (
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             className="flex-1"
-                            onClick={() => window.open(`/api/classrooms/${classroomId}/materials/download/${encodeURIComponent(material.title)}`, '_blank')}
+                            onClick={() =>
+                              window.open(
+                                `/api/classrooms/${classroomId}/materials/download/${encodeURIComponent(
+                                  material.title
+                                )}`,
+                                "_blank"
+                              )
+                            }
                           >
                             Download File
                           </Button>
@@ -679,7 +795,9 @@ export default function ClassroomDetailPage() {
           <TabsContent value="discussions" className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">Class Discussions</h2>
-              <Button onClick={() => setShowDiscussionForm(!showDiscussionForm)}>
+              <Button
+                onClick={() => setShowDiscussionForm(!showDiscussionForm)}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Start Discussion
               </Button>
@@ -697,7 +815,12 @@ export default function ClassroomDetailPage() {
                       <Input
                         placeholder="Discussion topic"
                         value={newDiscussion.title}
-                        onChange={(e) => setNewDiscussion(prev => ({ ...prev, title: e.target.value }))}
+                        onChange={(e) =>
+                          setNewDiscussion((prev) => ({
+                            ...prev,
+                            title: e.target.value,
+                          }))
+                        }
                         required
                       />
                     </div>
@@ -705,7 +828,12 @@ export default function ClassroomDetailPage() {
                       <Textarea
                         placeholder="What would you like to discuss?"
                         value={newDiscussion.content}
-                        onChange={(e) => setNewDiscussion(prev => ({ ...prev, content: e.target.value }))}
+                        onChange={(e) =>
+                          setNewDiscussion((prev) => ({
+                            ...prev,
+                            content: e.target.value,
+                          }))
+                        }
                         rows={4}
                         required
                       />
@@ -715,7 +843,11 @@ export default function ClassroomDetailPage() {
                         <Send className="h-4 w-4 mr-2" />
                         Post Discussion
                       </Button>
-                      <Button type="button" variant="outline" onClick={() => setShowDiscussionForm(false)}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowDiscussionForm(false)}
+                      >
                         Cancel
                       </Button>
                     </div>
@@ -729,7 +861,9 @@ export default function ClassroomDetailPage() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <MessageSquare className="h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">No discussions yet</h3>
+                  <h3 className="text-xl font-semibold mb-2">
+                    No discussions yet
+                  </h3>
                   <p className="text-gray-600 dark:text-gray-300">
                     Start the first discussion in this classroom!
                   </p>
@@ -741,13 +875,24 @@ export default function ClassroomDetailPage() {
                   <Card key={discussion._id}>
                     <CardHeader>
                       <div className="flex items-start justify-between">
-                        <CardTitle className="text-lg">{discussion.title}</CardTitle>
-                        <Badge variant={discussion.authorRole === "teacher" ? "default" : "secondary"}>
-                          {discussion.authorRole === "teacher" ? "👨‍🏫 Teacher" : "👨‍🎓 Student"}
+                        <CardTitle className="text-lg">
+                          {discussion.title}
+                        </CardTitle>
+                        <Badge
+                          variant={
+                            discussion.authorRole === "teacher"
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {discussion.authorRole === "teacher"
+                            ? "👨‍🏫 Teacher"
+                            : "👨‍🎓 Student"}
                         </Badge>
                       </div>
                       <p className="text-sm text-gray-500">
-                        by {discussion.authorName} • {new Date(discussion.createdAt).toLocaleString()}
+                        by {discussion.authorName} •{" "}
+                        {new Date(discussion.createdAt).toLocaleString()}
                       </p>
                     </CardHeader>
                     <CardContent>
