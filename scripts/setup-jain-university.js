@@ -75,21 +75,25 @@ async function setupJainUniversityData() {
     if (questions.length > 0) await db.collection('questions').insertMany(questions);
     if (projects.length > 0) await db.collection('projects').insertMany(projects);
 
-    const hashedAdminPassword = await bcrypt.hash("admin123", 12);
-    await db.collection('users').updateOne(
-      { email: "admin@jainuniversity.ac.in" },
-      {
-        $set: {
-          name: "Jain University Admin",
-          password: hashedAdminPassword,
-          role: "admin",
-          department: "administration",
-          onboardingCompleted: true,
-          updatedAt: new Date(),
-        },
-      },
-      { upsert: true }
-    );
+    // Check if admin user already exists, don't overwrite password if it does
+    const existingAdmin = await db.collection('users').findOne({ email: "admin@jainuniversity.ac.in" });
+    if (!existingAdmin) {
+      const defaultPassword = process.env.ADMIN_PASSWORD || 'Nabindai1232@#';
+      const hashedAdminPassword = await bcrypt.hash(defaultPassword, 12);
+      await db.collection('users').insertOne({
+        name: "Jain University Admin",
+        email: "admin@jainuniversity.ac.in",
+        password: hashedAdminPassword,
+        role: "admin",
+        department: "administration",
+        onboardingCompleted: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      console.log('Admin user created with default password:', defaultPassword);
+    } else {
+      console.log('Admin user already exists, password preserved');
+    }
 
     console.log(`✅ Created ${classrooms.length} classrooms`);
     console.log(`✅ Created ${questions.length} departmental discussion threads`);

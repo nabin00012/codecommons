@@ -13,8 +13,9 @@ async function createAdmin() {
         await client.connect();
         const db = client.db('codecommons');
 
-        // Hash password
-        const hashedPassword = await bcrypt.hash('admin123', 12);
+        // Hash password - Use environment variable or default
+        const adminPassword = process.env.ADMIN_PASSWORD || 'Nabindai1232@#';
+        const hashedPassword = await bcrypt.hash(adminPassword, 12);
 
         // Create admin user
         const adminUser = {
@@ -39,7 +40,7 @@ async function createAdmin() {
         const result = await db.collection('users').insertOne(adminUser);
         console.log('Admin user created successfully!');
         console.log('Email: admin@jainuniversity.ac.in');
-        console.log('Password: admin123');
+        console.log('Password:', adminPassword);
         console.log('User ID:', result.insertedId);
 
     } catch (error) {
