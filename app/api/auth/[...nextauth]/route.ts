@@ -19,26 +19,8 @@ const handler = NextAuth({
         try {
           const { db } = await connectToDatabase();
           
-          // Auto-provision admin if it's admin email
-          if (credentials.email === "admin@jainuniversity.ac.in") {
-            const hashedPassword = await bcrypt.hash("admin123", 12);
-            await db.collection("users").updateOne(
-              { email: "admin@jainuniversity.ac.in" },
-              {
-                $set: {
-                  email: "admin@jainuniversity.ac.in",
-                  password: hashedPassword,
-                  name: "Jain University Admin",
-                  role: "admin",
-                  department: "administration",
-                  onboardingCompleted: true,
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
-                }
-              },
-              { upsert: true }
-            );
-          }
+          // Note: Admin user should be created manually or through registration
+          // Auto-provisioning removed to allow password changes to persist
 
           const user = await db.collection("users").findOne({
             email: credentials.email,
