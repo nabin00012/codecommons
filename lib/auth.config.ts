@@ -145,3 +145,5 @@ export const authConfig: NextAuthConfig = {
     },
   },
 };
+
+export default NextAuth(authConfig);
