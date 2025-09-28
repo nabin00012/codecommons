@@ -125,12 +125,15 @@
   animation: float 6s ease-in-out infinite;
 }
 
-/* Cosmic card effect */
+/* Enhanced Cosmic Card Effects */
 .cosmic-card {
   position: relative;
   overflow: hidden;
+  transform: translateZ(0);
+  will-change: transform;
 }
 
+/* Multiple cosmic layers for depth */
 .cosmic-card::before {
   content: "";
   position: absolute;
@@ -138,30 +141,257 @@
   left: 0;
   right: 0;
   height: 100%;
-  background: linear-gradient(to bottom, transparent, transparent, rgba(var(--primary), 0.03));
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    transparent,
+    rgba(var(--primary), 0.02),
+    rgba(var(--primary), 0.05)
+  );
   z-index: 1;
   pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.cosmic-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    transparent,
+    rgba(var(--primary), 0.03),
+    rgba(var(--primary), 0.08)
+  );
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .cosmic-card:hover::before {
-  background: linear-gradient(to bottom, transparent, transparent, rgba(var(--primary), 0.08));
+  opacity: 0.7;
 }
 
+.cosmic-card:hover::after {
+  opacity: 1;
+}
+
+/* Cosmic spotlight effect */
 @media (prefers-reduced-motion: no-preference) {
-  .cosmic-card::after {
-    content: "";
+  .cosmic-card .cosmic-spotlight {
     position: absolute;
     inset: 0;
     z-index: 0;
-    background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(var(--primary), 0.1) 0%, transparent 25%);
+    background: radial-gradient(
+      circle at var(--x, 50%) var(--y, 50%),
+      rgba(var(--primary), 0.15) 0%,
+      rgba(var(--primary), 0.08) 25%,
+      transparent 50%
+    );
     opacity: 0;
-    transition: opacity 0.3s;
+    transition: opacity 0.4s ease;
     pointer-events: none;
   }
 
-  .cosmic-card:hover::after {
+  .cosmic-card:hover .cosmic-spotlight {
     opacity: 1;
   }
+}
+
+/* Animated border glow */
+.cosmic-card .cosmic-border {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  background: linear-gradient(
+    45deg,
+    transparent,
+    rgba(var(--primary), 0.3),
+    transparent,
+    rgba(var(--primary), 0.3),
+    transparent
+  );
+  background-size: 200% 200%;
+  animation: cosmic-border 3s ease-in-out infinite;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.cosmic-card:hover .cosmic-border {
+  opacity: 0.8;
+}
+
+/* 3D perspective effects */
+.cosmic-card {
+  perspective: 1000px;
+}
+
+.cosmic-card .cosmic-content {
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease;
+}
+
+.cosmic-card:hover .cosmic-content {
+  transform: rotateX(2deg) rotateY(2deg);
+}
+
+/* Particle effect */
+.cosmic-card .cosmic-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.cosmic-card .cosmic-particles::before,
+.cosmic-card .cosmic-particles::after {
+  content: "";
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: rgba(var(--primary), 0.6);
+  border-radius: 50%;
+  animation: cosmic-float 4s ease-in-out infinite;
+}
+
+.cosmic-card .cosmic-particles::before {
+  top: 20%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.cosmic-card .cosmic-particles::after {
+  top: 70%;
+  left: 80%;
+  animation-delay: 2s;
+}
+
+/* Enhanced animations */
+@keyframes cosmic-border {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes cosmic-float {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(-20px) translateX(10px);
+    opacity: 1;
+  }
+}
+
+/* Enhanced Glass-morphism Effects */
+.glass-card {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 8px 32px 0 rgba(31, 38, 135, 0.37),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .glass-card {
+  background: rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 12px 40px 0 rgba(31, 38, 135, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] .glass-card:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+/* Advanced glass-morphism for cosmic cards */
+.cosmic-glass {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0.05)
+  );
+  backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 8px 32px 0 rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 0 40px -10px rgba(var(--primary), 0.1);
+}
+
+.cosmic-glass:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.15),
+    rgba(255, 255, 255, 0.08)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow:
+    0 12px 40px 0 rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 0 60px -5px rgba(var(--primary), 0.3);
+}
+
+/* Glowing shadow effect */
+.cosmic-card {
+  box-shadow:
+    0 0 20px -10px rgba(var(--primary), 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cosmic-card:hover {
+  box-shadow:
+    0 0 40px -5px rgba(var(--primary), 0.3),
+    0 0 80px -10px rgba(var(--primary), 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Floating animation for elements */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.cosmic-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Pulse animation for active indicators */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(var(--primary), 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(var(--primary), 0.8), 0 0 30px rgba(var(--primary), 0.4);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
 }
 
 /* Add this if you don't already have it */
