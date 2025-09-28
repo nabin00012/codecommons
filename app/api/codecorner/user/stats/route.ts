@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     // Get user's questions
     const questions = await db
       .collection("questions")
-      .find({ "author._id": userData.user._id })
+      .find({ "author._id": userData._id })
       .toArray();
 
     // Get user's answers
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
       .collection("questions")
       .aggregate([
         { $unwind: "$answers" },
-        { $match: { "answers.author._id": userData.user._id } },
+        { $match: { "answers.author._id": userData._id } },
         { $project: { answer: "$answers" } },
       ])
       .toArray();

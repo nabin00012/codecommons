@@ -1,42 +1,18 @@
 import type { NextAuthConfig } from "next-auth";
 import type { JWT as NextAuthJWT } from "next-auth/jwt";
 import type { Session as NextAuthSession } from "next-auth";
-import type { User as NextAuthUser } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { authService } from "./services/auth";
 import NextAuth from "next-auth";
 import { authConfig } from "./auth.config";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import { connectToDatabase } from "./mongodb";
-import { User } from "./models/user";
+import clientPromiseDefault from "./mongodb";
 
-interface User extends NextAuthUser {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  token: string;
-}
-
-interface CustomJWT extends NextAuthJWT {
-  id: string;
-  role: string;
-  accessToken: string;
-}
-
-interface CustomSession extends NextAuthSession {
-  user: {
-    id: string;
-    _id: string;
-    name: string;
-    email: string;
-    role: string;
-  };
-  token: string;
-  expires: string;
-}
+// Use NextAuth's built-in types since they're already extended in auth.config.ts
 
 export const authOptions: NextAuthConfig = {
+  adapter: MongoDBAdapter(clientPromiseDefault as any),
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -55,17 +31,17 @@ export const authOptions: NextAuthConfig = {
             credentials.password
           );
 
-          if (!response?.token || !response?.user) {
+          if (!response?._id) {
             throw new Error("Invalid credentials");
           }
 
           return {
-            id: response.user.id,
-            name: response.user.name,
-            email: response.user.email,
-            role: response.user.role,
-            token: response.token,
-          } as User;
+            id: response._id,
+            name: response.name,
+            email: response.email,
+            role: response.role,
+            department: response.department || "",
+          };
         } catch (error) {
           console.error("Auth error:", error);
           throw new Error("Invalid credentials");
@@ -76,30 +52,44 @@ export const authOptions: NextAuthConfig = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        const customUser = user as User;
-        token.id = customUser.id;
-        token.role = customUser.role;
-        token.accessToken = customUser.token;
+        token.id = user.id;
+        token.role = user.role;
+        token.department = user.department;
+        token.section = user.section;
+        token.year = user.year;
+        token.specialization = user.specialization;
+        token.onboardingCompleted = user.onboardingCompleted;
+      } else if (token.email) {
+        try {
+          const { db } = await connectToDatabase();
+          const dbUser = await db
+            .collection("users")
+            .findOne({ email: token.email });
+          if (dbUser) {
+            token.role = dbUser.role || token.role;
+            token.department = dbUser.department || "";
+            token.section = dbUser.section || "";
+            token.year = dbUser.year ? String(dbUser.year) : "";
+            token.specialization = dbUser.specialization || "";
+            token.onboardingCompleted = dbUser.onboardingCompleted ?? false;
+          }
+        } catch (error) {
+          console.error("JWT callback error:", error);
+        }
       }
-      return token as CustomJWT;
+      return token;
     },
     async session({ session, token }) {
-      const customToken = token as CustomJWT;
-      const customSession = session as unknown as CustomSession;
-
-      customSession.user = {
-        id: customToken.id,
-        _id: customToken.id,
-        name: customToken.name as string,
-        email: customToken.email as string,
-        role: customToken.role,
-      };
-      customSession.token = customToken.accessToken;
-      customSession.expires = new Date(
-        Date.now() + 30 * 24 * 60 * 60 * 1000
-      ).toISOString();
-
-      return customSession;
+      if (session.user) {
+        session.user.id = token.id;
+        session.user.role = token.role;
+        session.user.department = token.department;
+        session.user.section = token.section;
+        session.user.year = token.year;
+        session.user.specialization = token.specialization;
+        session.user.onboardingCompleted = token.onboardingCompleted;
+      }
+      return session;
     },
   },
   pages: {
@@ -136,5 +126,10 @@ export const { auth, signIn, signOut } = NextAuth({
   },
 });
 
-export type Session = Awaited<ReturnType<typeof auth>>;
+const authHandler = NextAuth(authOptions);
+
+export default authHandler;
+export const auth = authHandler;
+
+export type Session = Awaited<ReturnType<typeof authHandler>>;
 export type User = NonNullable<Session>["user"];

@@ -5,7 +5,8 @@ import Editor from "@monaco-editor/react";
 import { useSettings } from "@/lib/context/settings-context";
 
 export interface CodeEditorProps {
-  value: string;
+  value?: string;
+  initialValue?: string;
   language: string;
   onChange: (value: string | undefined) => void;
   height?: string;
@@ -22,6 +23,7 @@ export interface CodeEditorProps {
 
 export function CodeEditor({
   value,
+  initialValue,
   language,
   onChange,
   height = "500px",
@@ -34,7 +36,8 @@ export function CodeEditor({
     <Editor
       height={height}
       defaultLanguage={language}
-      defaultValue={value}
+      value={value}
+      defaultValue={initialValue}
       onChange={onChange}
       theme={theme || settings.editor.theme}
       options={{

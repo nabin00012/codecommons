@@ -46,7 +46,7 @@ export async function POST(
 
     console.log("Verifying token...");
     const authData = await authService.verifyToken(token);
-    if (!authData?.user) {
+    if (!authData?._id) {
       console.log("Invalid token or user not found");
       return NextResponse.json(
         { success: false, message: "Invalid authentication" },
@@ -54,7 +54,7 @@ export async function POST(
       );
     }
 
-    const user = authData.user;
+    const user = authData;
     console.log("User authenticated:", user._id);
 
     // Forward the request to the backend API

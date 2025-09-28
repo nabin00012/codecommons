@@ -80,7 +80,7 @@ const handler = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub as string;
-        session.user.role = token.role as string;
+        session.user.role = token.role as "student" | "teacher" | "admin";
         session.user.department = token.department as string;
         session.user.section = token.section as string;
         session.user.year = token.year as string;

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { Event } from "@/lib/models/event";
+import { auth } from "@/lib/auth";
 
 export async function GET(req: Request) {
   try {
@@ -48,6 +49,11 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { title, description, date, location, tags, maxAttendees } =
       await req.json();
 

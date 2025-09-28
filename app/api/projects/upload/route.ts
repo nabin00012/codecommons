@@ -22,14 +22,14 @@ export async function POST(request: NextRequest) {
     }
 
     const authData = await authService.verifyToken(token);
-    if (!authData || !authData.user) {
+    if (!authData || !authData._id) {
       console.log("Invalid authentication token");
       return NextResponse.json(
         { error: "Invalid authentication" },
         { status: 401 }
       );
     }
-    const user = authData.user;
+    const user = authData;
     console.log("Authentication successful for user:", user._id);
 
     // Connect to database

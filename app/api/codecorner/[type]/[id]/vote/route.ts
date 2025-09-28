@@ -8,6 +8,7 @@ export async function POST(
   req: Request,
   { params }: { params: { type: string; id: string } }
 ) {
+  const { id } = params;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -37,26 +38,26 @@ export async function POST(
       if (voteType === "up") {
         if (hasUpvoted) {
           question.upvotes = question.upvotes.filter(
-            (id) => id.toString() !== userId
+            (id: any) => id.toString() !== userId
           );
         } else {
           question.upvotes.push(userId);
           if (hasDownvoted) {
             question.downvotes = question.downvotes.filter(
-              (id) => id.toString() !== userId
+              (id: any) => id.toString() !== userId
             );
           }
         }
       } else {
         if (hasDownvoted) {
           question.downvotes = question.downvotes.filter(
-            (id) => id.toString() !== userId
+            (id: any) => id.toString() !== userId
           );
         } else {
           question.downvotes.push(userId);
           if (hasUpvoted) {
             question.upvotes = question.upvotes.filter(
-              (id) => id.toString() !== userId
+              (id: any) => id.toString() !== userId
             );
           }
         }
@@ -80,26 +81,26 @@ export async function POST(
       if (voteType === "up") {
         if (hasUpvoted) {
           answer.upvotes = answer.upvotes.filter(
-            (id) => id.toString() !== userId
+            (id: any) => id.toString() !== userId
           );
         } else {
           answer.upvotes.push(userId);
           if (hasDownvoted) {
             answer.downvotes = answer.downvotes.filter(
-              (id) => id.toString() !== userId
+              (id: any) => id.toString() !== userId
             );
           }
         }
       } else {
         if (hasDownvoted) {
           answer.downvotes = answer.downvotes.filter(
-            (id) => id.toString() !== userId
+            (id: any) => id.toString() !== userId
           );
         } else {
           answer.downvotes.push(userId);
           if (hasUpvoted) {
             answer.upvotes = answer.upvotes.filter(
-              (id) => id.toString() !== userId
+              (id: any) => id.toString() !== userId
             );
           }
         }

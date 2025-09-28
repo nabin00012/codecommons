@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { Group } from "@/lib/models/group";
+import { auth } from "@/lib/auth";
 
 export async function GET(req: Request) {
   try {
@@ -48,6 +49,11 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { name, description, tags } = await req.json();
 
     if (!name || !description) {
