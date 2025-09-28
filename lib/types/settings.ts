@@ -1,6 +1,11 @@
 export interface Settings {
-  theme: string;
-  notifications: boolean;
+  theme: "light" | "dark" | "system" | "cosmic";
+  notifications: {
+    enabled: boolean;
+    email: boolean;
+    push: boolean;
+    sound: boolean;
+  };
   language: string;
   editor: {
     fontSize: number;
@@ -8,13 +13,17 @@ export interface Settings {
     lineNumbers: boolean;
     minimap: boolean;
   };
-  sound: boolean;
   enabled: boolean;
 }
 
 export const defaultSettings: Settings = {
   theme: "system",
-  notifications: true,
+  notifications: {
+    enabled: true,
+    email: true,
+    push: true,
+    sound: true,
+  },
   language: "en",
   editor: {
     fontSize: 14,
@@ -22,6 +31,5 @@ export const defaultSettings: Settings = {
     lineNumbers: true,
     minimap: true,
   },
-  sound: true,
   enabled: true,
 };

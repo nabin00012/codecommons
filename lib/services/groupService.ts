@@ -39,6 +39,7 @@ export const groupService = {
     name: string;
     description: string;
     tags: string[];
+    activityLevel?: "high" | "medium" | "low";
   }) {
     try {
       const token = await authService.getToken();
@@ -150,6 +151,27 @@ export const groupService = {
       return response.json();
     } catch (error) {
       console.error("Error leaving group:", error);
+      throw error;
+    }
+  },
+
+  // Toggle join/leave group
+  async toggleJoin(groupId: string) {
+    try {
+      const token = await authService.getToken();
+      const response = await fetch(`${API_URL}/api/groups/${groupId}/join`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to toggle group membership");
+      }
+      return response.json();
+    } catch (error) {
+      console.error("Error toggling group membership:", error);
       throw error;
     }
   },

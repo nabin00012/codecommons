@@ -13,10 +13,11 @@ interface NotificationSettings {
   enabled: boolean;
   email: boolean;
   push: boolean;
+  sound: boolean;
 }
 
 interface Settings {
-  theme: "light" | "dark" | "system";
+  theme: "light" | "dark" | "system" | "cosmic";
   editor: EditorSettings;
   notifications: NotificationSettings;
 }
@@ -33,6 +34,7 @@ const defaultSettings: Settings = {
     enabled: true,
     email: true,
     push: true,
+    sound: true,
   },
 };
 
