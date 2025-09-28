@@ -26,18 +26,20 @@ import {
 } from "lucide-react";
 import { CosmicBackground } from "@/components/cosmic-background";
 import { CosmicCardEffect } from "@/components/cosmic-card-effect";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 
 // Custom hook for animated counters
 function useAnimatedCounter(endValue: number, duration: number = 2000) {
   const [count, setCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const [hasAnimated, setHasAnimated] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const animationRef = useRef<number>();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        if (entry.isIntersecting && !hasAnimated) {
           setIsVisible(true);
         }
       },
@@ -48,11 +50,16 @@ function useAnimatedCounter(endValue: number, duration: number = 2000) {
       observer.observe(ref.current);
     }
 
-    return () => observer.disconnect();
-  }, []);
+    return () => {
+      observer.disconnect();
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [hasAnimated]);
 
   useEffect(() => {
-    if (!isVisible) return;
+    if (!isVisible || hasAnimated) return;
 
     let startTime: number;
     const startValue = 0;
@@ -70,12 +77,20 @@ function useAnimatedCounter(endValue: number, duration: number = 2000) {
       setCount(currentValue);
 
       if (progress < 1) {
-        requestAnimationFrame(animate);
+        animationRef.current = requestAnimationFrame(animate);
+      } else {
+        setHasAnimated(true);
       }
     };
 
-    requestAnimationFrame(animate);
-  }, [isVisible, endValue, duration]);
+    animationRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [isVisible, endValue, duration, hasAnimated]);
 
   return { count, ref };
 }
@@ -204,25 +219,32 @@ export default function DashboardPage() {
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background via-background/95 to-background/90 relative overflow-hidden">
         {/* Animated background elements */}
         <div className="absolute inset-0">
-          {[...Array(20)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-1 h-1 bg-primary/30 rounded-full"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-              }}
-              animate={{
-                scale: [0, 1, 0],
-                opacity: [0, 0.7, 0],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                delay: Math.random() * 2,
-              }}
-            />
-          ))}
+          {[...Array(20)].map((_, i) => {
+            // Memoize random positions to prevent re-renders
+            const leftPos = useMemo(() => `${Math.random() * 100}%`, []);
+            const topPos = useMemo(() => `${Math.random() * 100}%`, []);
+            const delay = useMemo(() => Math.random() * 2, []);
+
+            return (
+              <motion.div
+                key={i}
+                className="absolute w-1 h-1 bg-primary/30 rounded-full"
+                style={{
+                  left: leftPos,
+                  top: topPos,
+                }}
+                animate={{
+                  scale: [0, 1, 0],
+                  opacity: [0, 0.7, 0],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  delay: delay,
+                }}
+              />
+            );
+          })}
         </div>
 
         {/* Main loading spinner */}
@@ -392,6 +414,10 @@ export default function DashboardPage() {
                       1500
                     );
 
+                    // Memoize random values to prevent re-renders
+                    const progressValue = useMemo(() => Math.floor(Math.random() * 40 + 60), []);
+                    const widthValue = useMemo(() => `${Math.random() * 40 + 60}%`, []);
+
                     return (
                       <motion.div
                         key={stat.title}
@@ -451,7 +477,7 @@ export default function DashboardPage() {
                               <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                                 <span>Progress</span>
                                 <span>
-                                  {Math.floor(Math.random() * 40 + 60)}%
+                                  {progressValue}%
                                 </span>
                               </div>
                               <div className="w-full bg-muted/30 rounded-full h-2 overflow-hidden">
@@ -459,7 +485,7 @@ export default function DashboardPage() {
                                   className="h-full bg-gradient-to-r from-primary/60 to-primary rounded-full"
                                   initial={{ width: 0 }}
                                   animate={{
-                                    width: `${Math.random() * 40 + 60}%`,
+                                    width: widthValue,
                                   }}
                                   transition={{
                                     delay: 1 + index * 0.2,
@@ -552,7 +578,7 @@ export default function DashboardPage() {
                                 {/* Progress bar for visual appeal */}
                                 <div className="mt-4 relative z-10">
                                   <Progress
-                                    value={Math.random() * 100}
+                                    value={useMemo(() => Math.random() * 100, [])}
                                     className="h-1 bg-white/20"
                                   />
                                 </div>
