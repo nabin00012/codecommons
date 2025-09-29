@@ -146,4 +146,4 @@ export const authConfig: NextAuthConfig = {
   },
 };
 
-export default NextAuth(authConfig);
+// Note: NextAuth handlers are created in lib/auth.ts. This file only exports the config.

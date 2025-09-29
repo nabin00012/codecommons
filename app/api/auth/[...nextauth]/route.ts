@@ -1,10 +1,2 @@
-import NextAuth from "next-auth";
-import { authConfig } from "@/lib/auth.config";
-
-export async function GET(request: Request) {
-  return NextAuth(authConfig)(request);
-}
-
-export async function POST(request: Request) {
-  return NextAuth(authConfig)(request);
-}
+// NextAuth v5 style: re-export GET/POST handlers from lib/auth
+export { GET, POST } from "@/lib/auth";
