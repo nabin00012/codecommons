@@ -49,36 +49,34 @@ export default function LoginPage() {
         throw new Error("Please enter both email and password");
       }
 
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Login failed" }));
-        throw new Error(errorData.error || "Login failed");
+      if (result?.error) {
+        throw new Error(
+          result.error === "CredentialsSignin"
+            ? "Invalid email or password"
+            : result.error
+        );
       }
 
-      const data = await response.json();
-      console.log("Login successful:", data);
+      if (result?.ok) {
+        console.log("Login successful");
+        toast({
+          title: "Welcome back!",
+          description: "You have been successfully logged in.",
+        });
 
-      toast({
-        title: "Welcome back!",
-        description: "You have been successfully logged in.",
-      });
-
-      // Simple redirect logic - admin goes to dashboard, others may need onboarding
-      if (email === "admin@jainuniversity.ac.in") {
-        router.push("/dashboard");
-      } else {
-        router.push("/onboarding");
+        // Simple redirect logic - admin goes to dashboard, others may need onboarding
+        if (email === "admin@jainuniversity.ac.in") {
+          router.push("/dashboard");
+        } else {
+          router.push("/onboarding");
+        }
       }
-      
-      // Force reload to update auth state
-      window.location.reload();
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "An error occurred";
@@ -105,7 +103,9 @@ export default function LoginPage() {
 
       if (result?.error) {
         if (result.error === "AccessDenied") {
-          throw new Error("Only @jainuniversity.ac.in email addresses are allowed to sign in with Google.");
+          throw new Error(
+            "Only @jainuniversity.ac.in email addresses are allowed to sign in with Google."
+          );
         }
         throw new Error(result.error);
       }
@@ -120,7 +120,9 @@ export default function LoginPage() {
       }
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "An error occurred during Google sign-in";
+        err instanceof Error
+          ? err.message
+          : "An error occurred during Google sign-in";
       setError(errorMessage);
       toast({
         title: "Google sign-in failed",
@@ -271,7 +273,8 @@ export default function LoginPage() {
                 </Link>
               </div>
               <div className="text-xs text-center text-muted-foreground">
-                Google sign-in is only available for @jainuniversity.ac.in email addresses
+                Google sign-in is only available for @jainuniversity.ac.in email
+                addresses
               </div>
             </CardFooter>
           </Card>
