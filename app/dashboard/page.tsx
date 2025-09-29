@@ -220,10 +220,9 @@ export default function DashboardPage() {
         {/* Animated background elements */}
         <div className="absolute inset-0">
           {[...Array(20)].map((_, i) => {
-            // Memoize random positions to prevent re-renders
-            const leftPos = useMemo(() => `${Math.random() * 100}%`, []);
-            const topPos = useMemo(() => `${Math.random() * 100}%`, []);
-            const delay = useMemo(() => Math.random() * 2, []);
+            const leftPos = `${Math.random() * 100}%`;
+            const topPos = `${Math.random() * 100}%`;
+            const delay = Math.random() * 2;
 
             return (
               <motion.div
@@ -310,7 +309,7 @@ export default function DashboardPage() {
           <AnimatePresence>
             {mounted && (
               <>
-        {/* Welcome Header */}
+                {/* Welcome Header */}
                 <motion.div
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -358,7 +357,7 @@ export default function DashboardPage() {
                       </motion.div>
                       <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground via-primary/80 to-foreground/70 bg-clip-text text-transparent">
                         Welcome back, {user?.name || "User"}!
-          </h1>
+                      </h1>
                     </div>
 
                     {/* Floating decorative elements */}
@@ -390,9 +389,9 @@ export default function DashboardPage() {
                     transition={{ delay: 0.3, duration: 0.6 }}
                     className="text-lg text-muted-foreground max-w-2xl"
                   >
-            {user?.role === "admin" 
+                    {user?.role === "admin"
                       ? "Manage the platform and oversee all activities with powerful administrative tools"
-              : user?.role === "teacher"
+                      : user?.role === "teacher"
                       ? "Create and manage your classrooms, inspire the next generation of developers"
                       : "Continue your learning journey, build amazing projects, and connect with the community"}
                   </motion.p>
@@ -406,17 +405,15 @@ export default function DashboardPage() {
                   className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12"
                 >
                   {stats?.map((stat, index) => {
-                    const numericValue = parseInt(
-                      stat.value?.replace(/\D/g, "") || "0"
-                    ) || 0;
+                    const numericValue =
+                      parseInt(stat.value?.replace(/\D/g, "") || "0") || 0;
                     const { count, ref } = useAnimatedCounter(
                       numericValue,
                       1500
                     );
 
-                    // Memoize random values to prevent re-renders
-                    const progressValue = useMemo(() => Math.floor(Math.random() * 40 + 60), []);
-                    const widthValue = useMemo(() => `${Math.random() * 40 + 60}%`, []);
+                    const progressValue = Math.floor(Math.random() * 40 + 60);
+                    const widthValue = `${Math.random() * 40 + 60}%`;
 
                     return (
                       <motion.div
@@ -459,15 +456,19 @@ export default function DashboardPage() {
                                 <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                                   <TrendingUp className="h-3 w-3 text-green-500" />
                                   {stat?.change || "No recent activity"}
-          </p>
-        </div>
+                                </p>
+                              </div>
                               <div
                                 className={`p-3 rounded-xl ${stat.bgColor} group-hover:scale-110 transition-transform duration-300 shadow-lg`}
                               >
                                 <div
-                                  className={`${stat?.color || 'text-gray-600'} group-hover:scale-110 transition-transform duration-300`}
+                                  className={`${
+                                    stat?.color || "text-gray-600"
+                                  } group-hover:scale-110 transition-transform duration-300`}
                                 >
-                                  {stat?.icon || <Activity className="h-4 w-4" />}
+                                  {stat?.icon || (
+                                    <Activity className="h-4 w-4" />
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -476,9 +477,7 @@ export default function DashboardPage() {
                             <div className="mt-4">
                               <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                                 <span>Progress</span>
-                                <span>
-                                  {progressValue}%
-                                </span>
+                                <span>{progressValue}%</span>
                               </div>
                               <div className="w-full bg-muted/30 rounded-full h-2 overflow-hidden">
                                 <motion.div
@@ -526,7 +525,9 @@ export default function DashboardPage() {
                       >
                         <Link href={action?.href || "#"}>
                           <Card
-                            className={`cosmic-card relative overflow-hidden border-0 ${action?.bgColor || 'bg-gray-50'} hover:shadow-2xl transition-all duration-500 group cursor-pointer h-full`}
+                            className={`cosmic-card relative overflow-hidden border-0 ${
+                              action?.bgColor || "bg-gray-50"
+                            } hover:shadow-2xl transition-all duration-500 group cursor-pointer h-full`}
                           >
                             {/* Cosmic spotlight effect */}
                             <div className="cosmic-spotlight absolute inset-0" />
@@ -547,14 +548,22 @@ export default function DashboardPage() {
                               <CardHeader className="relative pb-3">
                                 <div className="flex items-center justify-between">
                                   <div
-                                    className={`p-3 rounded-xl bg-gradient-to-r ${action?.color || 'from-gray-500 to-gray-600'} text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
+                                    className={`p-3 rounded-xl bg-gradient-to-r ${
+                                      action?.color ||
+                                      "from-gray-500 to-gray-600"
+                                    } text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 relative overflow-hidden`}
                                   >
                                     {/* Icon glow effect */}
                                     <div
-                                      className={`absolute inset-0 bg-gradient-to-r ${action?.color || 'from-gray-500 to-gray-600'} opacity-50 group-hover:opacity-75 transition-opacity duration-300`}
+                                      className={`absolute inset-0 bg-gradient-to-r ${
+                                        action?.color ||
+                                        "from-gray-500 to-gray-600"
+                                      } opacity-50 group-hover:opacity-75 transition-opacity duration-300`}
                                     />
                                     <div className="relative z-10">
-                                      {action?.icon || <Activity className="h-6 w-6" />}
+                                      {action?.icon || (
+                                        <Activity className="h-6 w-6" />
+                                      )}
                                     </div>
                                   </div>
                                   {action?.count && (
@@ -568,17 +577,18 @@ export default function DashboardPage() {
                                 </div>
                                 <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors duration-300 relative z-10">
                                   {action?.title || "Section"}
-                  </CardTitle>
-                </CardHeader>
+                                </CardTitle>
+                              </CardHeader>
                               <CardContent className="relative flex-1 flex flex-col">
                                 <p className="text-muted-foreground group-hover:text-foreground transition-colors duration-300 flex-1 relative z-10">
-                                  {action?.description || "No description available"}
+                                  {action?.description ||
+                                    "No description available"}
                                 </p>
 
                                 {/* Progress bar for visual appeal */}
                                 <div className="mt-4 relative z-10">
                                   <Progress
-                                    value={useMemo(() => Math.random() * 100, [])}
+                                    value={Math.random() * 100}
                                     className="h-1 bg-white/20"
                                   />
                                 </div>
@@ -588,13 +598,13 @@ export default function DashboardPage() {
                                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                                   <span>Active</span>
                                 </div>
-                </CardContent>
+                              </CardContent>
 
                               {/* Hover effect overlay */}
                               <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                             </div>
-              </Card>
-            </Link>
+                          </Card>
+                        </Link>
                       </motion.div>
                     ))}
                   </div>
@@ -686,8 +696,8 @@ export default function DashboardPage() {
                               <Star className="h-4 w-4 text-yellow-500 opacity-60 group-hover:opacity-100 transition-opacity duration-200" />
                             </motion.div>
                           </motion.div>
-          ))}
-        </div>
+                        ))}
+                      </div>
 
                       {/* Activity summary */}
                       <motion.div
@@ -712,8 +722,8 @@ export default function DashboardPage() {
                           </div>
                         </div>
                       </motion.div>
-          </CardContent>
-        </Card>
+                    </CardContent>
+                  </Card>
                 </motion.div>
               </>
             )}
