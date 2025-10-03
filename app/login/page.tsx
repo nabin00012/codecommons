@@ -49,28 +49,48 @@ export default function LoginPage() {
         throw new Error("Please enter both email and password");
       }
 
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
+      // Try custom API login first
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (result?.error) {
-        throw new Error(
-          result.error === "CredentialsSignin"
-            ? "Invalid email or password"
-            : result.error
-        );
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Login failed");
       }
 
-      if (result?.ok) {
-        console.log("Login successful");
+      if (data.user && data.token) {
+        // Store the token
+        if (typeof window !== "undefined") {
+          localStorage.setItem("token", data.token);
+        }
+
+        // Update user context
+        login({
+          id: data.user.id || data.user._id,
+          _id: data.user._id || data.user.id,
+          name: data.user.name,
+          email: data.user.email,
+          role: data.user.role as UserRole,
+          department: data.user.department || "",
+          section: data.user.section || "",
+          year: data.user.year || "",
+          specialization: data.user.specialization || "",
+          onboardingCompleted: data.user.onboardingCompleted ?? false,
+          preferences: data.user.preferences || defaultPreferences,
+        });
+
         toast({
           title: "Welcome back!",
           description: "You have been successfully logged in.",
         });
 
-        // Simple redirect logic - admin goes to dashboard, others may need onboarding
+        // Simple redirect logic
         if (email === "admin@jainuniversity.ac.in") {
           router.push("/dashboard");
         } else {
@@ -135,7 +155,7 @@ export default function LoginPage() {
   };
 
   useEffect(() => {
-    if (user) {
+    if (user && typeof window !== "undefined") {
       console.log("User is already logged in, redirecting to dashboard...");
       router.push("/dashboard");
     }

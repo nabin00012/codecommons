@@ -42,7 +42,7 @@ export default function CreateClassroomPage() {
         return;
       }
 
-      const classroomServiceInstance = new ClassroomService(token);
+      const classroomServiceInstance = new ClassroomService();
       await classroomServiceInstance.createClassroom({
         name,
         description,

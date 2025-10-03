@@ -26,10 +26,7 @@ export function JoinClassroom() {
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      setClassroomService(new ClassroomService(token));
-    }
+    setClassroomService(new ClassroomService());
   }, []);
 
   const handleJoin = async () => {

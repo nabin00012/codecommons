@@ -25,13 +25,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [token, setTokenState] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
     const verifyToken = async () => {
       try {
-        const storedToken = localStorage.getItem("token");
+        const storedToken = typeof window !== "undefined" ? localStorage.getItem("token") : null;
         if (!storedToken) {
           setIsAuthenticated(false);
           setIsLoading(false);
@@ -49,7 +56,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error("Token verification error:", error);
         setIsAuthenticated(false);
         setTokenState(null);
-        localStorage.removeItem("token");
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("token");
+        }
         toast({
           title: "Session expired",
           description: "Please log in again to continue.",
@@ -61,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     verifyToken();
-  }, [toast]);
+  }, [mounted, toast]);
 
   const setToken = (newToken: string | null) => {
     setTokenState(newToken);

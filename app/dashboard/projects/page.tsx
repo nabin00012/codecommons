@@ -94,7 +94,7 @@ export default function ProjectsPage() {
         token.substring(0, 10) + "..."
       );
 
-      const response = await fetch(`${API_URL}/api/projects`, {
+      const response = await fetch(`/api/projects`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -160,7 +160,7 @@ export default function ProjectsPage() {
       );
       console.log("Project data:", newProject);
 
-      const response = await fetch(`${API_URL}/api/projects`, {
+      const response = await fetch(`/api/projects`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

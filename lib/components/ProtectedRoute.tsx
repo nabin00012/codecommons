@@ -16,32 +16,37 @@ export default function ProtectedRoute({
   const router = useRouter();
   const { user, loading } = useUser();
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (!loading && !isRedirecting) {
-      if (!user) {
-        setIsRedirecting(true);
-        router.push("/login");
-        return;
-      }
+    setMounted(true);
+  }, []);
 
-      if (requireTeacher && user.role !== "teacher") {
-        setIsRedirecting(true);
-        router.push("/dashboard");
-        return;
-      }
+  useEffect(() => {
+    if (!mounted || loading || isRedirecting) return;
 
-      const needsOnboarding =
-        user.role !== "admin" &&
-        (!user.onboardingCompleted || !user.department || user.department === "");
-
-      if (needsOnboarding && typeof window !== "undefined" && window.location.pathname !== "/onboarding") {
-        setIsRedirecting(true);
-        router.push("/onboarding");
-        return;
-      }
+    if (!user) {
+      setIsRedirecting(true);
+      router.push("/login");
+      return;
     }
-  }, [user, loading, router, requireTeacher, isRedirecting]);
+
+    if (requireTeacher && user.role !== "teacher") {
+      setIsRedirecting(true);
+      router.push("/dashboard");
+      return;
+    }
+
+    const needsOnboarding =
+      user.role !== "admin" &&
+      (!user.onboardingCompleted || !user.department || user.department === "");
+
+    if (needsOnboarding && typeof window !== "undefined" && window.location.pathname !== "/onboarding") {
+      setIsRedirecting(true);
+      router.push("/onboarding");
+      return;
+    }
+  }, [mounted, user, loading, router, requireTeacher, isRedirecting]);
 
   if (loading) {
     return (

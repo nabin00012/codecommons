@@ -48,20 +48,24 @@ const SettingsContext = createContext<SettingsContextType | undefined>(
 );
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<Settings>(() => {
-    // Initialize settings from localStorage or use defaults
+  const [settings, setSettings] = useState<Settings>(defaultSettings);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    // Initialize settings from localStorage after mounting
     if (typeof window !== "undefined") {
       const savedSettings = localStorage.getItem("settings");
       if (savedSettings) {
         try {
-          return { ...defaultSettings, ...JSON.parse(savedSettings) };
+          const parsed = JSON.parse(savedSettings);
+          setSettings({ ...defaultSettings, ...parsed });
         } catch (error) {
           console.error("Failed to parse saved settings:", error);
         }
       }
     }
-    return defaultSettings;
-  });
+  }, []);
 
   const updateSettings = async (newSettings: Partial<Settings>) => {
     setSettings((prev) => {

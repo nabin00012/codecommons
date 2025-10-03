@@ -77,10 +77,29 @@ class AuthService {
   }
 
   async login(email: string, password: string): Promise<AuthResponse> {
-    return this.request<AuthResponse>("/auth/login", {
+    // Use frontend API for authentication
+    const response = await fetch("/api/auth/login", {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ email, password }),
     });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Login failed");
+    }
+
+    return {
+      _id: data.user.id || data.user._id,
+      name: data.user.name,
+      email: data.user.email,
+      role: data.user.role,
+      token: data.token,
+      preferences: data.user.preferences,
+    };
   }
 
   async register(userData: {
@@ -89,19 +108,54 @@ class AuthService {
     password: string;
     role: string;
   }): Promise<AuthResponse> {
-    return this.request<AuthResponse>("/auth/register", {
+    // Use frontend API for registration
+    const response = await fetch("/api/auth/register", {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(userData),
     });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Registration failed");
+    }
+
+    return {
+      _id: data._id,
+      name: data.name,
+      email: data.email,
+      role: data.role,
+      token: data.token,
+      preferences: data.preferences,
+    };
   }
 
   async verifyToken(token: string): Promise<AuthResponse> {
-    return this.request<AuthResponse>("/auth/verify", {
-      method: "POST",
+    // Use frontend API for token verification
+    const response = await fetch("/api/auth/session", {
+      method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.user) {
+      throw new Error("Token verification failed");
+    }
+
+    return {
+      _id: data.user.id || data.user._id,
+      name: data.user.name,
+      email: data.user.email,
+      role: data.user.role,
+      token: token,
+      preferences: data.user.preferences,
+    };
   }
 
   async getToken(): Promise<string | null> {

@@ -50,3 +50,62 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export async function POST(request: NextRequest) {
+  try {
+    console.log("Creating new project...");
+    
+    // Get user from auth token
+    const token = request.cookies.get("auth-token")?.value;
+    if (!token) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    const decoded = jwt.verify(token, process.env.NEXTAUTH_SECRET || "fallback-secret") as any;
+    console.log("User authenticated:", decoded.email);
+
+    const body = await request.json();
+    const { title, description, department, visibility = "public" } = body;
+
+    if (!title || !description) {
+      return NextResponse.json(
+        { error: "Title and description are required" },
+        { status: 400 }
+      );
+    }
+
+    const { db } = await connectToDatabase();
+    
+    const newProject = {
+      title,
+      description,
+      department: department || decoded.department || "",
+      ownerId: decoded.id,
+      ownerEmail: decoded.email,
+      visibility,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const result = await db.collection("projects").insertOne(newProject);
+    
+    const createdProject = {
+      _id: result.insertedId.toString(),
+      ...newProject,
+    };
+
+    return NextResponse.json({
+      success: true,
+      data: createdProject,
+    });
+  } catch (error) {
+    console.error("Error creating project:", error);
+    return NextResponse.json(
+      { error: "Failed to create project" },
+      { status: 500 }
+    );
+  }
+}

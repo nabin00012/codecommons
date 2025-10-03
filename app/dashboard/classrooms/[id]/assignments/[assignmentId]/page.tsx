@@ -73,7 +73,7 @@ export default function AssignmentDetailPage() {
         });
 
         // First verify we can access the classroom
-        const classroomServiceInstance = new ClassroomService(token);
+        const classroomServiceInstance = new ClassroomService();
         try {
           const classroomData = await classroomServiceInstance.getClassroom(
             classroomId

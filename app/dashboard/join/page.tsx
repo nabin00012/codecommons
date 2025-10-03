@@ -39,7 +39,7 @@ export default function JoinClassroomPage() {
         return;
       }
 
-      const classroomServiceInstance = new ClassroomService(token);
+      const classroomServiceInstance = new ClassroomService();
       await classroomServiceInstance.joinClassroomByCode(code);
 
       toast({

@@ -70,23 +70,23 @@ interface Group {
 export default function CommunityPage() {
   const { user } = useUser();
   const { toast } = useToast();
-  
+
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Form states
   const [showDiscussionForm, setShowDiscussionForm] = useState(false);
   const [showEventForm, setShowEventForm] = useState(false);
   const [showGroupForm, setShowGroupForm] = useState(false);
-  
+
   const [newDiscussion, setNewDiscussion] = useState({
     title: "",
     content: "",
     tags: "",
   });
-  
+
   const [newEvent, setNewEvent] = useState({
     title: "",
     description: "",
@@ -94,7 +94,7 @@ export default function CommunityPage() {
     location: "",
     maxAttendees: "50",
   });
-  
+
   const [newGroup, setNewGroup] = useState({
     name: "",
     description: "",
@@ -111,7 +111,7 @@ export default function CommunityPage() {
         const discussionsResponse = await fetch("/api/discussions", {
           credentials: "include",
         });
-        
+
         if (discussionsResponse.ok) {
           const discussionsData = await discussionsResponse.json();
           setDiscussions(discussionsData.data || []);
@@ -121,7 +121,7 @@ export default function CommunityPage() {
         const eventsResponse = await fetch("/api/events", {
           credentials: "include",
         });
-        
+
         if (eventsResponse.ok) {
           const eventsData = await eventsResponse.json();
           setEvents(eventsData.data || []);
@@ -131,12 +131,11 @@ export default function CommunityPage() {
         const groupsResponse = await fetch("/api/groups", {
           credentials: "include",
         });
-        
+
         if (groupsResponse.ok) {
           const groupsData = await groupsResponse.json();
           setGroups(groupsData.data || []);
         }
-
       } catch (error) {
         console.error("Error fetching community data:", error);
         toast({
@@ -154,7 +153,7 @@ export default function CommunityPage() {
 
   const handleCreateDiscussion = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const response = await fetch("/api/discussions", {
         method: "POST",
@@ -164,13 +163,16 @@ export default function CommunityPage() {
         credentials: "include",
         body: JSON.stringify({
           ...newDiscussion,
-          tags: newDiscussion.tags.split(",").map(tag => tag.trim()).filter(tag => tag),
+          tags: newDiscussion.tags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter((tag) => tag),
         }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        setDiscussions(prev => [data.data, ...prev]);
+        setDiscussions((prev) => [data.data, ...prev]);
         setNewDiscussion({ title: "", content: "", tags: "" });
         setShowDiscussionForm(false);
         toast({
@@ -190,7 +192,7 @@ export default function CommunityPage() {
 
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const response = await fetch("/api/events", {
         method: "POST",
@@ -203,8 +205,14 @@ export default function CommunityPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setEvents(prev => [data.data, ...prev]);
-        setNewEvent({ title: "", description: "", date: "", location: "", maxAttendees: "50" });
+        setEvents((prev) => [data.data, ...prev]);
+        setNewEvent({
+          title: "",
+          description: "",
+          date: "",
+          location: "",
+          maxAttendees: "50",
+        });
         setShowEventForm(false);
         toast({
           title: "Success",
@@ -223,7 +231,7 @@ export default function CommunityPage() {
 
   const handleCreateGroup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const response = await fetch("/api/groups", {
         method: "POST",
@@ -233,13 +241,16 @@ export default function CommunityPage() {
         credentials: "include",
         body: JSON.stringify({
           ...newGroup,
-          tags: newGroup.tags.split(",").map(tag => tag.trim()).filter(tag => tag),
+          tags: newGroup.tags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter((tag) => tag),
         }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        setGroups(prev => [data.data, ...prev]);
+        setGroups((prev) => [data.data, ...prev]);
         setNewGroup({ name: "", description: "", tags: "", isPrivate: false });
         setShowGroupForm(false);
         toast({
@@ -265,11 +276,13 @@ export default function CommunityPage() {
       });
 
       if (response.ok) {
-        setGroups(prev => prev.map(group => 
-          group._id === groupId 
-            ? { ...group, members: [...group.members, user?.email || ""] }
-            : group
-        ));
+        setGroups((prev) =>
+          prev.map((group) =>
+            group._id === groupId
+              ? { ...group, members: [...group.members, user?.email || ""] }
+              : group
+          )
+        );
         toast({
           title: "Success",
           description: "Joined group successfully",
@@ -293,11 +306,13 @@ export default function CommunityPage() {
       });
 
       if (response.ok) {
-        setEvents(prev => prev.map(event => 
-          event._id === eventId 
-            ? { ...event, attendees: [...event.attendees, user?.email || ""] }
-            : event
-        ));
+        setEvents((prev) =>
+          prev.map((event) =>
+            event._id === eventId
+              ? { ...event, attendees: [...event.attendees, user?.email || ""] }
+              : event
+          )
+        );
         toast({
           title: "Success",
           description: "You're now attending this event",
@@ -313,22 +328,29 @@ export default function CommunityPage() {
     }
   };
 
-  const filteredDiscussions = discussions.filter(discussion =>
-    discussion.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    discussion.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    discussion.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredDiscussions = discussions.filter(
+    (discussion) =>
+      discussion.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      discussion.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      discussion.tags.some((tag) =>
+        tag.toLowerCase().includes(searchQuery.toLowerCase())
+      )
   );
 
-  const filteredEvents = events.filter(event =>
-    event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    event.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    event.location.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredEvents = events.filter(
+    (event) =>
+      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.location.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredGroups = groups.filter(group =>
-    group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    group.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    group.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredGroups = groups.filter(
+    (group) =>
+      group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      group.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      group.tags.some((tag) =>
+        tag.toLowerCase().includes(searchQuery.toLowerCase())
+      )
   );
 
   if (loading) {
@@ -377,7 +399,9 @@ export default function CommunityPage() {
           <TabsContent value="discussions" className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">Community Discussions</h2>
-              <Button onClick={() => setShowDiscussionForm(!showDiscussionForm)}>
+              <Button
+                onClick={() => setShowDiscussionForm(!showDiscussionForm)}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Start Discussion
               </Button>
@@ -395,7 +419,12 @@ export default function CommunityPage() {
                       <Input
                         placeholder="Discussion title"
                         value={newDiscussion.title}
-                        onChange={(e) => setNewDiscussion(prev => ({ ...prev, title: e.target.value }))}
+                        onChange={(e) =>
+                          setNewDiscussion((prev) => ({
+                            ...prev,
+                            title: e.target.value,
+                          }))
+                        }
                         required
                       />
                     </div>
@@ -403,7 +432,12 @@ export default function CommunityPage() {
                       <Textarea
                         placeholder="What would you like to discuss?"
                         value={newDiscussion.content}
-                        onChange={(e) => setNewDiscussion(prev => ({ ...prev, content: e.target.value }))}
+                        onChange={(e) =>
+                          setNewDiscussion((prev) => ({
+                            ...prev,
+                            content: e.target.value,
+                          }))
+                        }
                         rows={4}
                         required
                       />
@@ -412,7 +446,12 @@ export default function CommunityPage() {
                       <Input
                         placeholder="Tags (comma-separated)"
                         value={newDiscussion.tags}
-                        onChange={(e) => setNewDiscussion(prev => ({ ...prev, tags: e.target.value }))}
+                        onChange={(e) =>
+                          setNewDiscussion((prev) => ({
+                            ...prev,
+                            tags: e.target.value,
+                          }))
+                        }
                       />
                     </div>
                     <div className="flex gap-2">
@@ -420,7 +459,11 @@ export default function CommunityPage() {
                         <MessageSquare className="h-4 w-4 mr-2" />
                         Post Discussion
                       </Button>
-                      <Button type="button" variant="outline" onClick={() => setShowDiscussionForm(false)}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowDiscussionForm(false)}
+                      >
                         Cancel
                       </Button>
                     </div>
@@ -432,27 +475,39 @@ export default function CommunityPage() {
             {/* Discussions List */}
             <div className="space-y-4">
               {filteredDiscussions.map((discussion) => (
-                <Card key={discussion._id} className="hover:shadow-lg transition-shadow">
+                <Card
+                  key={discussion._id}
+                  className="hover:shadow-lg transition-shadow"
+                >
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          {discussion.isPinned && <Star className="h-4 w-4 text-yellow-500" />}
-                          <CardTitle className="text-lg">{discussion.title}</CardTitle>
+                          {discussion.isPinned && (
+                            <Star className="h-4 w-4 text-yellow-500" />
+                          )}
+                          <CardTitle className="text-lg">
+                            {discussion.title}
+                          </CardTitle>
                         </div>
                         <div className="flex items-center gap-4 text-sm text-gray-500">
                           <div className="flex items-center gap-1">
                             <Avatar className="h-6 w-6">
                               <AvatarImage src="/placeholder.svg" />
                               <AvatarFallback className="text-xs">
-                                {discussion.authorName.split(' ').map(n => n[0]).join('')}
+                                {discussion.authorName
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")}
                               </AvatarFallback>
                             </Avatar>
                             {discussion.authorName}
                           </div>
                           <div className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
-                            {new Date(discussion.createdAt).toLocaleDateString()}
+                            {new Date(
+                              discussion.createdAt
+                            ).toLocaleDateString()}
                           </div>
                           <div className="flex items-center gap-1">
                             <MessageCircle className="h-3 w-3" />
@@ -464,8 +519,16 @@ export default function CommunityPage() {
                           </div>
                         </div>
                       </div>
-                      <Badge variant={discussion.authorRole === "teacher" ? "default" : "secondary"}>
-                        {discussion.authorRole === "teacher" ? "👨‍🏫 Teacher" : "👨‍🎓 Student"}
+                      <Badge
+                        variant={
+                          discussion.authorRole === "teacher"
+                            ? "default"
+                            : "secondary"
+                        }
+                      >
+                        {discussion.authorRole === "teacher"
+                          ? "👨‍🏫 Teacher"
+                          : "👨‍🎓 Student"}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -476,7 +539,11 @@ export default function CommunityPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex gap-2">
                         {discussion.tags.map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs">
+                          <Badge
+                            key={tag}
+                            variant="outline"
+                            className="text-xs"
+                          >
                             #{tag}
                           </Badge>
                         ))}
@@ -514,7 +581,12 @@ export default function CommunityPage() {
                       <Input
                         placeholder="Event title"
                         value={newEvent.title}
-                        onChange={(e) => setNewEvent(prev => ({ ...prev, title: e.target.value }))}
+                        onChange={(e) =>
+                          setNewEvent((prev) => ({
+                            ...prev,
+                            title: e.target.value,
+                          }))
+                        }
                         required
                       />
                     </div>
@@ -522,7 +594,12 @@ export default function CommunityPage() {
                       <Textarea
                         placeholder="Event description"
                         value={newEvent.description}
-                        onChange={(e) => setNewEvent(prev => ({ ...prev, description: e.target.value }))}
+                        onChange={(e) =>
+                          setNewEvent((prev) => ({
+                            ...prev,
+                            description: e.target.value,
+                          }))
+                        }
                         rows={3}
                         required
                       />
@@ -533,7 +610,12 @@ export default function CommunityPage() {
                           type="datetime-local"
                           placeholder="Event date"
                           value={newEvent.date}
-                          onChange={(e) => setNewEvent(prev => ({ ...prev, date: e.target.value }))}
+                          onChange={(e) =>
+                            setNewEvent((prev) => ({
+                              ...prev,
+                              date: e.target.value,
+                            }))
+                          }
                           required
                         />
                       </div>
@@ -542,7 +624,12 @@ export default function CommunityPage() {
                           placeholder="Max attendees"
                           type="number"
                           value={newEvent.maxAttendees}
-                          onChange={(e) => setNewEvent(prev => ({ ...prev, maxAttendees: e.target.value }))}
+                          onChange={(e) =>
+                            setNewEvent((prev) => ({
+                              ...prev,
+                              maxAttendees: e.target.value,
+                            }))
+                          }
                         />
                       </div>
                     </div>
@@ -550,7 +637,12 @@ export default function CommunityPage() {
                       <Input
                         placeholder="Location"
                         value={newEvent.location}
-                        onChange={(e) => setNewEvent(prev => ({ ...prev, location: e.target.value }))}
+                        onChange={(e) =>
+                          setNewEvent((prev) => ({
+                            ...prev,
+                            location: e.target.value,
+                          }))
+                        }
                         required
                       />
                     </div>
@@ -559,7 +651,11 @@ export default function CommunityPage() {
                         <Calendar className="h-4 w-4 mr-2" />
                         Create Event
                       </Button>
-                      <Button type="button" variant="outline" onClick={() => setShowEventForm(false)}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowEventForm(false)}
+                      >
                         Cancel
                       </Button>
                     </div>
@@ -571,7 +667,10 @@ export default function CommunityPage() {
             {/* Events List */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredEvents.map((event) => (
-                <Card key={event._id} className="hover:shadow-lg transition-shadow">
+                <Card
+                  key={event._id}
+                  className="hover:shadow-lg transition-shadow"
+                >
                   <CardHeader>
                     <CardTitle className="text-lg">{event.title}</CardTitle>
                     <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -590,17 +689,20 @@ export default function CommunityPage() {
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <Users className="h-4 w-4 text-gray-500" />
-                        {event.attendees.length} / {event.maxAttendees} attendees
+                        {event.attendees.length} / {event.maxAttendees}{" "}
+                        attendees
                       </div>
                     </div>
                     <div className="flex gap-2 mt-4">
                       {event.attendees.includes(user?.email || "") ? (
                         <Badge variant="default">Attending</Badge>
                       ) : (
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           onClick={() => handleAttendEvent(event._id)}
-                          disabled={event.attendees.length >= parseInt(event.maxAttendees)}
+                          disabled={
+                            event.attendees.length >= Number(event.maxAttendees)
+                          }
                         >
                           <UserPlus className="h-4 w-4 mr-1" />
                           Attend
@@ -639,7 +741,12 @@ export default function CommunityPage() {
                       <Input
                         placeholder="Group name"
                         value={newGroup.name}
-                        onChange={(e) => setNewGroup(prev => ({ ...prev, name: e.target.value }))}
+                        onChange={(e) =>
+                          setNewGroup((prev) => ({
+                            ...prev,
+                            name: e.target.value,
+                          }))
+                        }
                         required
                       />
                     </div>
@@ -647,7 +754,12 @@ export default function CommunityPage() {
                       <Textarea
                         placeholder="Group description"
                         value={newGroup.description}
-                        onChange={(e) => setNewGroup(prev => ({ ...prev, description: e.target.value }))}
+                        onChange={(e) =>
+                          setNewGroup((prev) => ({
+                            ...prev,
+                            description: e.target.value,
+                          }))
+                        }
                         rows={3}
                         required
                       />
@@ -656,7 +768,12 @@ export default function CommunityPage() {
                       <Input
                         placeholder="Tags (comma-separated)"
                         value={newGroup.tags}
-                        onChange={(e) => setNewGroup(prev => ({ ...prev, tags: e.target.value }))}
+                        onChange={(e) =>
+                          setNewGroup((prev) => ({
+                            ...prev,
+                            tags: e.target.value,
+                          }))
+                        }
                       />
                     </div>
                     <div className="flex items-center gap-2">
@@ -664,16 +781,27 @@ export default function CommunityPage() {
                         type="checkbox"
                         id="private"
                         checked={newGroup.isPrivate}
-                        onChange={(e) => setNewGroup(prev => ({ ...prev, isPrivate: e.target.checked }))}
+                        onChange={(e) =>
+                          setNewGroup((prev) => ({
+                            ...prev,
+                            isPrivate: e.target.checked,
+                          }))
+                        }
                       />
-                      <label htmlFor="private" className="text-sm">Private group</label>
+                      <label htmlFor="private" className="text-sm">
+                        Private group
+                      </label>
                     </div>
                     <div className="flex gap-2">
                       <Button type="submit">
                         <Users className="h-4 w-4 mr-2" />
                         Create Group
                       </Button>
-                      <Button type="button" variant="outline" onClick={() => setShowGroupForm(false)}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowGroupForm(false)}
+                      >
                         Cancel
                       </Button>
                     </div>
@@ -685,11 +813,16 @@ export default function CommunityPage() {
             {/* Groups List */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredGroups.map((group) => (
-                <Card key={group._id} className="hover:shadow-lg transition-shadow">
+                <Card
+                  key={group._id}
+                  className="hover:shadow-lg transition-shadow"
+                >
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <CardTitle className="text-lg">{group.name}</CardTitle>
-                      <Badge variant={group.isPrivate ? "secondary" : "default"}>
+                      <Badge
+                        variant={group.isPrivate ? "secondary" : "default"}
+                      >
                         {group.isPrivate ? "Private" : "Public"}
                       </Badge>
                     </div>
@@ -705,7 +838,11 @@ export default function CommunityPage() {
                       </div>
                       <div className="flex gap-2">
                         {group.tags.map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs">
+                          <Badge
+                            key={tag}
+                            variant="outline"
+                            className="text-xs"
+                          >
                             #{tag}
                           </Badge>
                         ))}
@@ -715,8 +852,8 @@ export default function CommunityPage() {
                       {group.members.includes(user?.email || "") ? (
                         <Badge variant="default">Member</Badge>
                       ) : (
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           onClick={() => handleJoinGroup(group._id)}
                         >
                           <UserPlus className="h-4 w-4 mr-1" />
