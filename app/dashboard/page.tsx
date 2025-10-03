@@ -95,6 +95,49 @@ function useAnimatedCounter(endValue: number, duration: number = 2000) {
   return { count, ref };
 }
 
+// Separate component for stat cards to use hooks properly
+function StatCard({ stat, index }: { stat: any; index: number }) {
+  const numericValue = parseInt(stat.value?.replace(/\D/g, "") || "0") || 0;
+  const { count, ref } = useAnimatedCounter(numericValue, 1500);
+  const progressValue = Math.floor(Math.random() * 40 + 60);
+
+  return (
+    <motion.div
+      key={stat.title}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.1 * index, duration: 0.5 }}
+      ref={ref}
+    >
+      <Card className="relative overflow-hidden group hover:shadow-2xl transition-all duration-500 border-border/50 cosmic-card">
+        <CosmicCardEffect />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            {stat.title}
+          </CardTitle>
+          <div className="p-2 rounded-lg bg-primary/10 text-primary cosmic-glow">
+            {stat.icon}
+          </div>
+        </CardHeader>
+        <CardContent className="relative z-10">
+          <div className="text-3xl font-bold cosmic-text mb-2">
+            {count}
+            {stat.value?.includes("+") && "+"}
+          </div>
+          <Progress
+            value={progressValue}
+            className="h-2 cosmic-progress"
+          />
+          <p className="text-xs text-muted-foreground mt-2">
+            {stat.change}
+          </p>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
 const quickActions = [
   {
     title: "My Classrooms",
@@ -404,101 +447,9 @@ export default function DashboardPage() {
                   transition={{ delay: 0.2, duration: 0.6 }}
                   className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12"
                 >
-                  {stats?.map((stat, index) => {
-                    const numericValue =
-                      parseInt(stat.value?.replace(/\D/g, "") || "0") || 0;
-                    const { count, ref } = useAnimatedCounter(
-                      numericValue,
-                      1500
-                    );
-
-                    const progressValue = Math.floor(Math.random() * 40 + 60);
-                    const widthValue = `${Math.random() * 40 + 60}%`;
-
-                    return (
-                      <motion.div
-                        key={stat.title}
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.1 * index, duration: 0.4 }}
-                        ref={ref}
-                      >
-                        <Card className="cosmic-glass relative overflow-hidden border-0 hover:shadow-2xl transition-all duration-500 hover:scale-105 group hover:-translate-y-1">
-                          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 group-hover:from-primary/10 group-hover:to-accent/10 transition-all duration-500" />
-                          <CardContent className="relative p-6">
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1">
-                                <p className="text-sm font-medium text-muted-foreground mb-1">
-                                  {stat.title}
-                                </p>
-                                <div className="flex items-center gap-2">
-                                  <p className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
-                                    {stat?.title?.includes("Streak")
-                                      ? `${count} days`
-                                      : stat?.title?.includes("Posts")
-                                      ? `${count}`
-                                      : stat?.title?.includes("Completed")
-                                      ? `${count}`
-                                      : `${count}`}
-                                  </p>
-                                  <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    transition={{
-                                      delay: 0.5 + index * 0.1,
-                                      type: "spring",
-                                      stiffness: 200,
-                                    }}
-                                  >
-                                    <Sparkles className="h-4 w-4 text-primary opacity-60" />
-                                  </motion.div>
-                                </div>
-                                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                                  <TrendingUp className="h-3 w-3 text-green-500" />
-                                  {stat?.change || "No recent activity"}
-                                </p>
-                              </div>
-                              <div
-                                className={`p-3 rounded-xl ${stat.bgColor} group-hover:scale-110 transition-transform duration-300 shadow-lg`}
-                              >
-                                <div
-                                  className={`${
-                                    stat?.color || "text-gray-600"
-                                  } group-hover:scale-110 transition-transform duration-300`}
-                                >
-                                  {stat?.icon || (
-                                    <Activity className="h-4 w-4" />
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Animated progress indicator */}
-                            <div className="mt-4">
-                              <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                                <span>Progress</span>
-                                <span>{progressValue}%</span>
-                              </div>
-                              <div className="w-full bg-muted/30 rounded-full h-2 overflow-hidden">
-                                <motion.div
-                                  className="h-full bg-gradient-to-r from-primary/60 to-primary rounded-full"
-                                  initial={{ width: 0 }}
-                                  animate={{
-                                    width: widthValue,
-                                  }}
-                                  transition={{
-                                    delay: 1 + index * 0.2,
-                                    duration: 1.5,
-                                    ease: "easeOut",
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    );
-                  })}
+                  {stats?.map((stat, index) => (
+                    <StatCard key={stat.title} stat={stat} index={index} />
+                  ))}
                 </motion.div>
 
                 {/* Main Navigation Grid */}
