@@ -3,7 +3,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 
 export async function GET(request: NextRequest) {
   try {
-    const email = request.nextUrl.searchParams.get("email");
+    const email = request.nextUrl?.searchParams?.get("email");
 
     if (!email) {
       return NextResponse.json(

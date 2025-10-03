@@ -8,6 +8,8 @@ import { UserProvider } from "@/lib/context/user-context";
 import { AuthProvider } from "@/lib/context/AuthContext";
 import { NextAuthProvider } from "@/components/providers/next-auth-provider";
 import { SettingsProvider } from "@/lib/context/settings-context";
+import ErrorBoundary from "@/components/error-boundary";
+import ClientOnly from "@/components/client-only";
 import "@/lib/monaco-config";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -29,26 +31,34 @@ export default function RootLayout({
       <body
         className={`${inter.className} min-h-screen bg-background antialiased`}
       >
-        <NextAuthProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <AuthProvider>
-              <UserProvider>
-                <SettingsProvider>
-                  <main className="relative flex min-h-screen flex-col overflow-x-hidden">
-                    <div className="flex-1">{children}</div>
-                    <Analytics />
-                  </main>
-                </SettingsProvider>
-              </UserProvider>
-            </AuthProvider>
-            <Toaster />
-          </ThemeProvider>
-        </NextAuthProvider>
+        <ErrorBoundary>
+          <ClientOnly fallback={
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+          }>
+            <NextAuthProvider>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                disableTransitionOnChange
+              >
+                <AuthProvider>
+                  <UserProvider>
+                    <SettingsProvider>
+                      <main className="relative flex min-h-screen flex-col overflow-x-hidden">
+                        <div className="flex-1">{children}</div>
+                        <Analytics />
+                      </main>
+                    </SettingsProvider>
+                  </UserProvider>
+                </AuthProvider>
+                <Toaster />
+              </ThemeProvider>
+            </NextAuthProvider>
+          </ClientOnly>
+        </ErrorBoundary>
       </body>
     </html>
   );

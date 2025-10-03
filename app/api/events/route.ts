@@ -5,11 +5,19 @@ import { auth } from "@/lib/auth";
 
 export async function GET(req: Request) {
   try {
-    const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
-    const query = searchParams.get("query") || "";
-    const tags = searchParams.get("tags")?.split(",") || [];
+    let searchParams;
+    try {
+      const url = new URL(req.url);
+      searchParams = url.searchParams;
+    } catch (error) {
+      console.error("Error parsing URL:", error);
+      searchParams = new URLSearchParams();
+    }
+    
+    const page = parseInt(searchParams?.get("page") || "1");
+    const limit = parseInt(searchParams?.get("limit") || "10");
+    const query = searchParams?.get("query") || "";
+    const tags = searchParams?.get("tags")?.split(",") || [];
 
     await connectToDatabase();
 

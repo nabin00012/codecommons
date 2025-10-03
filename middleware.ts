@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { safeGetCookie } from "@/lib/safe-fetch";
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -26,11 +27,11 @@ export function middleware(request: NextRequest) {
   if (isPublic) return NextResponse.next();
 
   // Check for auth tokens (both NextAuth and custom)
-  const token =
-    request.cookies.get("next-auth.session-token")?.value ||
-    request.cookies.get("__Secure-next-auth.session-token")?.value ||
-    request.cookies.get("auth-token")?.value ||
-    request.cookies.get("token")?.value;
+  const token = 
+    safeGetCookie(request.cookies, "next-auth.session-token") ||
+    safeGetCookie(request.cookies, "__Secure-next-auth.session-token") ||
+    safeGetCookie(request.cookies, "auth-token") ||
+    safeGetCookie(request.cookies, "token");
 
   if (!token) {
     // Don't redirect API routes, return 401 instead

@@ -14,9 +14,11 @@ export default function ErrorPage() {
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
-    const errorParam = searchParams.get("error");
-    if (errorParam) {
-      setError(errorParam);
+    if (searchParams) {
+      const errorParam = searchParams.get("error");
+      if (errorParam) {
+        setError(errorParam);
+      }
     }
   }, [searchParams]);
 

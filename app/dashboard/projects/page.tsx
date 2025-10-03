@@ -112,7 +112,7 @@ export default function ProjectsPage() {
         let errorMessage = `Failed to fetch projects: ${response.status} ${response.statusText}`;
 
         try {
-          const contentType = response.headers.get("content-type");
+          const contentType = response.headers?.get("content-type");
           if (contentType && contentType.includes("application/json")) {
             const errorData = await response.json();
             errorMessage = errorData.message || errorMessage;
