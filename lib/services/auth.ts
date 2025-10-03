@@ -164,6 +164,21 @@ class AuthService {
     }
     return localStorage.getItem("token");
   }
+
+  async logout(): Promise<void> {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token");
+    }
+    // You can also make an API call to invalidate the token on the server
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout API call failed:", error);
+    }
+  }
 }
 
 export const authService = new AuthService();

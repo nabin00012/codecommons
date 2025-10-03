@@ -447,7 +447,7 @@ export default function AssignmentDetailPage() {
                   <div className="space-y-4">
                     {assignment.submissions.map((submission) => (
                       <Card
-                        key={submission._id || submission.id}
+                        key={submission._id}
                         className="p-4"
                       >
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
@@ -474,8 +474,8 @@ export default function AssignmentDetailPage() {
                               onSubmit={async (e) => {
                                 e.preventDefault();
                                 await handleGrade(
-                                  submission._id,
-                                  submission._id || submission.id
+                                  0, // submission index (not used)
+                                  submission._id
                                 );
                               }}
                             >

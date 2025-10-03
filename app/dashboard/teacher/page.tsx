@@ -65,24 +65,30 @@ export default function TeacherDashboardPage() {
   const recentAssignments = [
     {
       id: 1,
+      _id: "1",
       title: "Data Structures Quiz",
       dueDate: "Apr 15, 2025",
       submissions: 28,
       totalStudents: 32,
+      classroomId: "classroom1",
     },
     {
       id: 2,
+      _id: "2",
       title: "Algorithm Analysis",
       dueDate: "Apr 18, 2025",
       submissions: 15,
       totalStudents: 32,
+      classroomId: "classroom1",
     },
     {
       id: 3,
+      _id: "3",
       title: "Database Design Project",
       dueDate: "Apr 25, 2025",
       submissions: 8,
       totalStudents: 32,
+      classroomId: "classroom1",
     },
   ];
 

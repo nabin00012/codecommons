@@ -7,6 +7,7 @@ interface EditorSettings {
   fontSize: number;
   tabSize: number;
   wordWrap: boolean;
+  minimap: boolean;
 }
 
 interface NotificationSettings {
@@ -29,6 +30,7 @@ const defaultSettings: Settings = {
     fontSize: 14,
     tabSize: 2,
     wordWrap: true,
+    minimap: false,
   },
   notifications: {
     enabled: true,

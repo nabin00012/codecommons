@@ -38,7 +38,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const verifyToken = async () => {
       try {
-        const storedToken = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        const storedToken =
+          typeof window !== "undefined" ? localStorage.getItem("token") : null;
         if (!storedToken) {
           setIsAuthenticated(false);
           setIsLoading(false);

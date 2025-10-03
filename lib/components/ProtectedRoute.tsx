@@ -41,7 +41,11 @@ export default function ProtectedRoute({
       user.role !== "admin" &&
       (!user.onboardingCompleted || !user.department || user.department === "");
 
-    if (needsOnboarding && typeof window !== "undefined" && window.location.pathname !== "/onboarding") {
+    if (
+      needsOnboarding &&
+      typeof window !== "undefined" &&
+      window.location.pathname !== "/onboarding"
+    ) {
       setIsRedirecting(true);
       router.push("/onboarding");
       return;

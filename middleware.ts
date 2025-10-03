@@ -5,7 +5,7 @@ const isProd = process.env.NODE_ENV === "production";
 
 const publicPrefixes = [
   "/",
-  "/login", 
+  "/login",
   "/register",
   "/onboarding",
   "/api/auth",
@@ -26,7 +26,8 @@ export function middleware(request: NextRequest) {
   if (isPublic) return NextResponse.next();
 
   // Check for auth tokens (both NextAuth and custom)
-  const token = request.cookies.get("next-auth.session-token")?.value ||
+  const token =
+    request.cookies.get("next-auth.session-token")?.value ||
     request.cookies.get("__Secure-next-auth.session-token")?.value ||
     request.cookies.get("auth-token")?.value ||
     request.cookies.get("token")?.value;
@@ -49,7 +50,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|public).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|public).*)"],
 };

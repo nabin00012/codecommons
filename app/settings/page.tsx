@@ -59,7 +59,7 @@ export default function SettingsPage() {
                 <Label htmlFor="theme">Theme</Label>
                 <Select
                   value={settings.theme}
-                  onValueChange={(value) =>
+                  onValueChange={(value: "light" | "dark" | "system" | "cosmic") =>
                     updateSettings({ ...settings, theme: value })
                   }
                 >

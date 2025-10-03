@@ -405,6 +405,7 @@ export function ProjectManagement() {
                   setCurrentProject(project);
                   setIsDeleteDialogOpen(true);
                 }}
+                dueDate={new Date(project.dueDate)}
                 onView={(id) => {
                   // Handle view project
                   toast({

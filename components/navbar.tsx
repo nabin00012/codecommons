@@ -8,7 +8,10 @@ import { Code, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "next-themes";
 import ClientOnly from "@/components/client-only";
-import { UserNavigation, MobileUserNavigation } from "@/components/user-navigation";
+import {
+  UserNavigation,
+  MobileUserNavigation,
+} from "@/components/user-navigation";
 
 export function Navbar() {
   const pathname = usePathname();

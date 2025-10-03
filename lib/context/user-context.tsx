@@ -16,6 +16,7 @@ export interface User {
   year?: string;
   specialization?: string;
   onboardingCompleted?: boolean;
+  avatar?: string;
   preferences?: {
     theme: string;
     notifications: boolean;

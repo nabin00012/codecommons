@@ -3,11 +3,13 @@
 import React from "react";
 import { Project } from "@/lib/models/project";
 
+type ProjectStatus = "not-started" | "in-progress" | "completed" | "overdue";
+
 interface ProjectCardProps {
   id: string;
   title: string;
   description: string;
-  status: Project["status"];
+  status: ProjectStatus;
   progress: number;
   dueDate: Date;
   onEdit: (id: string) => void;
@@ -15,7 +17,7 @@ interface ProjectCardProps {
   onView: (id: string) => void;
 }
 
-const statusStyles = {
+const statusStyles: Record<ProjectStatus, { badge: string; progress: string }> = {
   "not-started": {
     badge: "bg-gray-100 text-gray-800",
     progress: "bg-gray-200",

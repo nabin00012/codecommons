@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import jwt from "jsonwebtoken";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
     console.log("Fetching projects from frontend API...");
-    
+
     // Get user from auth token
     const token = request.cookies.get("auth-token")?.value;
     if (!token) {
@@ -17,17 +17,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const decoded = jwt.verify(token, process.env.NEXTAUTH_SECRET || "fallback-secret") as any;
+    const decoded = jwt.verify(
+      token,
+      process.env.NEXTAUTH_SECRET || "fallback-secret"
+    ) as any;
     console.log("User authenticated:", decoded.email);
 
     const { db } = await connectToDatabase();
-    
+
     // Get all projects
     const projects = await db.collection("projects").find({}).toArray();
     console.log("Found projects:", projects.length);
 
     // Format projects for frontend
-    const formattedProjects = projects.map(project => ({
+    const formattedProjects = projects.map((project) => ({
       _id: project._id.toString(),
       title: project.title,
       description: project.description,
@@ -54,7 +57,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     console.log("Creating new project...");
-    
+
     // Get user from auth token
     const token = request.cookies.get("auth-token")?.value;
     if (!token) {
@@ -64,7 +67,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const decoded = jwt.verify(token, process.env.NEXTAUTH_SECRET || "fallback-secret") as any;
+    const decoded = jwt.verify(
+      token,
+      process.env.NEXTAUTH_SECRET || "fallback-secret"
+    ) as any;
     console.log("User authenticated:", decoded.email);
 
     const body = await request.json();
@@ -78,7 +84,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { db } = await connectToDatabase();
-    
+
     const newProject = {
       title,
       description,
@@ -91,7 +97,7 @@ export async function POST(request: NextRequest) {
     };
 
     const result = await db.collection("projects").insertOne(newProject);
-    
+
     const createdProject = {
       _id: result.insertedId.toString(),
       ...newProject,

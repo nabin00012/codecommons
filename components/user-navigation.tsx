@@ -36,7 +36,9 @@ interface MobileUserNavigationProps {
   onNavigate?: () => void;
 }
 
-export function MobileUserNavigation({ onNavigate }: MobileUserNavigationProps) {
+export function MobileUserNavigation({
+  onNavigate,
+}: MobileUserNavigationProps) {
   const { user } = useUser();
   const { theme } = useTheme();
 
