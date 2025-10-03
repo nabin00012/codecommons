@@ -134,11 +134,11 @@ export function ProjectManagement() {
   const { user } = useUser();
   const { toast } = useToast();
 
-  // State for projects
-  const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS);
-  const [filteredProjects, setFilteredProjects] =
-    useState<Project[]>(INITIAL_PROJECTS);
+  // State for projects - start empty to prevent hydration mismatch
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   // State for dialogs
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -151,11 +151,14 @@ export function ProjectManagement() {
   const [statusFilter, setStatusFilter] = useState<ProjectStatus[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Simulate loading state
+  // Initialize data after mounting to prevent hydration mismatch
   useEffect(() => {
+    setMounted(true);
     const timer = setTimeout(() => {
+      setProjects(INITIAL_PROJECTS);
+      setFilteredProjects(INITIAL_PROJECTS);
       setIsLoading(false);
-    }, 1000);
+    }, 100); // Small delay to ensure proper hydration
     return () => clearTimeout(timer);
   }, []);
 
@@ -271,6 +274,16 @@ export function ProjectManagement() {
       });
     }, 1000);
   };
+
+  if (!mounted || isLoading) {
+    return (
+      <section className="space-y-6">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-6">

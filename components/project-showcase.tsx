@@ -46,8 +46,8 @@ export function ProjectShowcase({ username, projects }: ProjectShowcaseProps) {
   // Filter projects based on active filter
   const filteredProjects = activeFilter === "all" ? projects : projects.filter((project) => project.featured)
 
-  // Generate a random background gradient for each project
-  const getRandomGradient = () => {
+  // Generate a deterministic gradient for each project based on project id
+  const getGradientForProject = (projectId: string) => {
     const gradients = [
       "from-violet-500 to-indigo-600",
       "from-fuchsia-500 to-purple-600",
@@ -56,7 +56,9 @@ export function ProjectShowcase({ username, projects }: ProjectShowcaseProps) {
       "from-rose-500 to-pink-600",
       "from-amber-500 to-orange-600",
     ]
-    return gradients[Math.floor(Math.random() * gradients.length)]
+    // Use project id to generate consistent gradient
+    const index = projectId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % gradients.length;
+    return gradients[index];
   }
 
   return (
@@ -143,7 +145,7 @@ export function ProjectShowcase({ username, projects }: ProjectShowcaseProps) {
                     <div
                       className={cn(
                         "absolute inset-0 bg-gradient-to-br opacity-90 transition-all duration-500",
-                        getRandomGradient(),
+                        getGradientForProject(project.id),
                         "group-hover:opacity-100 transform group-hover:scale-105",
                       )}
                     />
