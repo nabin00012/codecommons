@@ -35,8 +35,13 @@ export default function AssignmentsPage() {
   useEffect(() => {
     const fetchAssignments = async () => {
       try {
+        const token = localStorage.getItem("auth-token");
         const response = await fetch("/api/assignments", {
           credentials: "include",
+          headers: {
+            ...(token && { Authorization: `Bearer ${token}` }),
+            "Content-Type": "application/json",
+          },
         });
 
         if (response.ok) {
