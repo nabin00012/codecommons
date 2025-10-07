@@ -416,7 +416,7 @@ export default function ProjectsPage() {
                     {project.description}
                   </p>
                   <div className="flex flex-wrap gap-1 mt-2">
-                    {project.tags.slice(0, 3).map((tag, tagIndex) => (
+                    {(project.tags || []).slice(0, 3).map((tag, tagIndex) => (
                       <Badge
                         key={tagIndex}
                         variant="secondary"
@@ -425,9 +425,9 @@ export default function ProjectsPage() {
                         {tag}
                       </Badge>
                     ))}
-                    {project.tags.length > 3 && (
+                    {(project.tags || []).length > 3 && (
                       <Badge variant="outline" className="text-xs px-2 py-1">
-                        +{project.tags.length - 3}
+                        +{(project.tags || []).length - 3}
                       </Badge>
                     )}
                   </div>

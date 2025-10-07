@@ -212,6 +212,7 @@ export default function DashboardPage() {
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   
   // Stats state - will be fetched from API
+  // Initial stats without assignments (shown before classrooms are loaded)
   const [stats, setStats] = useState([
     {
       title: "Active Projects",
@@ -220,14 +221,6 @@ export default function DashboardPage() {
       icon: <FolderGit2 className="h-4 w-4" />,
       color: "text-blue-600",
       bgColor: "bg-blue-100 dark:bg-blue-900/30",
-    },
-    {
-      title: "Assignments Completed",
-      value: "0",
-      change: "No recent activity",
-      icon: <Calendar className="h-4 w-4" />,
-      color: "text-green-600",
-      bgColor: "bg-green-100 dark:bg-green-900/30",
     },
     {
       title: "Community Posts",
@@ -302,6 +295,19 @@ export default function DashboardPage() {
           
           if (classroomCount > 0) {
             setHasClassrooms(true);
+            // Update stats to include assignments when classrooms exist
+            setStats(prevStats => [
+              prevStats[0], // Active Projects
+              {
+                title: "Assignments Completed",
+                value: "0",
+                change: "No recent activity",
+                icon: <Calendar className="h-4 w-4" />,
+                color: "text-green-600",
+                bgColor: "bg-green-100 dark:bg-green-900/30",
+              },
+              ...prevStats.slice(1), // Community Posts, Current Streak
+            ]);
             
             // Add classroom and assignment actions if user has classrooms
             const baseActions = getBaseActions();
