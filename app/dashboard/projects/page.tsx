@@ -127,8 +127,9 @@ export default function ProjectsPage() {
       }
 
       const data = await response.json();
-      console.log("Projects fetched successfully:", data.length, "projects");
-      setProjects(data);
+      const projectsData = data.data || data.projects || data || [];
+      console.log("Projects fetched successfully:", projectsData.length, "projects");
+      setProjects(projectsData);
     } catch (error) {
       console.error("Error fetching projects:", error);
       setError(

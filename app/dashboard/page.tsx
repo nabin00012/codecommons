@@ -23,6 +23,7 @@ import {
   Star,
   Zap,
   Activity,
+  Library,
 } from "lucide-react";
 import { CosmicBackground } from "@/components/cosmic-background";
 import { CosmicCardEffect } from "@/components/cosmic-card-effect";
@@ -135,6 +136,17 @@ function StatCard({ stat, index }: { stat: any; index: number }) {
 
 // Base actions available to all users
 const getBaseActions = () => [
+  {
+    title: "Resource Hub",
+    description: "Discover learning resources",
+    href: "/resources",
+    icon: <Library className="h-6 w-6" />,
+    color: "from-purple-500 to-pink-500",
+    bgColor:
+      "bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20",
+    glowColor: "shadow-purple-500/25",
+    alwaysShow: true,
+  },
   {
     title: "Code Editor",
     description: "Write and test your code",
@@ -285,7 +297,7 @@ export default function DashboardPage() {
       fetch(`/api/classrooms?userId=${user.id}`)
         .then(res => res.json())
         .then(data => {
-          const classrooms = data.classrooms || [];
+          const classrooms = data.data || data.classrooms || [];
           const classroomCount = classrooms.length;
           
           if (classroomCount > 0) {
