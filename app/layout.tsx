@@ -12,6 +12,7 @@ import ErrorBoundary from "@/components/error-boundary";
 import ClientOnly from "@/components/client-only";
 import "@/lib/monaco-config";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -45,6 +46,7 @@ export default function RootLayout({
                     <main className="relative flex min-h-screen flex-col overflow-x-hidden">
                       <div className="flex-1">{children}</div>
                       <Analytics />
+                      <SpeedInsights />
                     </main>
                   </SettingsProvider>
                 </UserProvider>
