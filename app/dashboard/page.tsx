@@ -197,6 +197,7 @@ export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
   const [quickActions, setQuickActions] = useState(getBaseActions());
   const [hasClassrooms, setHasClassrooms] = useState(false);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
   
   // Stats state - will be fetched from API
   const [stats, setStats] = useState([
@@ -329,6 +330,16 @@ export default function DashboardPage() {
           console.error("Failed to fetch classrooms:", err);
           setQuickActions(getBaseActions());
         });
+
+      // Fetch recent activity (only if user has actual data)
+      fetch(`/api/users/${user.id}/activity`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.activity && data.activity.length > 0) {
+            setRecentActivity(data.activity.slice(0, 3)); // Show only last 3
+          }
+        })
+        .catch(err => console.error("Failed to fetch activity:", err));
     }
   }, [user, mounted]);
 
@@ -668,26 +679,7 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent className="relative">
                       <div className="space-y-3">
-                        {[
-                          {
-                            id: 1,
-                            title: "Completed JavaScript Assignment",
-                            type: "assignment",
-                            time: "2h ago",
-                          },
-                          {
-                            id: 2,
-                            title: "Joined React Classroom",
-                            type: "classroom",
-                            time: "5h ago",
-                          },
-                          {
-                            id: 3,
-                            title: "Submitted Project Proposal",
-                            type: "project",
-                            time: "1d ago",
-                          },
-                        ].map((activity, i) => (
+                        {recentActivity.length > 0 ? recentActivity.map((activity, i) => (
                           <motion.div
                             key={activity.id}
                             initial={{ opacity: 0, x: -20 }}
@@ -726,7 +718,12 @@ export default function DashboardPage() {
                               <Star className="h-4 w-4 text-yellow-500 opacity-60 group-hover:opacity-100 transition-opacity duration-200" />
                             </motion.div>
                           </motion.div>
-                        ))}
+                        )) : (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <p className="text-sm">No recent activity</p>
+                            <p className="text-xs mt-2">Start by creating a project or joining a classroom!</p>
+                          </div>
+                        )}
                       </div>
 
                       {/* Activity summary */}

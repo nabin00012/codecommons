@@ -20,6 +20,7 @@ export function Navbar() {
 
   const navItems = [
     { name: "Features", href: "/#features" },
+    { name: "Resources", href: "/resources" },
     { name: "Questions", href: "/dashboard/questions" },
     { name: "Leaderboard", href: "/leaderboard" },
     { name: "Point System", href: "/#point-system" },
