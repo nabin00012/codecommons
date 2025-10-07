@@ -83,23 +83,15 @@ export default function ProjectsPage() {
   const fetchProjects = async () => {
     try {
       setIsLoading(true);
-      const token = await authService.getToken();
-      if (!token) {
-        throw new Error("No authentication token found");
-      }
 
-      console.log("API URL:", API_URL);
-      console.log(
-        "Fetching projects with token:",
-        token.substring(0, 10) + "..."
-      );
+      console.log("Fetching projects...");
 
       const response = await fetch(`/api/projects`, {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
+        credentials: "include", // Important: sends cookies with request
       });
 
       console.log("Projects response status:", response.status);
@@ -149,23 +141,15 @@ export default function ProjectsPage() {
 
   const handleCreateProject = async () => {
     try {
-      const token = await authService.getToken();
-      if (!token) {
-        throw new Error("No authentication token found");
-      }
-
-      console.log(
-        "Creating project with token:",
-        token.substring(0, 10) + "..."
-      );
+      console.log("Creating project...");
       console.log("Project data:", newProject);
 
       const response = await fetch(`/api/projects`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
+        credentials: "include", // Important: sends cookies with request
         body: JSON.stringify(newProject),
       });
 
