@@ -133,29 +133,8 @@ function StatCard({ stat, index }: { stat: any; index: number }) {
   );
 }
 
-const quickActions = [
-  {
-    title: "My Classrooms",
-    description: "Access your courses and materials",
-    href: "/dashboard/classrooms",
-    icon: <BookOpen className="h-6 w-6" />,
-    color: "from-blue-500 to-cyan-500",
-    bgColor:
-      "bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20",
-    count: 5,
-    glowColor: "shadow-blue-500/25",
-  },
-  {
-    title: "Assignments",
-    description: "View and submit your assignments",
-    href: "/dashboard/assignments",
-    icon: <Calendar className="h-6 w-6" />,
-    color: "from-green-500 to-emerald-500",
-    bgColor:
-      "bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20",
-    count: 3,
-    glowColor: "shadow-green-500/25",
-  },
+// Base actions available to all users
+const getBaseActions = () => [
   {
     title: "Code Editor",
     description: "Write and test your code",
@@ -165,6 +144,7 @@ const quickActions = [
     bgColor:
       "bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20",
     glowColor: "shadow-orange-500/25",
+    alwaysShow: true,
   },
   {
     title: "Q&A Forum",
@@ -174,8 +154,8 @@ const quickActions = [
     color: "from-purple-500 to-pink-500",
     bgColor:
       "bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20",
-    count: 8,
     glowColor: "shadow-purple-500/25",
+    alwaysShow: true,
   },
   {
     title: "Projects",
@@ -186,6 +166,7 @@ const quickActions = [
     bgColor:
       "bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-950/20",
     glowColor: "shadow-indigo-500/25",
+    alwaysShow: true,
   },
   {
     title: "Leaderboard",
@@ -196,6 +177,7 @@ const quickActions = [
     bgColor:
       "bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20",
     glowColor: "shadow-yellow-500/25",
+    alwaysShow: true,
   },
   {
     title: "Community",
@@ -206,12 +188,15 @@ const quickActions = [
     bgColor:
       "bg-gradient-to-br from-teal-50 to-green-50 dark:from-teal-950/20 dark:to-green-950/20",
     glowColor: "shadow-teal-500/25",
+    alwaysShow: true,
   },
 ];
 
 export default function DashboardPage() {
   const { user, loading } = useUser();
   const [mounted, setMounted] = useState(false);
+  const [quickActions, setQuickActions] = useState(getBaseActions());
+  const [hasClassrooms, setHasClassrooms] = useState(false);
   
   // Stats state - will be fetched from API
   const [stats, setStats] = useState([
@@ -249,9 +234,10 @@ export default function DashboardPage() {
     },
   ]);
 
-  // Fetch user stats from API
+  // Fetch user stats and classrooms from API
   useEffect(() => {
     if (user?.id && mounted) {
+      // Fetch user stats
       fetch(`/api/users/${user.id}/stats`)
         .then(res => res.json())
         .then(data => {
@@ -293,6 +279,56 @@ export default function DashboardPage() {
           }
         })
         .catch(err => console.error("Failed to fetch stats:", err));
+
+      // Fetch user's classrooms
+      fetch(`/api/classrooms?userId=${user.id}`)
+        .then(res => res.json())
+        .then(data => {
+          const classrooms = data.classrooms || [];
+          const classroomCount = classrooms.length;
+          
+          if (classroomCount > 0) {
+            setHasClassrooms(true);
+            
+            // Add classroom and assignment actions if user has classrooms
+            const baseActions = getBaseActions();
+            const classroomActions = [
+              {
+                title: "My Classrooms",
+                description: "Access your courses and materials",
+                href: "/dashboard/classrooms",
+                icon: <BookOpen className="h-6 w-6" />,
+                color: "from-blue-500 to-cyan-500",
+                bgColor:
+                  "bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20",
+                count: classroomCount,
+                glowColor: "shadow-blue-500/25",
+                alwaysShow: false,
+              },
+              {
+                title: "Assignments",
+                description: "View and submit your assignments",
+                href: "/dashboard/assignments",
+                icon: <Calendar className="h-6 w-6" />,
+                color: "from-green-500 to-emerald-500",
+                bgColor:
+                  "bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20",
+                glowColor: "shadow-green-500/25",
+                alwaysShow: false,
+              },
+            ];
+            
+            // Combine classroom actions with base actions
+            setQuickActions([...classroomActions, ...baseActions]);
+          } else {
+            // No classrooms - show only base actions
+            setQuickActions(getBaseActions());
+          }
+        })
+        .catch(err => {
+          console.error("Failed to fetch classrooms:", err);
+          setQuickActions(getBaseActions());
+        });
     }
   }, [user, mounted]);
 
@@ -560,12 +596,12 @@ export default function DashboardPage() {
                                       )}
                                     </div>
                                   </div>
-                                  {action?.count && (
+                                  {(action as any)?.count && (
                                     <Badge
                                       variant="secondary"
                                       className="bg-white/80 text-foreground border-0 backdrop-blur-sm shadow-lg animate-pulse"
                                     >
-                                      {action.count}
+                                      {(action as any).count}
                                     </Badge>
                                   )}
                                 </div>
