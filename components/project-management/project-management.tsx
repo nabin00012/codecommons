@@ -54,87 +54,11 @@ interface Project {
   };
 }
 
-// Mock data for courses
-const COURSES = [
-  { id: "1", name: "Data Structures & Algorithms" },
-  { id: "2", name: "Web Development" },
-  { id: "3", name: "Machine Learning Basics" },
-  { id: "4", name: "Database Management Systems" },
-];
-
-// Mock project data
-const INITIAL_PROJECTS: Project[] = [
-  {
-    id: "1",
-    title: "AI-Powered Code Assistant",
-    description:
-      "A machine learning model that helps students write better code by providing suggestions and identifying potential bugs.",
-    status: "in-progress",
-    progress: 65,
-    dueDate: "May 15, 2025",
-    course: "Machine Learning Basics",
-    members: 3,
-    owner: {
-      id: "user1",
-      name: "Rahul Singh",
-      role: "student",
-    },
-  },
-  {
-    id: "2",
-    title: "Distributed Learning Platform",
-    description:
-      "An educational platform that connects students and teachers across multiple institutions for collaborative learning.",
-    status: "completed",
-    progress: 100,
-    dueDate: "March 10, 2025",
-    course: "Web Development",
-    members: 4,
-    owner: {
-      id: "user2",
-      name: "Dr. Priya Sharma",
-      role: "teacher",
-    },
-  },
-  {
-    id: "3",
-    title: "Blockchain Voting System",
-    description:
-      "A secure and transparent voting system built on blockchain technology for student council elections.",
-    status: "not-started",
-    progress: 0,
-    dueDate: "June 30, 2025",
-    course: "Database Management Systems",
-    members: 2,
-    owner: {
-      id: "user1",
-      name: "Rahul Singh",
-      role: "student",
-    },
-  },
-  {
-    id: "4",
-    title: "Algorithm Visualization Tool",
-    description:
-      "An interactive tool that visualizes common algorithms to help students understand their operation and complexity.",
-    status: "overdue",
-    progress: 40,
-    dueDate: "April 1, 2025",
-    course: "Data Structures & Algorithms",
-    members: 1,
-    owner: {
-      id: "user3",
-      name: "Ananya Patel",
-      role: "student",
-    },
-  },
-];
-
 export function ProjectManagement() {
   const { user } = useUser();
   const { toast } = useToast();
 
-  // State for projects - start empty to prevent hydration mismatch
+  // State for projects - start empty and fetch from API
   const [projects, setProjects] = useState<Project[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
@@ -150,17 +74,40 @@ export function ProjectManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProjectStatus[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [courses, setCourses] = useState<Array<{id: string; name: string}>>([]);
 
-  // Initialize data after mounting to prevent hydration mismatch
+  // Fetch projects and courses from API
   useEffect(() => {
     setMounted(true);
-    const timer = setTimeout(() => {
-      setProjects(INITIAL_PROJECTS);
-      setFilteredProjects(INITIAL_PROJECTS);
+    if (user?.id) {
+      // Fetch projects
+      fetch(`/api/projects?userId=${user.id}`)
+        .then(res => res.json())
+        .then(data => {
+          setProjects(data.projects || []);
+          setFilteredProjects(data.projects || []);
+          setIsLoading(false);
+        })
+        .catch(err => {
+          console.error("Failed to fetch projects:", err);
+          setIsLoading(false);
+        });
+      
+      // Fetch courses/classrooms
+      fetch(`/api/classrooms?userId=${user.id}`)
+        .then(res => res.json())
+        .then(data => {
+          const classroomList = data.classrooms?.map((c: any) => ({
+            id: c._id,
+            name: c.name
+          })) || [];
+          setCourses(classroomList);
+        })
+        .catch(err => console.error("Failed to fetch courses:", err));
+    } else {
       setIsLoading(false);
-    }, 100); // Small delay to ensure proper hydration
-    return () => clearTimeout(timer);
-  }, []);
+    }
+  }, [user]);
 
   // Filter projects based on search query and status filter
   useEffect(() => {
@@ -460,7 +407,7 @@ export function ProjectManagement() {
           <ProjectForm
             onSubmit={handleAddProject}
             isSubmitting={isSubmitting}
-            courses={COURSES}
+            courses={courses}
           />
         </DialogContent>
       </Dialog>
@@ -487,7 +434,7 @@ export function ProjectManagement() {
               }}
               onSubmit={handleEditProject}
               isSubmitting={isSubmitting}
-              courses={COURSES}
+              courses={courses}
             />
           )}
         </DialogContent>

@@ -125,13 +125,8 @@ function StatCard({ stat, index }: { stat: any; index: number }) {
             {count}
             {stat.value?.includes("+") && "+"}
           </div>
-          <Progress
-            value={progressValue}
-            className="h-2 cosmic-progress"
-          />
-          <p className="text-xs text-muted-foreground mt-2">
-            {stat.change}
-          </p>
+          <Progress value={progressValue} className="h-2 cosmic-progress" />
+          <p className="text-xs text-muted-foreground mt-2">{stat.change}</p>
         </CardContent>
       </Card>
     </motion.div>
@@ -214,44 +209,92 @@ const quickActions = [
   },
 ];
 
-const stats = [
-  {
-    title: "Active Projects",
-    value: "12",
-    change: "+2 this week",
-    icon: <FolderGit2 className="h-4 w-4" />,
-    color: "text-blue-600",
-    bgColor: "bg-blue-100 dark:bg-blue-900/30",
-  },
-  {
-    title: "Assignments Completed",
-    value: "28",
-    change: "+5 this month",
-    icon: <Calendar className="h-4 w-4" />,
-    color: "text-green-600",
-    bgColor: "bg-green-100 dark:bg-green-900/30",
-  },
-  {
-    title: "Community Posts",
-    value: "156",
-    change: "+12 today",
-    icon: <MessageSquare className="h-4 w-4" />,
-    color: "text-purple-600",
-    bgColor: "bg-purple-100 dark:bg-purple-900/30",
-  },
-  {
-    title: "Current Streak",
-    value: "7 days",
-    change: "Keep it up!",
-    icon: <Zap className="h-4 w-4" />,
-    color: "text-orange-600",
-    bgColor: "bg-orange-100 dark:bg-orange-900/30",
-  },
-];
-
 export default function DashboardPage() {
   const { user, loading } = useUser();
   const [mounted, setMounted] = useState(false);
+  
+  // Stats state - will be fetched from API
+  const [stats, setStats] = useState([
+    {
+      title: "Active Projects",
+      value: "0",
+      change: "No recent activity",
+      icon: <FolderGit2 className="h-4 w-4" />,
+      color: "text-blue-600",
+      bgColor: "bg-blue-100 dark:bg-blue-900/30",
+    },
+    {
+      title: "Assignments Completed",
+      value: "0",
+      change: "No recent activity",
+      icon: <Calendar className="h-4 w-4" />,
+      color: "text-green-600",
+      bgColor: "bg-green-100 dark:bg-green-900/30",
+    },
+    {
+      title: "Community Posts",
+      value: "0",
+      change: "No recent activity",
+      icon: <MessageSquare className="h-4 w-4" />,
+      color: "text-purple-600",
+      bgColor: "bg-purple-100 dark:bg-purple-900/30",
+    },
+    {
+      title: "Current Streak",
+      value: "0 days",
+      change: "Start your journey!",
+      icon: <Zap className="h-4 w-4" />,
+      color: "text-orange-600",
+      bgColor: "bg-orange-100 dark:bg-orange-900/30",
+    },
+  ]);
+
+  // Fetch user stats from API
+  useEffect(() => {
+    if (user?.id && mounted) {
+      fetch(`/api/users/${user.id}/stats`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.stats) {
+            setStats([
+              {
+                title: "Active Projects",
+                value: data.stats.activeProjects?.toString() || "0",
+                change: data.stats.projectsChange || "No recent activity",
+                icon: <FolderGit2 className="h-4 w-4" />,
+                color: "text-blue-600",
+                bgColor: "bg-blue-100 dark:bg-blue-900/30",
+              },
+              {
+                title: "Assignments Completed",
+                value: data.stats.assignmentsCompleted?.toString() || "0",
+                change: data.stats.assignmentsChange || "No recent activity",
+                icon: <Calendar className="h-4 w-4" />,
+                color: "text-green-600",
+                bgColor: "bg-green-100 dark:bg-green-900/30",
+              },
+              {
+                title: "Community Posts",
+                value: data.stats.communityPosts?.toString() || "0",
+                change: data.stats.postsChange || "No recent activity",
+                icon: <MessageSquare className="h-4 w-4" />,
+                color: "text-purple-600",
+                bgColor: "bg-purple-100 dark:bg-purple-900/30",
+              },
+              {
+                title: "Current Streak",
+                value: `${data.stats.currentStreak || 0} days`,
+                change: data.stats.currentStreak > 0 ? "Keep it up!" : "Start your journey!",
+                icon: <Zap className="h-4 w-4" />,
+                color: "text-orange-600",
+                bgColor: "bg-orange-100 dark:bg-orange-900/30",
+              },
+            ]);
+          }
+        })
+        .catch(err => console.error("Failed to fetch stats:", err));
+    }
+  }, [user, mounted]);
 
   useEffect(() => {
     setMounted(true);

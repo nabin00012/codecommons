@@ -32,32 +32,26 @@ export default function RootLayout({
         className={`${inter.className} min-h-screen bg-background antialiased`}
       >
         <ErrorBoundary>
-          <ClientOnly fallback={
-            <div className="min-h-screen flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-            </div>
-          }>
-            <NextAuthProvider>
-              <ThemeProvider
-                attribute="class"
-                defaultTheme="system"
-                enableSystem
-                disableTransitionOnChange
-              >
-                <AuthProvider>
-                  <UserProvider>
-                    <SettingsProvider>
-                      <main className="relative flex min-h-screen flex-col overflow-x-hidden">
-                        <div className="flex-1">{children}</div>
-                        <Analytics />
-                      </main>
-                    </SettingsProvider>
-                  </UserProvider>
-                </AuthProvider>
-                <Toaster />
-              </ThemeProvider>
-            </NextAuthProvider>
-          </ClientOnly>
+          <NextAuthProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <AuthProvider>
+                <UserProvider>
+                  <SettingsProvider>
+                    <main className="relative flex min-h-screen flex-col overflow-x-hidden">
+                      <div className="flex-1">{children}</div>
+                      <Analytics />
+                    </main>
+                  </SettingsProvider>
+                </UserProvider>
+              </AuthProvider>
+              <Toaster />
+            </ThemeProvider>
+          </NextAuthProvider>
         </ErrorBoundary>
       </body>
     </html>
