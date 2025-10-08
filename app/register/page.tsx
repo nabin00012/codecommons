@@ -20,7 +20,6 @@ import {
   Eye, 
   EyeOff, 
   Loader2, 
-  RefreshCw, 
   Sparkles,
   GraduationCap,
   Users,
@@ -59,15 +58,6 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
-
-  const generateRandomEmail = () => {
-    const randomNum = Math.floor(Math.random() * 1000000);
-    const newEmail = `${randomNum}@jainuniversity.ac.in`;
-    setFormData((prev) => ({ ...prev, email: newEmail }));
-    if (errors.email) {
-      setErrors((prev) => ({ ...prev, email: "" }));
-    }
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -353,21 +343,9 @@ export default function RegisterPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="email" className="text-sm font-medium text-white">
-                        University Email
-                      </Label>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={generateRandomEmail}
-                        className="h-8 px-3 text-xs text-white/70 hover:bg-white/10 hover:text-white"
-                      >
-                        <RefreshCw className="mr-1 h-3 w-3" />
-                        Generate
-                      </Button>
-                    </div>
+                    <Label htmlFor="email" className="text-sm font-medium text-white">
+                      University Email
+                    </Label>
                     <Input
                       id="email"
                       name="email"
