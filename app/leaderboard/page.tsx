@@ -409,6 +409,33 @@ export default function LeaderboardPage() {
             </p>
           </motion.div>
 
+          {/* Mock Data Notice */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05, duration: 0.5 }}
+          >
+            <Card className="border-yellow-500/50 bg-yellow-50/50 dark:bg-yellow-950/20">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-full bg-yellow-500/20 p-2">
+                    <Trophy className="h-5 w-5 text-yellow-600 dark:text-yellow-500" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-yellow-900 dark:text-yellow-100 mb-1">
+                      📊 Demo Data Display
+                    </h3>
+                    <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                      This leaderboard currently shows <strong>sample data for demonstration purposes</strong>. 
+                      As you and your friends use the platform, real rankings will be displayed based on actual contributions, 
+                      points earned, and community engagement. Start asking questions, submitting projects, and helping others to climb the ranks!
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

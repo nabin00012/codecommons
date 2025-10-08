@@ -644,6 +644,35 @@ export default function CodeCornerPage() {
         </Card>
       </div>
 
+      {/* Live Data Notice */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="mb-6"
+      >
+        <Card className="border-green-500/50 bg-green-50/50 dark:bg-green-950/20">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <div className="rounded-full bg-green-500/20 p-2">
+                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-500" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-green-900 dark:text-green-100 mb-1">
+                  ✨ Live Q&A Platform
+                </h3>
+                <p className="text-sm text-green-800 dark:text-green-200">
+                  This is a <strong>real-time question and answer platform</strong>! 
+                  All questions you see here are posted by actual users. Feel free to ask your coding questions, 
+                  share your knowledge by answering others, and earn points for your contributions. 
+                  Your questions will appear here instantly for the community to help you!
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
       {/* Enhanced Hero Section */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-8 mb-8">
         <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))]" />
