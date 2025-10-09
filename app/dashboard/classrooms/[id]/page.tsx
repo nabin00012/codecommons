@@ -71,8 +71,10 @@ interface Material {
   type: string;
   size: string;
   uploadedOn: string;
+  uploadedBy?: string;
   content?: string;
   fileName?: string;
+  hasFile?: boolean;
 }
 
 interface Announcement {
@@ -1496,59 +1498,91 @@ export default function ClassroomDetailPage() {
 
             {/* Materials List */}
             {materials.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <FileText className="h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">
-                    No materials yet
+              <Card className="border-2 border-dashed border-primary/20 hover:border-primary/40 transition-colors">
+                <CardContent className="flex flex-col items-center justify-center py-16">
+                  <div className="relative mb-6">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 rounded-full blur-2xl"></div>
+                    <div className="relative bg-gradient-to-r from-blue-500 to-purple-500 p-4 rounded-2xl">
+                      <FileText className="h-12 w-12 text-white" />
+                    </div>
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+                    No Study Materials Yet
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-300">
+                  <p className="text-gray-600 dark:text-gray-300 text-center max-w-md">
                     {isTeacher
-                      ? "Upload study materials for your students"
-                      : "Materials will appear here when uploaded"}
+                      ? "📚 Upload lecture notes, PDFs, videos, and resources to help your students learn better"
+                      : "📖 Your teacher will upload study materials here. Check back soon!"}
                   </p>
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {materials.map((material) => (
-                  <Card
-                    key={material.id}
-                    className="hover:shadow-lg transition-shadow"
-                  >
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <CardTitle className="text-lg">
-                          {material.title}
-                        </CardTitle>
-                        <div className="text-right">
-                          {material.type === "video" && (
-                            <Video className="h-5 w-5 text-red-500" />
-                          )}
-                          {material.type === "document" && (
-                            <File className="h-5 w-5 text-blue-500" />
-                          )}
-                          {material.type === "link" && (
-                            <LinkIcon className="h-5 w-5 text-green-500" />
-                          )}
-                          {material.type === "code" && (
-                            <FileText className="h-5 w-5 text-purple-500" />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {materials.map((material) => {
+                  const materialIcon = material.type === "video" 
+                    ? { icon: Video, color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/20", badge: "🎥" }
+                    : material.type === "document"
+                    ? { icon: File, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20", badge: "📄" }
+                    : material.type === "link"
+                    ? { icon: LinkIcon, color: "text-green-500", bg: "bg-green-50 dark:bg-green-900/20", badge: "🔗" }
+                    : { icon: FileText, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-900/20", badge: "💻" };
+                  
+                  const IconComponent = materialIcon.icon;
+                  
+                  return (
+                    <Card
+                      key={material.id}
+                      className="group hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 border-primary/10 hover:border-primary/30 overflow-hidden"
+                    >
+                      {/* Gradient Header */}
+                      <div className="h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+                      
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start gap-3">
+                          {/* Icon */}
+                          <div className={`${materialIcon.bg} p-3 rounded-xl shrink-0`}>
+                            <IconComponent className={`h-6 w-6 ${materialIcon.color}`} />
+                          </div>
+                          
+                          {/* Title and Badge */}
+                          <div className="flex-1 min-w-0">
+                            <CardTitle className="text-lg font-bold mb-1 line-clamp-2 group-hover:text-primary transition-colors">
+                              {material.title}
+                            </CardTitle>
+                            <Badge variant="outline" className="text-xs">
+                              {materialIcon.badge} {material.type.charAt(0).toUpperCase() + material.type.slice(1)}
+                            </Badge>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      
+                      <CardContent className="space-y-4">
+                        {/* File Info */}
+                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {new Date(material.uploadedOn).toLocaleDateString()}
+                          </span>
+                          {(material as any).fileName && (
+                            <span className="flex items-center gap-1 font-medium">
+                              📦 {material.size}
+                            </span>
                           )}
                         </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-gray-500 mb-4">
-                        Uploaded:{" "}
-                        {new Date(material.uploadedOn).toLocaleDateString()}
-                      </p>
-                      <div className="flex gap-2">
-                        {((material as any).fileName || material.content) && (
-                          <>
+
+                        {/* Uploaded By */}
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 px-3 py-2 rounded-lg">
+                          <Users className="h-3 w-3" />
+                          <span>Uploaded by <span className="font-medium">{material.uploadedBy}</span></span>
+                        </div>
+                        
+                        {/* Action Buttons */}
+                        {((material as any).hasFile || material.content) && (
+                          <div className="flex gap-2 pt-2">
                             <Button
                               size="sm"
                               variant="outline"
-                              className="flex-1"
+                              className="flex-1 group/btn hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-all"
                               onClick={() =>
                                 window.open(
                                   `/api/classrooms/${classroomId}/materials/view/${encodeURIComponent(
@@ -1558,12 +1592,12 @@ export default function ClassroomDetailPage() {
                                 )
                               }
                             >
-                              <Eye className="h-4 w-4 mr-1" />
+                              <Eye className="h-4 w-4 mr-1.5 group-hover/btn:scale-110 transition-transform" />
                               View
                             </Button>
                             <Button
                               size="sm"
-                              className="flex-1"
+                              className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white shadow-lg hover:shadow-xl transition-all"
                               onClick={() =>
                                 window.open(
                                   `/api/classrooms/${classroomId}/materials/download/${encodeURIComponent(
@@ -1573,15 +1607,15 @@ export default function ClassroomDetailPage() {
                                 )
                               }
                             >
-                              <Download className="h-4 w-4 mr-1" />
+                              <Download className="h-4 w-4 mr-1.5" />
                               Download
                             </Button>
-                          </>
+                          </div>
                         )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </TabsContent>

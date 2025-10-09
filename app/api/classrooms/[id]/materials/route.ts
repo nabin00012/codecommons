@@ -33,6 +33,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       uploadedOn: material.createdAt,
       fileUrl: material.fileUrl || "#",
       uploadedBy: material.uploadedBy,
+      fileName: material.fileName,
+      mimeType: material.mimeType,
+      content: material.content,
+      hasFile: !!material.fileContent,
     }));
 
     return NextResponse.json({
