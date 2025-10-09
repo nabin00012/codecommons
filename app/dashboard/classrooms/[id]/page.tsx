@@ -367,6 +367,27 @@ export default function ClassroomDetailPage() {
     if (!selectedAssignment) return;
 
     try {
+      // Convert files to base64
+      const attachmentsWithContent = await Promise.all(
+        submissionFiles.map(async (file) => {
+          const base64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const result = reader.result as string;
+              resolve(result.split(',')[1]); // Remove data:image/png;base64, prefix
+            };
+            reader.readAsDataURL(file);
+          });
+          
+          return {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            content: base64,
+          };
+        })
+      );
+
       const response = await fetch(
         `/api/classrooms/${classroomId}/assignments/${selectedAssignment._id}/submit`,
         {
@@ -377,11 +398,7 @@ export default function ClassroomDetailPage() {
           credentials: "include",
           body: JSON.stringify({
             content: submissionText,
-            attachments: submissionFiles.map(f => ({
-              name: f.name,
-              size: f.size,
-              type: f.type,
-            }))
+            attachments: attachmentsWithContent
           }),
         }
       );
@@ -1146,10 +1163,8 @@ export default function ClassroomDetailPage() {
                                             size="sm"
                                             variant="ghost"
                                             onClick={() => {
-                                              toast({
-                                                title: "Downloading",
-                                                description: `Downloading ${file.name}...`,
-                                              });
+                                              const downloadUrl = `/api/classrooms/${classroomId}/assignments/${selectedAssignment?._id}/submissions/${assignmentSubmissions[0]._id}/download?fileIndex=${idx}`;
+                                              window.open(downloadUrl, '_blank');
                                             }}
                                           >
                                             <Download className="h-4 w-4" />
@@ -1199,10 +1214,8 @@ export default function ClassroomDetailPage() {
                                                     size="sm"
                                                     variant="ghost"
                                                     onClick={() => {
-                                                      toast({
-                                                        title: "Downloading",
-                                                        description: `Downloading ${file.name}...`,
-                                                      });
+                                                      const downloadUrl = `/api/classrooms/${classroomId}/assignments/${selectedAssignment?._id}/submissions/${submission._id}/download?fileIndex=${fileIdx}`;
+                                                      window.open(downloadUrl, '_blank');
                                                     }}
                                                   >
                                                     <Download className="h-4 w-4" />
