@@ -118,6 +118,8 @@ export default function ClassroomDetailPage() {
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submittedAssignments, setSubmittedAssignments] = useState<Set<string>>(new Set());
+  const [assignmentSubmissions, setAssignmentSubmissions] = useState<any[]>([]);
 
   // Form states
   const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
@@ -201,6 +203,24 @@ export default function ClassroomDetailPage() {
         if (assignmentsResponse.ok) {
           const assignmentsData = await assignmentsResponse.json();
           setAssignments(assignmentsData.data || []);
+          
+          // Check which assignments the student has submitted
+          if (!isTeacher) {
+            const submitted = new Set<string>();
+            for (const assignment of assignmentsData.data || []) {
+              const checkResponse = await fetch(
+                `/api/classrooms/${classroomId}/assignments/${assignment._id}`,
+                { credentials: "include" }
+              );
+              if (checkResponse.ok) {
+                const checkData = await checkResponse.json();
+                if (checkData.data.submissions && checkData.data.submissions.length > 0) {
+                  submitted.add(assignment._id);
+                }
+              }
+            }
+            setSubmittedAssignments(submitted);
+          }
         }
 
         // Fetch materials
@@ -367,9 +387,12 @@ export default function ClassroomDetailPage() {
       );
 
       if (response.ok) {
+        // Mark assignment as submitted
+        setSubmittedAssignments(prev => new Set(prev).add(selectedAssignment._id));
         setShowAssignmentDialog(false);
         setSubmissionText("");
         setSubmissionFiles([]);
+        setSelectedAssignment(null);
         toast({
           title: "Success",
           description: "Assignment submitted successfully",
@@ -979,22 +1002,52 @@ export default function ClassroomDetailPage() {
                           Due: {new Date(assignment.dueDate).toLocaleString()}
                         </div>
                         
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button 
-                              size="sm"
-                              className="gap-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
-                              onClick={() => setSelectedAssignment(assignment)}
-                            >
-                              {isTeacher ? (
-                                <>
-                                  <Eye className="h-4 w-4" />
-                                  View Submissions
-                                </>
-                              ) : (
-                                <>
-                                  <Upload className="h-4 w-4" />
-                                  Submit Work
+                        <div className="flex items-center gap-2">
+                          {!isTeacher && submittedAssignments.has(assignment._id) && (
+                            <Badge className="bg-green-500 hover:bg-green-600 text-white">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Submitted
+                            </Badge>
+                          )}
+                          
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button 
+                                size="sm"
+                                className="gap-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+                                onClick={async () => {
+                                  setSelectedAssignment(assignment);
+                                  // Fetch submissions if teacher
+                                  if (isTeacher) {
+                                    try {
+                                      const res = await fetch(
+                                        `/api/classrooms/${classroomId}/assignments/${assignment._id}`,
+                                        { credentials: "include" }
+                                      );
+                                      if (res.ok) {
+                                        const data = await res.json();
+                                        setAssignmentSubmissions(data.data.submissions || []);
+                                      }
+                                    } catch (error) {
+                                      console.error("Error fetching submissions:", error);
+                                    }
+                                  }
+                                }}
+                              >
+                                {isTeacher ? (
+                                  <>
+                                    <Eye className="h-4 w-4" />
+                                    View Submissions
+                                  </>
+                                ) : submittedAssignments.has(assignment._id) ? (
+                                  <>
+                                    <Eye className="h-4 w-4" />
+                                    View Submission
+                                  </>
+                                ) : (
+                                  <>
+                                    <Upload className="h-4 w-4" />
+                                    Submit Work
                                 </>
                               )}
                             </Button>
@@ -1067,14 +1120,64 @@ export default function ClassroomDetailPage() {
                             )}
                             
                             {isTeacher && (
-                              <div className="mt-4">
-                                <p className="text-sm text-muted-foreground">
-                                  Student submissions will appear here once they submit their work.
-                                </p>
+                              <div className="mt-4 space-y-4">
+                                <h3 className="text-lg font-semibold">Student Submissions ({assignmentSubmissions.length})</h3>
+                                {assignmentSubmissions.length === 0 ? (
+                                  <p className="text-sm text-muted-foreground py-4">
+                                    No submissions yet. Students haven't submitted their work.
+                                  </p>
+                                ) : (
+                                  <div className="space-y-3">
+                                    {assignmentSubmissions.map((submission, idx) => (
+                                      <Card key={idx} className="bg-muted/50">
+                                        <CardContent className="pt-4">
+                                          <div className="flex items-start justify-between mb-2">
+                                            <div>
+                                              <p className="font-medium">{submission.studentName}</p>
+                                              <p className="text-sm text-muted-foreground">{submission.studentEmail}</p>
+                                            </div>
+                                            <Badge variant="outline">
+                                              {new Date(submission.submittedAt).toLocaleDateString()}
+                                            </Badge>
+                                          </div>
+                                          <div className="mt-3 p-3 bg-background rounded border">
+                                            <p className="text-sm whitespace-pre-wrap">{submission.content || "No text submission"}</p>
+                                          </div>
+                                          {submission.attachments && submission.attachments.length > 0 && (
+                                            <div className="mt-3 space-y-1">
+                                              <p className="text-sm font-medium">Attached Files:</p>
+                                              {submission.attachments.map((file: any, fileIdx: number) => (
+                                                <div key={fileIdx} className="flex items-center justify-between bg-background p-2 rounded text-sm">
+                                                  <span className="flex items-center gap-2">
+                                                    <File className="h-4 w-4" />
+                                                    {file.name}
+                                                  </span>
+                                                  <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={() => {
+                                                      toast({
+                                                        title: "Downloading",
+                                                        description: `Downloading ${file.name}...`,
+                                                      });
+                                                    }}
+                                                  >
+                                                    <Download className="h-4 w-4" />
+                                                  </Button>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          )}
+                                        </CardContent>
+                                      </Card>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             )}
                           </DialogContent>
                         </Dialog>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
