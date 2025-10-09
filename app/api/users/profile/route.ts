@@ -36,7 +36,23 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, role, department, section, year, specialization, onboardingCompleted } = body;
+    const { 
+      email, 
+      name,
+      role, 
+      department, 
+      section, 
+      year, 
+      specialization, 
+      onboardingCompleted,
+      bio,
+      phone,
+      location,
+      github,
+      linkedin,
+      twitter,
+      website
+    } = body;
 
     if (!email) {
       return NextResponse.json(
@@ -51,12 +67,20 @@ export async function PUT(request: NextRequest) {
       updatedAt: new Date(),
     };
 
+    if (name) updateData.name = name;
     if (role) updateData.role = role;
     if (department) updateData.department = department;
     if (section !== undefined) updateData.section = section;
     if (year !== undefined) updateData.year = year;
     if (specialization !== undefined) updateData.specialization = specialization;
     if (onboardingCompleted !== undefined) updateData.onboardingCompleted = onboardingCompleted;
+    if (bio !== undefined) updateData.bio = bio;
+    if (phone !== undefined) updateData.phone = phone;
+    if (location !== undefined) updateData.location = location;
+    if (github !== undefined) updateData.github = github;
+    if (linkedin !== undefined) updateData.linkedin = linkedin;
+    if (twitter !== undefined) updateData.twitter = twitter;
+    if (website !== undefined) updateData.website = website;
 
     const result = await db.collection("users").updateOne(
       { email: email },

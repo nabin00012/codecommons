@@ -17,6 +17,14 @@ export interface User {
   specialization?: string;
   onboardingCompleted?: boolean;
   avatar?: string;
+  bio?: string;
+  phone?: string;
+  location?: string;
+  github?: string;
+  linkedin?: string;
+  twitter?: string;
+  website?: string;
+  isEmailVerified?: boolean;
   preferences?: {
     theme: string;
     notifications: boolean;
@@ -30,6 +38,7 @@ interface UserContextType {
   login: (user: User) => void;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
+  refreshUser: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -94,8 +103,42 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     setUser((prev) => (prev ? { ...prev, ...updates } : null));
   };
 
+  const refreshUser = async () => {
+    try {
+      const response = await fetch("/api/auth/session");
+      if (response.ok) {
+        const data = await response.json();
+        if (data.user) {
+          setUser({
+            id: data.user._id || data.user.id,
+            _id: data.user._id || data.user.id,
+            name: data.user.name || "",
+            email: data.user.email || "",
+            role: (data.user.role as UserRole) || "user",
+            department: data.user.department || "",
+            section: data.user.section || "",
+            year: data.user.year || "",
+            specialization: data.user.specialization || "",
+            onboardingCompleted: data.user.onboardingCompleted ?? false,
+            bio: data.user.bio || "",
+            phone: data.user.phone || "",
+            location: data.user.location || "",
+            github: data.user.github || "",
+            linkedin: data.user.linkedin || "",
+            twitter: data.user.twitter || "",
+            website: data.user.website || "",
+            isEmailVerified: data.user.isEmailVerified ?? false,
+            preferences: data.user.preferences,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error refreshing user:", error);
+    }
+  };
+
   return (
-    <UserContext.Provider value={{ user, loading, login, logout, updateUser }}>
+    <UserContext.Provider value={{ user, loading, login, logout, updateUser, refreshUser }}>
       {children}
     </UserContext.Provider>
   );
