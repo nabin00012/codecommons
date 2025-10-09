@@ -1451,32 +1451,40 @@ export default function ClassroomDetailPage() {
                         {new Date(material.uploadedOn).toLocaleDateString()}
                       </p>
                       <div className="flex gap-2">
-                        {(material as any).fileName && (
-                          <Button
-                            size="sm"
-                            className="flex-1"
-                            onClick={() =>
-                              window.open(
-                                `/api/classrooms/${classroomId}/materials/download/${encodeURIComponent(
-                                  material.title
-                                )}`,
-                                "_blank"
-                              )
-                            }
-                          >
-                            <Download className="h-4 w-4 mr-1" />
-                            Download
-                          </Button>
-                        )}
-                        {material.content && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="flex-1"
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            View
-                          </Button>
+                        {((material as any).fileName || material.content) && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1"
+                              onClick={() =>
+                                window.open(
+                                  `/api/classrooms/${classroomId}/materials/view/${encodeURIComponent(
+                                    material.title
+                                  )}`,
+                                  "_blank"
+                                )
+                              }
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              View
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="flex-1"
+                              onClick={() =>
+                                window.open(
+                                  `/api/classrooms/${classroomId}/materials/download/${encodeURIComponent(
+                                    material.title
+                                  )}`,
+                                  "_blank"
+                                )
+                              }
+                            >
+                              <Download className="h-4 w-4 mr-1" />
+                              Download
+                            </Button>
+                          </>
                         )}
                       </div>
                     </CardContent>
