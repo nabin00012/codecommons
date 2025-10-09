@@ -432,75 +432,123 @@ export default function ClassroomDetailPage() {
 
   return (
     <ProtectedRoute>
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
-            <Button variant="ghost" size="sm" asChild>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+        <div className="container mx-auto px-4 py-6 max-w-7xl">
+          {/* Back Button */}
+          <div className="mb-4">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              asChild
+              className="hover:bg-primary/10 transition-colors"
+            >
               <Link href="/dashboard/classrooms">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Classrooms
               </Link>
             </Button>
-            <Badge variant="outline" className="font-mono text-lg px-3 py-1">
-              {classroom.code}
-            </Badge>
           </div>
 
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                {classroom.name}
-              </h1>
-              <p className="text-gray-600 dark:text-gray-300 mb-4">
-                {classroom.description}
-              </p>
-              <div className="flex items-center gap-4 text-sm text-gray-500">
-                <div className="flex items-center gap-1">
-                  <Users className="h-4 w-4" />
-                  {classroom.students.length} students
+          {/* Hero Header */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-8 shadow-2xl mb-8">
+            <div className="absolute inset-0 bg-grid-white/10" />
+            <div className="relative z-10">
+              <div className="flex items-start justify-between gap-6">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2 bg-white/10 rounded-lg backdrop-blur">
+                      <BookOpen className="h-6 w-6 text-white" />
+                    </div>
+                    <Badge className="font-mono text-base px-4 py-1 bg-white/20 backdrop-blur text-white border-white/30 hover:bg-white/30">
+                      {classroom.code}
+                    </Badge>
+                  </div>
+                  <h1 className="text-4xl font-bold text-white mb-3">
+                    {classroom.name}
+                  </h1>
+                  <p className="text-lg text-white/90 mb-4 max-w-3xl">
+                    {classroom.description}
+                  </p>
+                  <div className="flex items-center gap-6 text-white/80">
+                    <div className="flex items-center gap-2 bg-white/10 backdrop-blur px-3 py-1.5 rounded-lg">
+                      <Users className="h-4 w-4" />
+                      <span className="font-medium">{classroom.students.length}</span> students
+                    </div>
+                    <div className="flex items-center gap-2 bg-white/10 backdrop-blur px-3 py-1.5 rounded-lg">
+                      <BookOpen className="h-4 w-4" />
+                      <span className="font-medium">{classroom.department.toUpperCase()}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <BookOpen className="h-4 w-4" />
-                  {classroom.department.toUpperCase()}
-                </div>
+
+                {isTeacher && (
+                  <div className="bg-white/10 backdrop-blur border border-white/20 rounded-xl p-6 min-w-[200px]">
+                    <p className="text-sm text-white/80 mb-3 text-center">
+                      🎓 Share Code
+                    </p>
+                    <div className="bg-white rounded-lg p-4 shadow-lg">
+                      <p className="text-3xl font-mono font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                        {classroom.code}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-
-            {isTeacher && (
-              <div className="text-right">
-                <p className="text-sm text-gray-500 mb-2">
-                  Share this code with students
-                </p>
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                  <p className="text-3xl font-mono font-bold text-blue-600 dark:text-blue-400">
-                    {classroom.code}
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
-        </div>
 
         {/* Tabs */}
         <Tabs defaultValue="announcements" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="announcements">Announcements</TabsTrigger>
-            <TabsTrigger value="assignments">Assignments</TabsTrigger>
-            <TabsTrigger value="materials">Materials</TabsTrigger>
-            <TabsTrigger value="discussions">Discussions</TabsTrigger>
-            <TabsTrigger value="members">Members</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5 bg-card/50 backdrop-blur p-1 h-auto gap-1">
+            <TabsTrigger 
+              value="announcements"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+            >
+              <Megaphone className="h-4 w-4 mr-2" />
+              Announcements
+            </TabsTrigger>
+            <TabsTrigger 
+              value="assignments"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Assignments
+            </TabsTrigger>
+            <TabsTrigger 
+              value="materials"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+            >
+              <BookOpen className="h-4 w-4 mr-2" />
+              Materials
+            </TabsTrigger>
+            <TabsTrigger 
+              value="discussions"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+            >
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Discussions
+            </TabsTrigger>
+            <TabsTrigger 
+              value="members"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Members
+            </TabsTrigger>
           </TabsList>
 
           {/* Announcements Tab */}
-          <TabsContent value="announcements" className="space-y-6">
+          <TabsContent value="announcements" className="space-y-6 mt-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Class Announcements</h2>
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+                Class Announcements
+              </h2>
               {isTeacher && (
                 <Button
                   onClick={() => setShowAnnouncementForm(!showAnnouncementForm)}
+                  className="gap-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4" />
                   New Announcement
                 </Button>
               )}
@@ -577,16 +625,18 @@ export default function ClassroomDetailPage() {
 
             {/* Announcements List */}
             {announcements.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <Megaphone className="h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">
+              <Card className="border-primary/20 bg-gradient-to-br from-card via-card to-primary/5 shadow-xl">
+                <CardContent className="flex flex-col items-center justify-center py-16">
+                  <div className="p-4 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full mb-6">
+                    <Megaphone className="h-16 w-16 text-primary" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
                     No announcements yet
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-300">
+                  <p className="text-muted-foreground text-center max-w-md">
                     {isTeacher
-                      ? "Create your first announcement"
-                      : "Announcements will appear here"}
+                      ? "Create your first announcement to keep students informed about important updates"
+                      : "Announcements from your teacher will appear here"}
                   </p>
                 </CardContent>
               </Card>
@@ -597,30 +647,36 @@ export default function ClassroomDetailPage() {
                     key={announcement._id}
                     className={
                       announcement.isPinned
-                        ? "border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10"
-                        : ""
+                        ? "border-amber-300 bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 dark:from-amber-900/20 dark:via-yellow-900/20 dark:to-amber-900/10 shadow-lg"
+                        : "border-primary/20 hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-card to-card/50"
                     }
                   >
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2">
                           {announcement.isPinned && (
-                            <Pin className="h-4 w-4 text-yellow-500" />
+                            <div className="p-1.5 bg-amber-500/20 rounded-lg">
+                              <Pin className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                            </div>
                           )}
-                          <CardTitle className="text-lg">
+                          <CardTitle className="text-lg font-bold">
                             {announcement.title}
                           </CardTitle>
                         </div>
-                        <Badge variant="outline">
+                        <Badge 
+                          variant="outline"
+                          className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-primary/30"
+                        >
                           👨‍🏫 {announcement.authorName}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-500">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Clock className="h-3 w-3" />
                         {new Date(announcement.createdAt).toLocaleString()}
-                      </p>
+                      </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-gray-700 dark:text-gray-300">
+                      <p className="text-foreground leading-relaxed">
                         {announcement.content}
                       </p>
                     </CardContent>
@@ -631,14 +687,17 @@ export default function ClassroomDetailPage() {
           </TabsContent>
 
           {/* Assignments Tab */}
-          <TabsContent value="assignments" className="space-y-6">
+          <TabsContent value="assignments" className="space-y-6 mt-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Assignments</h2>
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+                Assignments
+              </h2>
               {isTeacher && (
                 <Button
                   onClick={() => setShowAssignmentForm(!showAssignmentForm)}
+                  className="gap-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4" />
                   Create Assignment
                 </Button>
               )}
@@ -1174,6 +1233,7 @@ export default function ClassroomDetailPage() {
             </div>
           </TabsContent>
         </Tabs>
+        </div>
       </div>
     </ProtectedRoute>
   );
