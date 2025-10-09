@@ -205,35 +205,20 @@ export default function ClassroomDetailPage() {
           const assignments = assignmentsData.data || [];
           setAssignments(assignments);
           
-          // Prefetch submission details for all assignments
-          if (assignments.length > 0) {
-            // Fetch submissions for all assignments in parallel
-            const submissionPromises = assignments.map((assignment: any) =>
-              fetch(`/api/classrooms/${classroomId}/assignments/${assignment._id}`, {
-                credentials: "include"
-              }).then(res => res.ok ? res.json() : null)
+          // For students: Just fetch which assignments they submitted (lightweight)
+          // For teachers: Don't prefetch anything, load on demand
+          if (!isTeacher && assignments.length > 0) {
+            const submissionsResponse = await fetch(
+              `/api/classrooms/${classroomId}/submissions/my-submissions`,
+              { credentials: "include" }
             );
-            
-            const submissionsResults = await Promise.all(submissionPromises);
-            
-            // Build cache and submitted set
-            const newCache = new Map<string, any[]>();
-            const submitted = new Set<string>();
-            
-            submissionsResults.forEach((result, index) => {
-              if (result?.data?.submissions) {
-                const assignmentId = assignments[index]._id;
-                newCache.set(assignmentId, result.data.submissions);
-                
-                // For students, check if they submitted
-                if (!isTeacher && result.data.submissions.length > 0) {
-                  submitted.add(assignmentId);
-                }
-              }
-            });
-            
-            setSubmissionsCache(newCache);
-            setSubmittedAssignments(submitted);
+            if (submissionsResponse.ok) {
+              const submissionsData = await submissionsResponse.json();
+              const submitted = new Set<string>(
+                (submissionsData.data || []).map((s: any) => s.assignmentId)
+              );
+              setSubmittedAssignments(submitted);
+            }
           }
         }
 
@@ -1228,23 +1213,26 @@ export default function ClassroomDetailPage() {
                               </div>
                             )}
 
-                            {!isTeacher && submittedAssignments.has(assignment._id) && assignmentSubmissions.length > 0 && (
+                            {!isTeacher && submittedAssignments.has(assignment._id) && (
                               <div className="mt-4 space-y-4">
                                 <div className="flex items-center gap-2 mb-3">
                                   <Badge className="bg-green-500 text-white">
                                     <CheckCircle className="h-3 w-3 mr-1" />
                                     Submitted
                                   </Badge>
-                                  <span className="text-sm text-muted-foreground">
-                                    {new Date(assignmentSubmissions[0].submittedAt).toLocaleString()}
-                                  </span>
+                                  {assignmentSubmissions.length > 0 && assignmentSubmissions[0].submittedAt && (
+                                    <span className="text-sm text-muted-foreground">
+                                      {new Date(assignmentSubmissions[0].submittedAt).toLocaleString()}
+                                    </span>
+                                  )}
                                 </div>
-                                <div className="p-4 bg-muted/50 rounded-lg border">
-                                  <h4 className="font-medium mb-2">Your Submission:</h4>
-                                  <p className="text-sm whitespace-pre-wrap mb-3">
-                                    {assignmentSubmissions[0].content || "No text submission"}
-                                  </p>
-                                  {assignmentSubmissions[0].attachments && assignmentSubmissions[0].attachments.length > 0 && (
+                                {assignmentSubmissions.length > 0 ? (
+                                  <div className="p-4 bg-muted/50 rounded-lg border">
+                                    <h4 className="font-medium mb-2">Your Submission:</h4>
+                                    <p className="text-sm whitespace-pre-wrap mb-3">
+                                      {assignmentSubmissions[0].content || "No text submission"}
+                                    </p>
+                                    {assignmentSubmissions[0].attachments && assignmentSubmissions[0].attachments.length > 0 && (
                                     <div className="space-y-1">
                                       <p className="text-sm font-medium">Attached Files:</p>
                                       {assignmentSubmissions[0].attachments.map((file: any, idx: number) => (
@@ -1279,7 +1267,12 @@ export default function ClassroomDetailPage() {
                                       ))}
                                     </div>
                                   )}
-                                </div>
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-muted-foreground py-4">
+                                    Loading your submission details...
+                                  </p>
+                                )}
                               </div>
                             )}
                             
