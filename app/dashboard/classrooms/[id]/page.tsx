@@ -1159,16 +1159,28 @@ export default function ClassroomDetailPage() {
                                             <File className="h-4 w-4" />
                                             {file.name}
                                           </span>
-                                          <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            onClick={() => {
-                                              const downloadUrl = `/api/classrooms/${classroomId}/assignments/${selectedAssignment?._id}/submissions/${assignmentSubmissions[0]._id}/download?fileIndex=${idx}`;
-                                              window.open(downloadUrl, '_blank');
-                                            }}
-                                          >
-                                            <Download className="h-4 w-4" />
-                                          </Button>
+                                          <div className="flex gap-1">
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              onClick={() => {
+                                                const viewUrl = `/api/classrooms/${classroomId}/assignments/${selectedAssignment?._id}/submissions/${assignmentSubmissions[0]._id}/view?fileIndex=${idx}`;
+                                                window.open(viewUrl, '_blank');
+                                              }}
+                                            >
+                                              <Eye className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              onClick={() => {
+                                                const downloadUrl = `/api/classrooms/${classroomId}/assignments/${selectedAssignment?._id}/submissions/${assignmentSubmissions[0]._id}/download?fileIndex=${idx}`;
+                                                window.open(downloadUrl, '_blank');
+                                              }}
+                                            >
+                                              <Download className="h-4 w-4" />
+                                            </Button>
+                                          </div>
                                         </div>
                                       ))}
                                     </div>
@@ -1210,16 +1222,28 @@ export default function ClassroomDetailPage() {
                                                     <File className="h-4 w-4" />
                                                     {file.name}
                                                   </span>
-                                                  <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    onClick={() => {
-                                                      const downloadUrl = `/api/classrooms/${classroomId}/assignments/${selectedAssignment?._id}/submissions/${submission._id}/download?fileIndex=${fileIdx}`;
-                                                      window.open(downloadUrl, '_blank');
-                                                    }}
-                                                  >
-                                                    <Download className="h-4 w-4" />
-                                                  </Button>
+                                                  <div className="flex gap-1">
+                                                    <Button
+                                                      size="sm"
+                                                      variant="ghost"
+                                                      onClick={() => {
+                                                        const viewUrl = `/api/classrooms/${classroomId}/assignments/${selectedAssignment?._id}/submissions/${submission._id}/view?fileIndex=${fileIdx}`;
+                                                        window.open(viewUrl, '_blank');
+                                                      }}
+                                                    >
+                                                      <Eye className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                      size="sm"
+                                                      variant="ghost"
+                                                      onClick={() => {
+                                                        const downloadUrl = `/api/classrooms/${classroomId}/assignments/${selectedAssignment?._id}/submissions/${submission._id}/download?fileIndex=${fileIdx}`;
+                                                        window.open(downloadUrl, '_blank');
+                                                      }}
+                                                    >
+                                                      <Download className="h-4 w-4" />
+                                                    </Button>
+                                                  </div>
                                                 </div>
                                               ))}
                                             </div>
