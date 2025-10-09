@@ -1113,19 +1113,34 @@ export default function CodeCornerPage() {
 
       {filteredQuestions.length === 0 && (
         <div className="text-center py-12">
-          <div className="bg-muted/50 rounded-full p-4 w-16 h-16 mx-auto mb-4">
-            <Code2 className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <h3 className="text-lg font-medium mb-2">No questions found</h3>
-          <p className="text-muted-foreground mb-6">
-            {searchQuery
-              ? "No questions match your search criteria."
-              : "Be the first to ask a question!"}
-          </p>
-          <Button onClick={() => setIsDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Ask Question
-          </Button>
+          <Card className="border-blue-500/50 bg-blue-50/50 dark:bg-blue-950/20 max-w-2xl mx-auto">
+            <CardContent className="pt-8 pb-8">
+              <div className="bg-blue-100 dark:bg-blue-900/30 rounded-full p-4 w-16 h-16 mx-auto mb-4">
+                <Code2 className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2 text-blue-900 dark:text-blue-100">
+                {searchQuery ? "No questions found" : "🚀 Start the Conversation!"}
+              </h3>
+              <p className="text-blue-800 dark:text-blue-200 mb-4">
+                {searchQuery
+                  ? "No questions match your search criteria. Try different keywords."
+                  : "This is a live Q&A platform with real questions from real users. There are currently no questions yet. Be the first one to ask and help build this community!"}
+              </p>
+              <div className="bg-white/50 dark:bg-black/20 rounded-lg p-4 mb-6 text-sm text-left">
+                <p className="text-blue-900 dark:text-blue-100 font-medium mb-2">💡 What can you ask?</p>
+                <ul className="space-y-1 text-blue-800 dark:text-blue-200">
+                  <li>• Coding problems you're stuck on</li>
+                  <li>• Questions about algorithms or data structures</li>
+                  <li>• Help with debugging your code</li>
+                  <li>• Best practices and optimization tips</li>
+                </ul>
+              </div>
+              <Button onClick={() => setIsDialogOpen(true)} size="lg" className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="h-5 w-5 mr-2" />
+                Ask the First Question
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>

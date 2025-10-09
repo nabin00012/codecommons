@@ -308,161 +308,217 @@ export default function ClassroomsListPage() {
 
   return (
     <ProtectedRoute>
-      <div className="container py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Classrooms</h1>
-          <div className="flex gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                type="text"
-                placeholder="Search classrooms..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 w-[300px]"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant={viewMode === "grid" ? "default" : "outline"}
-                onClick={() => setViewMode("grid")}
-                size="icon"
-              >
-                <Grid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "3d" ? "default" : "outline"}
-                onClick={() => setViewMode("3d")}
-                size="icon"
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
-            {isTeacher ? (
-              <Button
-                onClick={() => router.push("/dashboard/classrooms/new")}
-                size="lg"
-                className="gap-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 dark:from-blue-400 dark:to-purple-400 dark:hover:from-blue-500 dark:hover:to-purple-500 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-              >
-                <Plus className="w-4 h-4" />
-                Create Classroom
-              </Button>
-            ) : (
-              <div className="flex gap-2">
-                <Input
-                  type="text"
-                  placeholder="Enter classroom code"
-                  value={joinCode}
-                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                  className="w-[200px] uppercase"
-                  maxLength={6}
-                />
-                <Button
-                  onClick={handleJoinClassroom}
-                  disabled={isJoining || !joinCode}
-                  size="lg"
-                  className="gap-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 dark:from-blue-400 dark:to-purple-400 dark:hover:from-blue-500 dark:hover:to-purple-500 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-                >
-                  {isJoining ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Joining...
-                    </>
-                  ) : (
-                    <>
-                      <BookOpen className="w-4 h-4" />
-                      Join Classroom
-                    </>
-                  )}
-                </Button>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+        <div className="container py-8">
+          {/* Hero Header */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-8"
+          >
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-8 shadow-2xl">
+              <div className="absolute inset-0 bg-grid-white/10" />
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-3 bg-white/10 rounded-lg backdrop-blur">
+                    <BookOpen className="h-8 w-8 text-white" />
+                  </div>
+                  <h1 className="text-4xl font-bold text-white">My Classrooms</h1>
+                </div>
+                <p className="text-lg text-white/90 max-w-2xl">
+                  {isTeacher 
+                    ? "Manage your classes, create assignments, and track student progress"
+                    : "Access your enrolled courses, assignments, and materials"}
+                </p>
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+          </motion.div>
+
+          {/* Search and Actions Bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="mb-6"
+          >
+            <Card className="border-primary/10 shadow-lg">
+              <CardContent className="pt-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      type="text"
+                      placeholder="Search classrooms..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 w-full md:w-[300px]"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={viewMode === "grid" ? "default" : "outline"}
+                      onClick={() => setViewMode("grid")}
+                      size="icon"
+                    >
+                      <Grid className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === "3d" ? "default" : "outline"}
+                      onClick={() => setViewMode("3d")}
+                      size="icon"
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {isTeacher ? (
+                    <Button
+                      onClick={() => router.push("/dashboard/classrooms/new")}
+                      size="lg"
+                      className="gap-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 dark:from-blue-400 dark:to-purple-400 dark:hover:from-blue-500 dark:hover:to-purple-500 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Create Classroom
+                    </Button>
+                  ) : (
+                    <div className="flex gap-2 flex-1 md:flex-initial">
+                      <Input
+                        type="text"
+                        placeholder="Enter classroom code"
+                        value={joinCode}
+                        onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                        className="w-full md:w-[200px] uppercase"
+                        maxLength={6}
+                      />
+                      <Button
+                        onClick={handleJoinClassroom}
+                        disabled={isJoining || !joinCode}
+                        size="lg"
+                        className="gap-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 dark:from-blue-400 dark:to-purple-400 dark:hover:from-blue-500 dark:hover:to-purple-500 text-white shadow-lg hover:shadow-xl transition-all duration-300 whitespace-nowrap"
+                      >
+                        {isJoining ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Joining...
+                          </>
+                        ) : (
+                          <>
+                            <BookOpen className="w-4 h-4" />
+                            Join
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
 
         {filteredClassrooms.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <BookOpen className="w-12 h-12 text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold mb-2">
-                No Classrooms Found
-              </h3>
-              <p className="text-muted-foreground text-center mb-4">
-                {isTeacher
-                  ? "Create your first classroom to get started"
-                  : "Join a classroom using the code provided by your teacher"}
-              </p>
-              {isTeacher ? (
-                <Button
-                  onClick={() => router.push("/dashboard/classrooms/new")}
-                  size="lg"
-                  className="gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  Create Classroom
-                </Button>
-              ) : (
-                <div className="flex gap-2">
-                  <Input
-                    type="text"
-                    placeholder="Enter classroom code"
-                    value={joinCode}
-                    onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                    className="w-[200px] uppercase"
-                    maxLength={6}
-                  />
-                  <Button
-                    onClick={handleJoinClassroom}
-                    disabled={isJoining || !joinCode}
-                    size="lg"
-                    className="gap-2"
-                  >
-                    {isJoining ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Joining...
-                      </>
-                    ) : (
-                      <>
-                        <BookOpen className="w-4 h-4" />
-                        Join Classroom
-                      </>
-                    )}
-                  </Button>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Card className="border-primary/20 bg-gradient-to-br from-card via-card to-primary/5 shadow-xl">
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <div className="p-4 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full mb-6">
+                  <BookOpen className="w-16 h-16 text-primary" />
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+                  No Classrooms Found
+                </h3>
+                <p className="text-muted-foreground text-center mb-6 max-w-md">
+                  {isTeacher
+                    ? "Create your first classroom to get started with teaching and managing your students"
+                    : "Join a classroom using the code provided by your teacher to access courses and assignments"}
+                </p>
+                {isTeacher ? (
+                  <Button
+                    onClick={() => router.push("/dashboard/classrooms/new")}
+                    size="lg"
+                    className="gap-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 dark:from-blue-400 dark:to-purple-400 dark:hover:from-blue-500 dark:hover:to-purple-500 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Create Your First Classroom
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Input
+                      type="text"
+                      placeholder="Enter classroom code"
+                      value={joinCode}
+                      onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                      className="w-[200px] uppercase"
+                      maxLength={6}
+                    />
+                    <Button
+                      onClick={handleJoinClassroom}
+                      disabled={isJoining || !joinCode}
+                      size="lg"
+                      className="gap-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 dark:from-blue-400 dark:to-purple-400 dark:hover:from-blue-500 dark:hover:to-purple-500 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      {isJoining ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Joining...
+                        </>
+                      ) : (
+                        <>
+                          <BookOpen className="w-4 h-4" />
+                          Join Classroom
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
         ) : viewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredClassrooms.map((classroom) => (
+            {filteredClassrooms.map((classroom, index) => (
               <motion.div
                 key={classroom._id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
                 <Card
-                  className="h-full cursor-pointer hover:shadow-lg transition-shadow"
+                  className="h-full cursor-pointer hover:shadow-2xl transition-all duration-300 border-primary/20 bg-gradient-to-br from-card via-card to-primary/5 group overflow-hidden relative"
                   onClick={() =>
                     router.push(`/dashboard/classrooms/${classroom._id}`)
                   }
                 >
-                  <CardHeader>
+                  {/* Animated gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-purple-500/0 to-pink-500/0 group-hover:from-blue-500/10 group-hover:via-purple-500/10 group-hover:to-pink-500/10 transition-all duration-500" />
+                  
+                  <CardHeader className="relative z-10">
                     <CardTitle className="flex items-center justify-between">
-                      <span>{classroom.name}</span>
-                      <span className="text-sm font-mono bg-muted px-2 py-1 rounded">
+                      <span className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+                        {classroom.name}
+                      </span>
+                      <span className="text-sm font-mono bg-gradient-to-r from-blue-500 to-purple-500 dark:from-blue-400 dark:to-purple-400 text-white px-3 py-1 rounded-lg shadow-md">
                         {classroom.code}
                       </span>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-4">
+                  <CardContent className="relative z-10">
+                    <p className="text-muted-foreground mb-4 line-clamp-2">
                       {classroom.description}
                     </p>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <span>Instructor: {classroom.instructor.name}</span>
-                      <span>{classroom.students.length} students</span>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-1 text-muted-foreground">
+                        <span className="font-medium">Instructor:</span> {classroom.instructor.name}
+                      </span>
+                      <span className="flex items-center gap-1 px-2 py-1 bg-primary/10 rounded-md">
+                        <span className="font-semibold text-primary">{classroom.students.length}</span> 
+                        <span className="text-muted-foreground">students</span>
+                      </span>
                     </div>
                   </CardContent>
                 </Card>
@@ -479,6 +535,7 @@ export default function ClassroomsListPage() {
             />
           </div>
         )}
+      </div>
       </div>
     </ProtectedRoute>
   );
