@@ -121,6 +121,7 @@ export default function ClassroomDetailPage() {
   const [submittedAssignments, setSubmittedAssignments] = useState<Set<string>>(new Set());
   const [assignmentSubmissions, setAssignmentSubmissions] = useState<any[]>([]);
   const [submissionsCache, setSubmissionsCache] = useState<Map<string, any[]>>(new Map());
+  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
 
   // Form states
   const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
@@ -198,21 +199,38 @@ export default function ClassroomDetailPage() {
 
         if (assignmentsResponse.ok) {
           const assignmentsData = await assignmentsResponse.json();
-          setAssignments(assignmentsData.data || []);
+          const assignments = assignmentsData.data || [];
+          setAssignments(assignments);
           
-          // Fetch all submissions for this student at once
-          if (!isTeacher) {
-            const submissionsResponse = await fetch(
-              `/api/classrooms/${classroomId}/submissions/my-submissions`,
-              { credentials: "include" }
+          // Prefetch submission details for all assignments
+          if (assignments.length > 0) {
+            // Fetch submissions for all assignments in parallel
+            const submissionPromises = assignments.map((assignment: any) =>
+              fetch(`/api/classrooms/${classroomId}/assignments/${assignment._id}`, {
+                credentials: "include"
+              }).then(res => res.ok ? res.json() : null)
             );
-            if (submissionsResponse.ok) {
-              const submissionsData = await submissionsResponse.json();
-              const submitted = new Set<string>(
-                (submissionsData.data || []).map((s: any) => s.assignmentId)
-              );
-              setSubmittedAssignments(submitted);
-            }
+            
+            const submissionsResults = await Promise.all(submissionPromises);
+            
+            // Build cache and submitted set
+            const newCache = new Map<string, any[]>();
+            const submitted = new Set<string>();
+            
+            submissionsResults.forEach((result, index) => {
+              if (result?.data?.submissions) {
+                const assignmentId = assignments[index]._id;
+                newCache.set(assignmentId, result.data.submissions);
+                
+                // For students, check if they submitted
+                if (!isTeacher && result.data.submissions.length > 0) {
+                  submitted.add(assignmentId);
+                }
+              }
+            });
+            
+            setSubmissionsCache(newCache);
+            setSubmittedAssignments(submitted);
           }
         }
 
@@ -1018,6 +1036,7 @@ export default function ClassroomDetailPage() {
                                     setAssignmentSubmissions(submissionsCache.get(assignment._id) || []);
                                   } else {
                                     // Fetch submissions only if not cached
+                                    setLoadingSubmissions(true);
                                     try {
                                       const res = await fetch(
                                         `/api/classrooms/${classroomId}/assignments/${assignment._id}`,
@@ -1032,6 +1051,8 @@ export default function ClassroomDetailPage() {
                                       }
                                     } catch (error) {
                                       console.error("Error fetching submissions:", error);
+                                    } finally {
+                                      setLoadingSubmissions(false);
                                     }
                                   }
                                 }}
@@ -1062,7 +1083,12 @@ export default function ClassroomDetailPage() {
                               </DialogDescription>
                             </DialogHeader>
                             
-                            {!isTeacher && !submittedAssignments.has(assignment._id) && (
+                            {loadingSubmissions ? (
+                              <div className="flex flex-col items-center justify-center py-12">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                                <p className="mt-4 text-sm text-muted-foreground">Loading submissions...</p>
+                              </div>
+                            ) : !isTeacher && !submittedAssignments.has(assignment._id) && (
                               <div className="space-y-4 mt-4">
                                 <div>
                                   <label className="block text-sm font-medium mb-2">
@@ -1177,7 +1203,7 @@ export default function ClassroomDetailPage() {
                               </div>
                             )}
                             
-                            {isTeacher && (
+                            {!loadingSubmissions && isTeacher && (
                               <div className="mt-4 space-y-4">
                                 <h3 className="text-lg font-semibold">Student Submissions ({assignmentSubmissions.length})</h3>
                                 {assignmentSubmissions.length === 0 ? (
