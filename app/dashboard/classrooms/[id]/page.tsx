@@ -118,6 +118,7 @@ export default function ClassroomDetailPage() {
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true); // Show classroom first
   const [submittedAssignments, setSubmittedAssignments] = useState<Set<string>>(new Set());
   const [assignmentSubmissions, setAssignmentSubmissions] = useState<any[]>([]);
   const [submissionsCache, setSubmissionsCache] = useState<Map<string, any[]>>(new Map());
@@ -169,28 +170,28 @@ export default function ClassroomDetailPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch all data in parallel for better performance
+        // Step 1: Fetch classroom details first for quick display
+        const classroomResponse = await fetch(`/api/classrooms/${classroomId}`, { credentials: "include" });
+        if (classroomResponse.ok) {
+          const classroomData = await classroomResponse.json();
+          setClassroom(classroomData.data);
+          setInitialLoad(false); // Show classroom immediately
+        }
+
+        // Step 2: Fetch everything else in parallel
         const [
-          classroomResponse,
           announcementsResponse,
           assignmentsResponse,
           materialsResponse,
           discussionsResponse,
           membersResponse
         ] = await Promise.all([
-          fetch(`/api/classrooms/${classroomId}`, { credentials: "include" }),
           fetch(`/api/classrooms/${classroomId}/announcements`, { credentials: "include" }),
           fetch(`/api/classrooms/${classroomId}/assignments`, { credentials: "include" }),
           fetch(`/api/classrooms/${classroomId}/materials`, { credentials: "include" }),
           fetch(`/api/classrooms/${classroomId}/discussions`, { credentials: "include" }),
           fetch(`/api/classrooms/${classroomId}/members`, { credentials: "include" })
         ]);
-
-        // Process all responses
-        if (classroomResponse.ok) {
-          const classroomData = await classroomResponse.json();
-          setClassroom(classroomData.data);
-        }
 
         if (announcementsResponse.ok) {
           const announcementsData = await announcementsResponse.json();
@@ -507,10 +508,87 @@ export default function ClassroomDetailPage() {
     }
   };
 
-  if (loading) {
+  if (initialLoad) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center overflow-hidden">
+        <div className="relative">
+          {/* Animated Background Circles */}
+          <div className="absolute inset-0 -z-10">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-400/20 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+          </div>
+
+          {/* Main Loading Card */}
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl p-12 border border-white/20 dark:border-gray-700/50">
+            <div className="flex flex-col items-center gap-6">
+              {/* Animated Logo/Icon */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-2xl blur-xl opacity-75 animate-pulse"></div>
+                <div className="relative bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 p-6 rounded-2xl shadow-xl">
+                  <BookOpen className="h-16 w-16 text-white animate-bounce" />
+                </div>
+              </div>
+
+              {/* Loading Text */}
+              <div className="text-center space-y-3">
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+                  Loading Classroom
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400 text-lg">
+                  Preparing your learning experience...
+                </p>
+              </div>
+
+              {/* Animated Progress Bar */}
+              <div className="w-64 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full animate-[shimmer_1.5s_ease-in-out_infinite]"
+                  style={{
+                    backgroundSize: '200% 100%',
+                    animation: 'shimmer 1.5s ease-in-out infinite'
+                  }}
+                ></div>
+              </div>
+
+              {/* Loading Steps */}
+              <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                <div className="flex items-center gap-2 animate-pulse">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping"></div>
+                  <span>Fetching assignments</span>
+                </div>
+                <span className="mx-2">•</span>
+                <div className="flex items-center gap-2 animate-pulse" style={{ animationDelay: '0.3s' }}>
+                  <div className="w-2 h-2 bg-purple-500 rounded-full animate-ping"></div>
+                  <span>Loading materials</span>
+                </div>
+                <span className="mx-2">•</span>
+                <div className="flex items-center gap-2 animate-pulse" style={{ animationDelay: '0.6s' }}>
+                  <div className="w-2 h-2 bg-pink-500 rounded-full animate-ping"></div>
+                  <span>Getting ready</span>
+                </div>
+              </div>
+
+              {/* Fun Facts / Tips */}
+              <div className="mt-4 p-4 bg-blue-50 dark:bg-gray-700/50 rounded-xl border border-blue-100 dark:border-gray-600">
+                <p className="text-sm text-blue-800 dark:text-blue-300 text-center">
+                  💡 <span className="font-semibold">Tip:</span> You can press Tab to navigate between assignments quickly!
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Add shimmer animation */}
+        <style jsx>{`
+          @keyframes shimmer {
+            0% {
+              background-position: -200% 0;
+            }
+            100% {
+              background-position: 200% 0;
+            }
+          }
+        `}</style>
       </div>
     );
   }
