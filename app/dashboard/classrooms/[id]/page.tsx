@@ -32,6 +32,7 @@ import {
   Upload,
   Video,
   File,
+  Image as ImageIcon,
   Link as LinkIcon,
   Send,
   Pin,
@@ -1401,6 +1402,7 @@ export default function ClassroomDetailPage() {
                         className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600"
                       >
                         <option value="document">📄 Document/PDF</option>
+                        <option value="image">🖼️ Image/Photo</option>
                         <option value="video">🎥 Video Resource</option>
                         <option value="link">🔗 External Link</option>
                         <option value="code">💻 Code Sample</option>
@@ -1420,9 +1422,11 @@ export default function ClassroomDetailPage() {
                           }
                           accept={
                             newMaterial.type === "video"
-                              ? "video/*"
+                              ? "video/*,.mp4,.mov,.avi,.mkv,.wmv,.flv,.webm"
+                              : newMaterial.type === "image"
+                              ? "image/*,.jpg,.jpeg,.png,.gif,.bmp,.svg,.webp"
                               : newMaterial.type === "document"
-                              ? ".pdf,.doc,.docx,.txt,.ppt,.pptx"
+                              ? ".pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx,.csv,.rtf,.odt"
                               : "*/*"
                           }
                           className="flex-1 p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600"
@@ -1514,6 +1518,8 @@ export default function ClassroomDetailPage() {
                 {materials.map((material) => {
                   const materialIcon = material.type === "video" 
                     ? { icon: Video, color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/20", badge: "🎥" }
+                    : material.type === "image"
+                    ? { icon: ImageIcon, color: "text-pink-500", bg: "bg-pink-50 dark:bg-pink-900/20", badge: "🖼️" }
                     : material.type === "document"
                     ? { icon: File, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20", badge: "📄" }
                     : material.type === "link"
