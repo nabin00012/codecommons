@@ -49,13 +49,24 @@ export async function GET(
         .find({ assignmentId: assignmentId })
         .toArray();
       
-      // Enrich with student names
-      for (let submission of submissions) {
-        const student = await db.collection("users").findOne({ 
-          _id: new ObjectId(submission.studentId) 
-        });
-        submission.studentName = student?.name || "Unknown";
-        submission.studentEmail = student?.email || "";
+      // Fetch all student info in one query (batch fetch)
+      if (submissions.length > 0) {
+        const studentIds = submissions.map(s => new ObjectId(s.studentId));
+        const students = await db.collection("users")
+          .find({ _id: { $in: studentIds } })
+          .toArray();
+        
+        // Create a map for quick lookup
+        const studentMap = new Map(
+          students.map(s => [s._id.toString(), s])
+        );
+        
+        // Enrich submissions with student info
+        submissions = submissions.map(submission => ({
+          ...submission,
+          studentName: studentMap.get(submission.studentId)?.name || "Unknown",
+          studentEmail: studentMap.get(submission.studentId)?.email || "",
+        }));
       }
     } else {
       // Students see only their own submission
@@ -78,7 +89,7 @@ export async function GET(
           points: assignment.points,
           attachments: assignment.attachments || [],
         },
-        submissions: submissions.map(s => ({
+        submissions: submissions.map((s: any) => ({
           _id: s._id.toString(),
           studentId: s.studentId,
           studentName: s.studentName,

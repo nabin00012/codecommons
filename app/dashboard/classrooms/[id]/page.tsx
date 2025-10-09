@@ -168,39 +168,33 @@ export default function ClassroomDetailPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch classroom details
-        const classroomResponse = await fetch(
-          `/api/classrooms/${classroomId}`,
-          {
-            credentials: "include",
-          }
-        );
+        // Fetch all data in parallel for better performance
+        const [
+          classroomResponse,
+          announcementsResponse,
+          assignmentsResponse,
+          materialsResponse,
+          discussionsResponse,
+          membersResponse
+        ] = await Promise.all([
+          fetch(`/api/classrooms/${classroomId}`, { credentials: "include" }),
+          fetch(`/api/classrooms/${classroomId}/announcements`, { credentials: "include" }),
+          fetch(`/api/classrooms/${classroomId}/assignments`, { credentials: "include" }),
+          fetch(`/api/classrooms/${classroomId}/materials`, { credentials: "include" }),
+          fetch(`/api/classrooms/${classroomId}/discussions`, { credentials: "include" }),
+          fetch(`/api/classrooms/${classroomId}/members`, { credentials: "include" })
+        ]);
 
+        // Process all responses
         if (classroomResponse.ok) {
           const classroomData = await classroomResponse.json();
           setClassroom(classroomData.data);
         }
 
-        // Fetch announcements
-        const announcementsResponse = await fetch(
-          `/api/classrooms/${classroomId}/announcements`,
-          {
-            credentials: "include",
-          }
-        );
-
         if (announcementsResponse.ok) {
           const announcementsData = await announcementsResponse.json();
           setAnnouncements(announcementsData.data || []);
         }
-
-        // Fetch assignments
-        const assignmentsResponse = await fetch(
-          `/api/classrooms/${classroomId}/assignments`,
-          {
-            credentials: "include",
-          }
-        );
 
         if (assignmentsResponse.ok) {
           const assignmentsData = await assignmentsResponse.json();
@@ -222,39 +216,15 @@ export default function ClassroomDetailPage() {
           }
         }
 
-        // Fetch materials
-        const materialsResponse = await fetch(
-          `/api/classrooms/${classroomId}/materials`,
-          {
-            credentials: "include",
-          }
-        );
-
         if (materialsResponse.ok) {
           const materialsData = await materialsResponse.json();
           setMaterials(materialsData.data || []);
         }
 
-        // Fetch classroom discussions
-        const discussionsResponse = await fetch(
-          `/api/classrooms/${classroomId}/discussions`,
-          {
-            credentials: "include",
-          }
-        );
-
         if (discussionsResponse.ok) {
           const discussionsData = await discussionsResponse.json();
           setDiscussions(discussionsData.data || []);
         }
-
-        // Fetch members
-        const membersResponse = await fetch(
-          `/api/classrooms/${classroomId}/members`,
-          {
-            credentials: "include",
-          }
-        );
 
         if (membersResponse.ok) {
           const membersData = await membersResponse.json();
