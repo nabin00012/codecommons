@@ -13,6 +13,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   ArrowLeft,
   BookOpen,
   FileText,
@@ -34,6 +42,7 @@ import {
   CheckCircle,
   AlertCircle,
   Megaphone,
+  Paperclip,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -53,6 +62,7 @@ interface Assignment {
   description: string;
   dueDate: string;
   points: number;
+  attachments?: Array<{name: string; url: string; size: number}>;
 }
 
 interface Material {
@@ -140,6 +150,13 @@ export default function ClassroomDetailPage() {
   });
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  
+  // Assignment submission states
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
+  const [showAssignmentDialog, setShowAssignmentDialog] = useState(false);
+  const [submissionText, setSubmissionText] = useState("");
+  const [submissionFiles, setSubmissionFiles] = useState<File[]>([]);
+  const [assignmentAttachments, setAssignmentAttachments] = useState<File[]>([]);
 
   const classroomId = params.id as string;
   const isTeacher = user?.role === "teacher" || user?.role === "admin";
@@ -289,7 +306,14 @@ export default function ClassroomDetailPage() {
             "Content-Type": "application/json",
           },
           credentials: "include",
-          body: JSON.stringify(newAssignment),
+          body: JSON.stringify({
+            ...newAssignment,
+            attachments: assignmentAttachments.map(f => ({
+              name: f.name,
+              size: f.size,
+              type: f.type,
+            }))
+          }),
         }
       );
 
@@ -302,6 +326,7 @@ export default function ClassroomDetailPage() {
           dueDate: "",
           points: "100",
         });
+        setAssignmentAttachments([]);
         setShowAssignmentForm(false);
         toast({
           title: "Success",
@@ -313,6 +338,50 @@ export default function ClassroomDetailPage() {
       toast({
         title: "Error",
         description: "Failed to create assignment",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSubmitAssignment = async () => {
+    if (!selectedAssignment) return;
+
+    try {
+      const response = await fetch(
+        `/api/classrooms/${classroomId}/assignments/${selectedAssignment._id}/submit`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            content: submissionText,
+            attachments: submissionFiles.map(f => ({
+              name: f.name,
+              size: f.size,
+              type: f.type,
+            }))
+          }),
+        }
+      );
+
+      if (response.ok) {
+        setShowAssignmentDialog(false);
+        setSubmissionText("");
+        setSubmissionFiles([]);
+        toast({
+          title: "Success",
+          description: "Assignment submitted successfully",
+        });
+      } else {
+        throw new Error("Submission failed");
+      }
+    } catch (error) {
+      console.error("Error submitting assignment:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit assignment",
         variant: "destructive",
       });
     }
@@ -774,12 +843,62 @@ export default function ClassroomDetailPage() {
                         />
                       </div>
                     </div>
+                    
+                    {/* File Attachments */}
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium">
+                        Attach Files (Optional)
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="file"
+                          multiple
+                          onChange={(e) => {
+                            if (e.target.files) {
+                              setAssignmentAttachments(Array.from(e.target.files));
+                            }
+                          }}
+                          className="flex-1 p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600"
+                        />
+                      </div>
+                      {assignmentAttachments.length > 0 && (
+                        <div className="space-y-1">
+                          {assignmentAttachments.map((file, idx) => (
+                            <div key={idx} className="flex items-center justify-between text-sm bg-muted p-2 rounded">
+                              <span className="flex items-center gap-2">
+                                <Paperclip className="h-3 w-3" />
+                                {file.name}
+                              </span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setAssignmentAttachments(prev => prev.filter((_, i) => i !== idx));
+                                }}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
                     <div className="flex gap-2">
-                      <Button type="submit">Create Assignment</Button>
+                      <Button 
+                        type="submit"
+                        className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+                      >
+                        Create Assignment
+                      </Button>
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => setShowAssignmentForm(false)}
+                        onClick={() => {
+                          setShowAssignmentForm(false);
+                          setAssignmentAttachments([]);
+                        }}
                       >
                         Cancel
                       </Button>
@@ -807,25 +926,155 @@ export default function ClassroomDetailPage() {
             ) : (
               <div className="space-y-4">
                 {assignments.map((assignment) => (
-                  <Card key={assignment._id}>
+                  <Card key={assignment._id} className="border-primary/20 hover:shadow-lg transition-all duration-300">
                     <CardHeader>
                       <div className="flex items-start justify-between">
-                        <CardTitle>{assignment.title}</CardTitle>
-                        <Badge variant="outline">{assignment.points} pts</Badge>
+                        <CardTitle className="text-lg">{assignment.title}</CardTitle>
+                        <Badge variant="outline" className="bg-gradient-to-r from-blue-500/10 to-purple-500/10">
+                          {assignment.points} pts
+                        </Badge>
                       </div>
                     </CardHeader>
-                    <CardContent>
-                      <p className="text-gray-600 dark:text-gray-300 mb-4">
+                    <CardContent className="space-y-4">
+                      <p className="text-muted-foreground">
                         {assignment.description}
                       </p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <Calendar className="h-4 w-4" />
+                      
+                      {/* Attachments from teacher */}
+                      {assignment.attachments && assignment.attachments.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium flex items-center gap-2">
+                            <Paperclip className="h-4 w-4" />
+                            Attached Files:
+                          </p>
+                          <div className="space-y-1">
+                            {assignment.attachments.map((file, idx) => (
+                              <div key={idx} className="flex items-center justify-between bg-muted p-2 rounded text-sm">
+                                <span className="flex items-center gap-2">
+                                  <File className="h-4 w-4" />
+                                  {file.name}
+                                </span>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    // Download file logic
+                                    toast({
+                                      title: "Downloading",
+                                      description: `Downloading ${file.name}...`,
+                                    });
+                                  }}
+                                >
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between pt-2">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Clock className="h-4 w-4" />
                           Due: {new Date(assignment.dueDate).toLocaleString()}
                         </div>
-                        <Button size="sm">
-                          {isTeacher ? "View Submissions" : "Submit Assignment"}
-                        </Button>
+                        
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button 
+                              size="sm"
+                              className="gap-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+                              onClick={() => setSelectedAssignment(assignment)}
+                            >
+                              {isTeacher ? (
+                                <>
+                                  <Eye className="h-4 w-4" />
+                                  View Submissions
+                                </>
+                              ) : (
+                                <>
+                                  <Upload className="h-4 w-4" />
+                                  Submit Work
+                                </>
+                              )}
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                            <DialogHeader>
+                              <DialogTitle>{assignment.title}</DialogTitle>
+                              <DialogDescription>
+                                {assignment.description}
+                              </DialogDescription>
+                            </DialogHeader>
+                            
+                            {!isTeacher && (
+                              <div className="space-y-4 mt-4">
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">
+                                    Your Submission
+                                  </label>
+                                  <Textarea
+                                    placeholder="Type your answer or add notes here..."
+                                    value={submissionText}
+                                    onChange={(e) => setSubmissionText(e.target.value)}
+                                    rows={6}
+                                    className="w-full"
+                                  />
+                                </div>
+                                
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">
+                                    Attach Files
+                                  </label>
+                                  <input
+                                    type="file"
+                                    multiple
+                                    onChange={(e) => {
+                                      if (e.target.files) {
+                                        setSubmissionFiles(Array.from(e.target.files));
+                                      }
+                                    }}
+                                    className="w-full p-2 border rounded-md"
+                                  />
+                                  {submissionFiles.length > 0 && (
+                                    <div className="mt-2 space-y-1">
+                                      {submissionFiles.map((file, idx) => (
+                                        <div key={idx} className="flex items-center justify-between bg-muted p-2 rounded text-sm">
+                                          <span>{file.name}</span>
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => {
+                                              setSubmissionFiles(prev => prev.filter((_, i) => i !== idx));
+                                            }}
+                                          >
+                                            <Trash2 className="h-3 w-3" />
+                                          </Button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                <Button 
+                                  onClick={handleSubmitAssignment}
+                                  className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+                                >
+                                  <Send className="h-4 w-4 mr-2" />
+                                  Submit Assignment
+                                </Button>
+                              </div>
+                            )}
+                            
+                            {isTeacher && (
+                              <div className="mt-4">
+                                <p className="text-sm text-muted-foreground">
+                                  Student submissions will appear here once they submit their work.
+                                </p>
+                              </div>
+                            )}
+                          </DialogContent>
+                        </Dialog>
                       </div>
                     </CardContent>
                   </Card>

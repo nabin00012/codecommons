@@ -81,7 +81,7 @@ async function clearDatabase() {
       try {
         const collection = db.collection(collectionName);
         const count = await collection.countDocuments();
-        
+
         if (count > 0) {
           const result = await collection.deleteMany({});
           console.log(`   ✅ ${collectionName}: Deleted ${result.deletedCount} documents`);
