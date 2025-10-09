@@ -1017,20 +1017,18 @@ export default function ClassroomDetailPage() {
                                 className="gap-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
                                 onClick={async () => {
                                   setSelectedAssignment(assignment);
-                                  // Fetch submissions if teacher
-                                  if (isTeacher) {
-                                    try {
-                                      const res = await fetch(
-                                        `/api/classrooms/${classroomId}/assignments/${assignment._id}`,
-                                        { credentials: "include" }
-                                      );
-                                      if (res.ok) {
-                                        const data = await res.json();
-                                        setAssignmentSubmissions(data.data.submissions || []);
-                                      }
-                                    } catch (error) {
-                                      console.error("Error fetching submissions:", error);
+                                  // Fetch submissions for both teacher and student
+                                  try {
+                                    const res = await fetch(
+                                      `/api/classrooms/${classroomId}/assignments/${assignment._id}`,
+                                      { credentials: "include" }
+                                    );
+                                    if (res.ok) {
+                                      const data = await res.json();
+                                      setAssignmentSubmissions(data.data.submissions || []);
                                     }
+                                  } catch (error) {
+                                    console.error("Error fetching submissions:", error);
                                   }
                                 }}
                               >
@@ -1060,7 +1058,7 @@ export default function ClassroomDetailPage() {
                               </DialogDescription>
                             </DialogHeader>
                             
-                            {!isTeacher && (
+                            {!isTeacher && !submittedAssignments.has(assignment._id) && (
                               <div className="space-y-4 mt-4">
                                 <div>
                                   <label className="block text-sm font-medium mb-2">
@@ -1116,6 +1114,51 @@ export default function ClassroomDetailPage() {
                                   <Send className="h-4 w-4 mr-2" />
                                   Submit Assignment
                                 </Button>
+                              </div>
+                            )}
+
+                            {!isTeacher && submittedAssignments.has(assignment._id) && assignmentSubmissions.length > 0 && (
+                              <div className="mt-4 space-y-4">
+                                <div className="flex items-center gap-2 mb-3">
+                                  <Badge className="bg-green-500 text-white">
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    Submitted
+                                  </Badge>
+                                  <span className="text-sm text-muted-foreground">
+                                    {new Date(assignmentSubmissions[0].submittedAt).toLocaleString()}
+                                  </span>
+                                </div>
+                                <div className="p-4 bg-muted/50 rounded-lg border">
+                                  <h4 className="font-medium mb-2">Your Submission:</h4>
+                                  <p className="text-sm whitespace-pre-wrap mb-3">
+                                    {assignmentSubmissions[0].content || "No text submission"}
+                                  </p>
+                                  {assignmentSubmissions[0].attachments && assignmentSubmissions[0].attachments.length > 0 && (
+                                    <div className="space-y-1">
+                                      <p className="text-sm font-medium">Attached Files:</p>
+                                      {assignmentSubmissions[0].attachments.map((file: any, idx: number) => (
+                                        <div key={idx} className="flex items-center justify-between bg-background p-2 rounded text-sm">
+                                          <span className="flex items-center gap-2">
+                                            <File className="h-4 w-4" />
+                                            {file.name}
+                                          </span>
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => {
+                                              toast({
+                                                title: "Downloading",
+                                                description: `Downloading ${file.name}...`,
+                                              });
+                                            }}
+                                          >
+                                            <Download className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             )}
                             
