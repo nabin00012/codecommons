@@ -120,6 +120,7 @@ export default function ClassroomDetailPage() {
   const [loading, setLoading] = useState(true);
   const [submittedAssignments, setSubmittedAssignments] = useState<Set<string>>(new Set());
   const [assignmentSubmissions, setAssignmentSubmissions] = useState<any[]>([]);
+  const [submissionsCache, setSubmissionsCache] = useState<Map<string, any[]>>(new Map());
 
   // Form states
   const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
@@ -159,6 +160,7 @@ export default function ClassroomDetailPage() {
   const [submissionText, setSubmissionText] = useState("");
   const [submissionFiles, setSubmissionFiles] = useState<File[]>([]);
   const [assignmentAttachments, setAssignmentAttachments] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const classroomId = params.id as string;
   const isTeacher = user?.role === "teacher" || user?.role === "admin";
@@ -204,22 +206,19 @@ export default function ClassroomDetailPage() {
           const assignmentsData = await assignmentsResponse.json();
           setAssignments(assignmentsData.data || []);
           
-          // Check which assignments the student has submitted
+          // Fetch all submissions for this student at once
           if (!isTeacher) {
-            const submitted = new Set<string>();
-            for (const assignment of assignmentsData.data || []) {
-              const checkResponse = await fetch(
-                `/api/classrooms/${classroomId}/assignments/${assignment._id}`,
-                { credentials: "include" }
+            const submissionsResponse = await fetch(
+              `/api/classrooms/${classroomId}/submissions/my-submissions`,
+              { credentials: "include" }
+            );
+            if (submissionsResponse.ok) {
+              const submissionsData = await submissionsResponse.json();
+              const submitted = new Set<string>(
+                (submissionsData.data || []).map((s: any) => s.assignmentId)
               );
-              if (checkResponse.ok) {
-                const checkData = await checkResponse.json();
-                if (checkData.data.submissions && checkData.data.submissions.length > 0) {
-                  submitted.add(assignment._id);
-                }
-              }
+              setSubmittedAssignments(submitted);
             }
-            setSubmittedAssignments(submitted);
           }
         }
 
@@ -366,6 +365,7 @@ export default function ClassroomDetailPage() {
   const handleSubmitAssignment = async () => {
     if (!selectedAssignment) return;
 
+    setIsSubmitting(true);
     try {
       // Convert files to base64
       const attachmentsWithContent = await Promise.all(
@@ -406,6 +406,12 @@ export default function ClassroomDetailPage() {
       if (response.ok) {
         // Mark assignment as submitted
         setSubmittedAssignments(prev => new Set(prev).add(selectedAssignment._id));
+        // Clear cache for this assignment so it fetches fresh data next time
+        setSubmissionsCache(prev => {
+          const newCache = new Map(prev);
+          newCache.delete(selectedAssignment._id);
+          return newCache;
+        });
         setShowAssignmentDialog(false);
         setSubmissionText("");
         setSubmissionFiles([]);
@@ -424,6 +430,8 @@ export default function ClassroomDetailPage() {
         description: "Failed to submit assignment",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1034,18 +1042,27 @@ export default function ClassroomDetailPage() {
                                 className="gap-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
                                 onClick={async () => {
                                   setSelectedAssignment(assignment);
-                                  // Fetch submissions for both teacher and student
-                                  try {
-                                    const res = await fetch(
-                                      `/api/classrooms/${classroomId}/assignments/${assignment._id}`,
-                                      { credentials: "include" }
-                                    );
-                                    if (res.ok) {
-                                      const data = await res.json();
-                                      setAssignmentSubmissions(data.data.submissions || []);
+                                  
+                                  // Check cache first
+                                  if (submissionsCache.has(assignment._id)) {
+                                    setAssignmentSubmissions(submissionsCache.get(assignment._id) || []);
+                                  } else {
+                                    // Fetch submissions only if not cached
+                                    try {
+                                      const res = await fetch(
+                                        `/api/classrooms/${classroomId}/assignments/${assignment._id}`,
+                                        { credentials: "include" }
+                                      );
+                                      if (res.ok) {
+                                        const data = await res.json();
+                                        const submissions = data.data.submissions || [];
+                                        setAssignmentSubmissions(submissions);
+                                        // Cache the submissions
+                                        setSubmissionsCache(prev => new Map(prev).set(assignment._id, submissions));
+                                      }
+                                    } catch (error) {
+                                      console.error("Error fetching submissions:", error);
                                     }
-                                  } catch (error) {
-                                    console.error("Error fetching submissions:", error);
                                   }
                                 }}
                               >
@@ -1126,10 +1143,11 @@ export default function ClassroomDetailPage() {
                                 
                                 <Button 
                                   onClick={handleSubmitAssignment}
+                                  disabled={isSubmitting}
                                   className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
                                 >
                                   <Send className="h-4 w-4 mr-2" />
-                                  Submit Assignment
+                                  {isSubmitting ? "Submitting..." : "Submit Assignment"}
                                 </Button>
                               </div>
                             )}
