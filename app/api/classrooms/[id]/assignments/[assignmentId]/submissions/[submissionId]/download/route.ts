@@ -58,7 +58,7 @@ export async function GET(
     
     if (!file.content) {
       return NextResponse.json(
-        { error: "File content not found" },
+        { error: "File content not found. This submission was created before file storage was implemented. Please resubmit the assignment." },
         { status: 404 }
       );
     }
