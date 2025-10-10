@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import jwt from "jsonwebtoken";
+import { ObjectId } from "mongodb";
 
 export const dynamic = 'force-dynamic';
 
@@ -24,18 +25,45 @@ export async function GET(request: NextRequest) {
     // Get assignments for user's classrooms
     const assignments = await db.collection("assignments").find({}).toArray();
 
-    const formattedAssignments = assignments.map(assignment => ({
-      _id: assignment._id.toString(),
-      title: assignment.title,
-      description: assignment.description,
-      dueDate: assignment.dueDate,
-      points: assignment.points || 100,
-      classroomId: assignment.classroomId,
-      createdBy: assignment.createdBy,
-      status: "pending", // Default status
-      createdAt: assignment.createdAt,
-      updatedAt: assignment.updatedAt,
-    }));
+    // Get all submissions for the current user to check submission status
+    const submissions = await db.collection("submissions").find({
+      studentEmail: decoded.email
+    }).toArray();
+
+    // Create a map of assignmentId -> submission for quick lookup
+    const submissionMap = new Map(
+      submissions.map(sub => [sub.assignmentId, sub])
+    );
+
+    // Get classroom names
+    const classroomIds = [...new Set(assignments.map(a => a.classroomId))];
+    const classrooms = await db.collection("classrooms").find({
+      _id: { $in: classroomIds.map(id => new ObjectId(id)) }
+    }).toArray();
+    const classroomMap = new Map(classrooms.map(c => [c._id.toString(), c.name]));
+
+    const formattedAssignments = assignments.map(assignment => {
+      const assignmentId = assignment._id.toString();
+      const submission = submissionMap.get(assignmentId);
+      
+      return {
+        _id: assignmentId,
+        title: assignment.title,
+        description: assignment.description,
+        dueDate: assignment.dueDate,
+        points: assignment.points || 100,
+        classroomId: assignment.classroomId,
+        classroomName: classroomMap.get(assignment.classroomId) || "Unknown",
+        createdBy: assignment.createdBy,
+        submissionStatus: submission 
+          ? (submission.status === "graded" ? "graded" : "submitted")
+          : "pending",
+        grade: submission?.grade,
+        submittedAt: submission?.submittedAt,
+        createdAt: assignment.createdAt,
+        updatedAt: assignment.updatedAt,
+      };
+    });
 
     return NextResponse.json({
       success: true,

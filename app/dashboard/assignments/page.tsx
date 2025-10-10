@@ -276,12 +276,12 @@ export default function AssignmentsPage() {
 
     try {
       const formData = new FormData();
-      formData.append("text", submission.text);
+      formData.append("content", submission.text);
       if (submission.file) {
         formData.append("file", submission.file);
       }
 
-      const response = await fetch(`/api/assignments/${assignmentId}/submit`, {
+      const response = await fetch(`/api/assignments/${assignmentId}/submissions`, {
         method: "POST",
         credentials: "include",
         body: formData,
@@ -377,6 +377,16 @@ export default function AssignmentsPage() {
       .includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
   });
+
+  // Group assignments by classroom for better organization
+  const groupedAssignments = filteredAssignments.reduce((acc, assignment) => {
+    const classroomName = assignment.classroomName || "Other";
+    if (!acc[classroomName]) {
+      acc[classroomName] = [];
+    }
+    acc[classroomName].push(assignment);
+    return acc;
+  }, {} as Record<string, Assignment[]>);
 
   const stats = {
     total: assignments.length,
@@ -717,7 +727,7 @@ export default function AssignmentsPage() {
           )}
         </motion.div>
 
-        {/* Assignments List */}
+        {/* Assignments List - Grouped by Classroom/Subject */}
         <AnimatePresence mode="wait">
           {filteredAssignments.length === 0 ? (
             <EmptyState isTeacher={user?.role === "teacher"} />
@@ -726,9 +736,40 @@ export default function AssignmentsPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="grid gap-6"
+              className="space-y-8"
             >
-              {filteredAssignments.map((assignment, index) => {
+              {Object.entries(groupedAssignments).map(([classroomName, classroomAssignments], groupIndex) => (
+                <motion.div
+                  key={classroomName}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: groupIndex * 0.1 }}
+                  className="space-y-4"
+                >
+                  {/* Subject/Classroom Header */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: groupIndex * 0.1 + 0.1 }}
+                    className="flex items-center gap-3 px-2"
+                  >
+                    <div className="p-2 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg">
+                      <BookOpen className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                        {classroomName}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        {classroomAssignments.length} {classroomAssignments.length === 1 ? 'assignment' : 'assignments'}
+                      </p>
+                    </div>
+                    <div className="flex-1 h-px bg-gradient-to-r from-blue-300 to-transparent dark:from-blue-700" />
+                  </motion.div>
+
+                  {/* Assignments in this classroom */}
+                  <div className="grid gap-6">
+                    {classroomAssignments.map((assignment, index) => {
                 const statusInfo = getStatusInfo(assignment);
                 const StatusIcon = statusInfo.icon;
 
@@ -1006,6 +1047,9 @@ export default function AssignmentsPage() {
                   </motion.div>
                 );
               })}
+                  </div>
+                </motion.div>
+              ))}
             </motion.div>
           )}
         </AnimatePresence>
