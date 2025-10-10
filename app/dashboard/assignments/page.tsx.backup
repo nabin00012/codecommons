@@ -40,6 +40,10 @@ import {
   Users,
   BarChart3,
   GraduationCap,
+  Star,
+  Flame,
+  Rocket,
+  TrendingDown,
 } from "lucide-react";
 import {
   Dialog,
@@ -79,73 +83,60 @@ interface Classroom {
   name: string;
 }
 
-// Animated loading skeleton - MODERN & SLEEK
+// Animated loading skeleton
 const LoadingSkeleton = () => (
-  <div className="space-y-6">
+  <div className="space-y-4">
     {[1, 2, 3].map((i) => (
       <motion.div
         key={i}
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: i * 0.15, type: "spring", stiffness: 100 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: i * 0.1 }}
         className="relative overflow-hidden"
       >
-        <div className="rounded-3xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 p-6 shadow-lg">
-          <div className="space-y-4">
-            <div className="h-7 bg-gradient-to-r from-blue-300/40 via-purple-300/40 to-pink-300/40 dark:from-blue-700/40 dark:via-purple-700/40 dark:to-pink-700/40 rounded-2xl animate-pulse" />
-            <div className="h-5 bg-gray-300/40 dark:bg-gray-700/40 rounded-xl w-3/4 animate-pulse" />
-            <div className="flex gap-3 mt-4">
-              <div className="h-10 w-28 bg-gray-200/40 dark:bg-gray-700/40 rounded-full animate-pulse" />
-              <div className="h-10 w-28 bg-gray-200/40 dark:bg-gray-700/40 rounded-full animate-pulse" />
+        <Card className="border-2">
+          <CardHeader>
+            <div className="space-y-3">
+              <div className="h-6 bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200 dark:from-blue-900 dark:via-purple-900 dark:to-pink-900 rounded animate-pulse" />
+              <div className="h-4 bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100 dark:from-blue-900 dark:via-purple-900 dark:to-pink-900 rounded w-3/4 animate-pulse" />
             </div>
-          </div>
-        </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-5/6 animate-pulse" />
+            </div>
+          </CardContent>
+        </Card>
       </motion.div>
     ))}
   </div>
 );
 
-// Animated empty state - MODERN & FUN
+// Animated empty state
 const EmptyState = ({ isTeacher }: { isTeacher: boolean }) => (
   <motion.div
-    initial={{ opacity: 0, scale: 0.95 }}
+    initial={{ opacity: 0, scale: 0.9 }}
     animate={{ opacity: 1, scale: 1 }}
-    transition={{ duration: 0.5, type: "spring" }}
-    className="flex flex-col items-center justify-center py-20 px-4"
+    className="flex flex-col items-center justify-center py-16 px-4"
   >
     <motion.div
       animate={{
-        y: [0, -15, 0],
-        rotate: [0, 3, -3, 0],
+        y: [0, -10, 0],
       }}
       transition={{
-        duration: 4,
+        duration: 2,
         repeat: Infinity,
         ease: "easeInOut",
       }}
-      className="relative mb-8"
+      className="w-32 h-32 mb-6 rounded-full bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400 flex items-center justify-center shadow-2xl"
     >
-      {/* Main circle */}
-      <div className="w-40 h-40 rounded-[2.5rem] bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-2xl transform rotate-12">
-        <FileText className="h-20 w-20 text-white -rotate-12" />
-      </div>
-      {/* Floating dots */}
-      <motion.div
-        animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
-        transition={{ duration: 2, repeat: Infinity }}
-        className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-yellow-400 shadow-lg"
-      />
-      <motion.div
-        animate={{ scale: [1, 1.3, 1], opacity: [0.6, 1, 0.6] }}
-        transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
-        className="absolute -bottom-3 -left-3 w-8 h-8 rounded-full bg-blue-400 shadow-lg"
-      />
+      <FileText className="h-16 w-16 text-white" />
     </motion.div>
-    
-    <h3 className="text-3xl font-bold mb-3 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+    <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
       {isTeacher ? "No Assignments Created Yet" : "No Assignments Available"}
     </h3>
-    <p className="text-muted-foreground text-center max-w-md text-lg">
+    <p className="text-muted-foreground text-center max-w-md">
       {isTeacher
         ? "Create your first assignment to get started with your classroom"
         : "Your teachers haven't assigned any work yet. Check back soon!"}
@@ -387,11 +378,11 @@ export default function AssignmentsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-blue-950/10 dark:to-indigo-950/10 p-4 md:p-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-10 space-y-4">
-            <div className="h-14 w-72 bg-gradient-to-r from-blue-200/60 via-purple-200/60 to-pink-200/60 dark:from-blue-800/40 dark:via-purple-800/40 dark:to-pink-800/40 rounded-2xl animate-pulse" />
-            <div className="h-7 w-full max-w-md bg-gray-200/60 dark:bg-gray-800/40 rounded-xl animate-pulse" />
+          <div className="mb-8">
+            <div className="h-12 w-64 bg-gradient-to-r from-blue-200 to-purple-200 dark:from-blue-900 dark:to-purple-900 rounded-lg animate-pulse mb-4" />
+            <div className="h-6 w-96 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
           </div>
           <LoadingSkeleton />
         </div>
@@ -400,69 +391,50 @@ export default function AssignmentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-blue-950/10 dark:to-indigo-950/10 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Modern Header Section */}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header with gradient */}
         <motion.div
-          initial={{ opacity: 0, y: -30 }}
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="mb-10"
+          className="mb-8"
         >
-          <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-8 md:p-10 shadow-2xl">
-            {/* Subtle animated background */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.1),transparent_50%)]" />
-            <div className="absolute inset-0 opacity-20">
-              <motion.div
-                animate={{
-                  backgroundPosition: ['0% 0%', '100% 100%'],
-                }}
-                transition={{
-                  duration: 20,
-                  repeat: Infinity,
-                  repeatType: 'reverse',
-                  ease: 'linear'
-                }}
-                className="absolute inset-0"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-                  backgroundSize: '60px 60px'
-                }}
-              />
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-8 shadow-2xl">
+            {/* Animated background pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute inset-0" style={{
+                backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)`
+              }} />
             </div>
 
             <div className="relative z-10">
-              <div className="flex items-center justify-between flex-wrap gap-6">
-                <div className="flex-1">
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2, duration: 0.5 }}
-                    className="flex items-center gap-4 mb-3"
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                  <motion.h1
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="text-4xl md:text-5xl font-bold text-white mb-2 flex items-center gap-3"
                   >
                     <motion.div
                       animate={{
-                        rotate: [0, 10, -10, 0],
-                        scale: [1, 1.1, 1],
+                        rotate: [0, 5, -5, 0],
                       }}
                       transition={{
-                        duration: 3,
+                        duration: 2,
                         repeat: Infinity,
                         ease: "easeInOut",
                       }}
-                      className="p-3 rounded-2xl bg-white/20 backdrop-blur-sm"
                     >
-                      <GraduationCap className="h-8 w-8 md:h-10 md:w-10 text-white" />
+                      <GraduationCap className="h-10 w-10" />
                     </motion.div>
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white">
-                      Assignments
-                    </h1>
-                  </motion.div>
+                    Assignments
+                  </motion.h1>
                   <motion.p
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3, duration: 0.5 }}
-                    className="text-white/90 text-lg md:text-xl max-w-2xl"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="text-white/90 text-lg"
                   >
                     {user?.role === "teacher"
                       ? "Create and manage assignments for your students"
@@ -472,23 +444,21 @@ export default function AssignmentsPage() {
 
                 {user?.role === "teacher" && (
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
+                    initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    transition={{ delay: 0.3 }}
                   >
                     <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
                       <DialogTrigger asChild>
                         <Button
                           size="lg"
-                          className="bg-white text-purple-600 hover:bg-white/95 shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 rounded-full px-8 font-semibold text-lg h-14"
+                          className="bg-white text-purple-600 hover:bg-white/90 shadow-xl hover:shadow-2xl transition-all"
                         >
-                          <Plus className="h-6 w-6 mr-2" />
+                          <Plus className="h-5 w-5 mr-2" />
                           Create Assignment
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl">
+                      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                           <DialogTitle className="text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                             Create New Assignment
@@ -507,10 +477,10 @@ export default function AssignmentsPage() {
                                 setNewAssignment({ ...newAssignment, classroomId: value })
                               }
                             >
-                              <SelectTrigger className="rounded-xl">
+                              <SelectTrigger>
                                 <SelectValue placeholder="Select a classroom" />
                               </SelectTrigger>
-                              <SelectContent className="rounded-xl">
+                              <SelectContent>
                                 {classrooms.map((classroom) => (
                                   <SelectItem key={classroom._id} value={classroom._id}>
                                     {classroom.name}
@@ -524,7 +494,6 @@ export default function AssignmentsPage() {
                             <Label htmlFor="title">Title *</Label>
                             <Input
                               id="title"
-                              className="rounded-xl"
                               placeholder="e.g., Week 5: React Hooks Assignment"
                               value={newAssignment.title}
                               onChange={(e) =>
@@ -537,7 +506,6 @@ export default function AssignmentsPage() {
                             <Label htmlFor="description">Description</Label>
                             <Textarea
                               id="description"
-                              className="rounded-xl"
                               placeholder="Describe the assignment requirements..."
                               rows={4}
                               value={newAssignment.description}
@@ -556,7 +524,6 @@ export default function AssignmentsPage() {
                               <Input
                                 id="dueDate"
                                 type="datetime-local"
-                                className="rounded-xl"
                                 value={newAssignment.dueDate}
                                 onChange={(e) =>
                                   setNewAssignment({
@@ -572,7 +539,6 @@ export default function AssignmentsPage() {
                               <Input
                                 id="points"
                                 type="number"
-                                className="rounded-xl"
                                 min="1"
                                 value={newAssignment.points}
                                 onChange={(e) =>
@@ -589,7 +555,6 @@ export default function AssignmentsPage() {
                         <DialogFooter>
                           <Button
                             variant="outline"
-                            className="rounded-xl"
                             onClick={() => setCreateDialogOpen(false)}
                             disabled={submitting === "creating"}
                           >
@@ -598,7 +563,7 @@ export default function AssignmentsPage() {
                           <Button
                             onClick={handleCreateAssignment}
                             disabled={submitting === "creating"}
-                            className="rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                           >
                             {submitting === "creating" ? (
                               <>
@@ -619,41 +584,32 @@ export default function AssignmentsPage() {
                 )}
               </div>
 
-              {/* Modern Stats Cards for Students */}
+              {/* Stats for students */}
               {user?.role === "student" && (
                 <motion.div
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5, duration: 0.6 }}
-                  className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8"
+                  transition={{ delay: 0.4 }}
+                  className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6"
                 >
                   {[
-                    { label: "Total", value: stats.total, icon: Target, gradient: "from-purple-400 to-pink-400", bgGlow: "bg-purple-400/20" },
-                    { label: "Pending", value: stats.pending, icon: Clock, gradient: "from-yellow-400 to-orange-400", bgGlow: "bg-yellow-400/20" },
-                    { label: "Submitted", value: stats.submitted, icon: CheckCircle, gradient: "from-blue-400 to-cyan-400", bgGlow: "bg-blue-400/20" },
-                    { label: "Graded", value: stats.graded, icon: Award, gradient: "from-green-400 to-emerald-400", bgGlow: "bg-green-400/20" },
+                    { label: "Total", value: stats.total, icon: Target, color: "bg-white/20" },
+                    { label: "Pending", value: stats.pending, icon: Clock, color: "bg-yellow-500/20" },
+                    { label: "Submitted", value: stats.submitted, icon: CheckCircle, color: "bg-blue-500/20" },
+                    { label: "Graded", value: stats.graded, icon: Award, color: "bg-green-500/20" },
                   ].map((stat, index) => (
                     <motion.div
                       key={stat.label}
-                      initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ delay: 0.6 + index * 0.1, type: "spring", stiffness: 150 }}
-                      whileHover={{ scale: 1.05, y: -5 }}
-                      className="relative group cursor-pointer"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.5 + index * 0.1 }}
+                      className={`${stat.color} backdrop-blur-sm rounded-xl p-4 border border-white/20`}
                     >
-                      {/* Glow effect on hover */}
-                      <div className={`absolute inset-0 ${stat.bgGlow} blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl`} />
-                      
-                      {/* Card */}
-                      <div className="relative bg-white/30 dark:bg-white/5 backdrop-blur-md rounded-2xl p-5 border border-white/40 dark:border-white/10 shadow-lg">
-                        <div className="flex items-center gap-4">
-                          <div className={`p-3 rounded-2xl bg-gradient-to-br ${stat.gradient} shadow-lg group-hover:shadow-xl transition-shadow`}>
-                            <stat.icon className="h-6 w-6 text-white" />
-                          </div>
-                          <div>
-                            <div className="text-3xl font-bold text-white drop-shadow-lg">{stat.value}</div>
-                            <div className="text-white/90 text-sm font-medium">{stat.label}</div>
-                          </div>
+                      <div className="flex items-center gap-3">
+                        <stat.icon className="h-8 w-8 text-white" />
+                        <div>
+                          <div className="text-3xl font-bold text-white">{stat.value}</div>
+                          <div className="text-white/80 text-sm">{stat.label}</div>
                         </div>
                       </div>
                     </motion.div>
@@ -664,54 +620,38 @@ export default function AssignmentsPage() {
           </div>
         </motion.div>
 
-        {/* Modern Search and Filters */}
+        {/* Filters and Search */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-          className="flex flex-col lg:flex-row gap-4"
+          transition={{ delay: 0.3 }}
+          className="mb-6 flex flex-col sm:flex-row gap-4"
         >
-          {/* Search Bar */}
-          <motion.div 
-            className="flex-1 relative group"
-            whileHover={{ scale: 1.01 }}
-          >
-            <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 h-5 w-5 text-purple-400 group-hover:text-purple-500 transition-colors" />
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               placeholder="Search assignments..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-14 h-14 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-2 border-gray-200/50 dark:border-gray-700/50 hover:border-purple-300 dark:hover:border-purple-700 focus:border-purple-500 rounded-2xl shadow-lg text-base transition-all"
+              className="pl-10 h-12 bg-white dark:bg-gray-800 border-2 focus:border-purple-500"
             />
-          </motion.div>
+          </div>
 
-          {/* Filter Tabs */}
           {user?.role === "student" && (
-            <div className="flex gap-2 overflow-x-auto pb-2 lg:pb-0">
-              {[
-                { key: "all", label: "All", icon: Target },
-                { key: "pending", label: "Pending", icon: Clock },
-                { key: "submitted", label: "Submitted", icon: CheckCircle },
-                { key: "graded", label: "Graded", icon: Award },
-              ].map(({ key, label, icon: Icon }) => (
-                <motion.div
-                  key={key}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+            <div className="flex gap-2 overflow-x-auto">
+              {["all", "pending", "submitted", "graded"].map((f) => (
+                <Button
+                  key={f}
+                  variant={filter === f ? "default" : "outline"}
+                  onClick={() => setFilter(f as any)}
+                  className={
+                    filter === f
+                      ? "bg-gradient-to-r from-blue-600 to-purple-600 whitespace-nowrap"
+                      : "whitespace-nowrap"
+                  }
                 >
-                  <Button
-                    variant={filter === key ? "default" : "outline"}
-                    onClick={() => setFilter(key as any)}
-                    className={
-                      filter === key
-                        ? "bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white rounded-full px-6 h-12 shadow-lg whitespace-nowrap border-0 font-medium"
-                        : "rounded-full px-6 h-12 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-2 border-gray-200/50 dark:border-gray-700/50 hover:border-purple-300 dark:hover:border-purple-700 whitespace-nowrap font-medium transition-all"
-                    }
-                  >
-                    <Icon className="h-4 w-4 mr-2" />
-                    {label}
-                  </Button>
-                </motion.div>
+                  {f.charAt(0).toUpperCase() + f.slice(1)}
+                </Button>
               ))}
             </div>
           )}
@@ -735,23 +675,19 @@ export default function AssignmentsPage() {
                 return (
                   <motion.div
                     key={assignment._id}
-                    initial={{ opacity: 0, x: -30, scale: 0.95 }}
-                    animate={{ opacity: 1, x: 0, scale: 1 }}
-                    transition={{ delay: index * 0.08, type: "spring", stiffness: 100 }}
-                    whileHover={{ scale: 1.02, y: -4 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    whileHover={{ scale: 1.01 }}
                     className="group"
                   >
-                    <div className="relative rounded-[2rem] bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-2 border-gray-200/50 dark:border-gray-700/50 shadow-xl hover:shadow-2xl hover:border-purple-300 dark:hover:border-purple-700 transition-all duration-300 overflow-hidden">
-                      {/* Accent Bar - Thicker and more prominent */}
+                    <Card className="border-2 hover:border-purple-500 transition-all shadow-lg hover:shadow-2xl overflow-hidden">
+                      {/* Gradient top bar */}
                       <div
-                        className={`h-1.5 bg-gradient-to-r ${statusInfo.color}`}
+                        className={`h-2 bg-gradient-to-r ${statusInfo.color}`}
                       />
-                      
-                      {/* Subtle glow effect on hover */}
-                      <div className={`absolute inset-0 bg-gradient-to-r ${statusInfo.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300 pointer-events-none`} />
 
-                      {/* Header Section */}
-                      <div className="p-6 pb-4">
+                      <CardHeader className="pb-4">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
@@ -762,9 +698,9 @@ export default function AssignmentsPage() {
                               >
                                 <StatusIcon className="h-5 w-5 text-white" />
                               </motion.div>
-                              <h3 className="text-2xl font-semibold group-hover:text-purple-600 transition-colors">
+                              <CardTitle className="text-2xl group-hover:text-purple-600 transition-colors">
                                 {assignment.title}
-                              </h3>
+                              </CardTitle>
                             </div>
 
                             {assignment.classroomName && (
@@ -774,9 +710,9 @@ export default function AssignmentsPage() {
                               </Badge>
                             )}
 
-                            <p className="text-base text-muted-foreground">
+                            <CardDescription className="text-base">
                               {assignment.description || "No description provided"}
-                            </p>
+                            </CardDescription>
                           </div>
 
                           <Badge
@@ -785,10 +721,9 @@ export default function AssignmentsPage() {
                             {statusInfo.text}
                           </Badge>
                         </div>
-                      </div>
+                      </CardHeader>
 
-                      {/* Content Section */}
-                      <div className="px-6 pb-4">
+                      <CardContent className="pb-4">
                         <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
@@ -821,14 +756,13 @@ export default function AssignmentsPage() {
                             />
                           </div>
                         )}
-                      </div>
+                      </CardContent>
 
-                      {/* Footer Section */}
-                      <div className="px-6 py-4 bg-gray-50/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-b-[2rem] flex justify-between gap-2">
+                      <CardFooter className="bg-muted/50 flex justify-between gap-2">
                         {user?.role === "student" && (
                           <>
                             {assignment.submissionStatus === "submitted" || assignment.submissionStatus === "graded" ? (
-                              <Button variant="outline" className="flex-1 rounded-xl">
+                              <Button variant="outline" className="flex-1">
                                 <Eye className="h-4 w-4 mr-2" />
                                 View Submission
                               </Button>
@@ -842,7 +776,7 @@ export default function AssignmentsPage() {
                               >
                                 <DialogTrigger asChild>
                                   <Button
-                                    className="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                                   >
                                     {submitting === assignment._id ? (
                                       <>
@@ -857,7 +791,7 @@ export default function AssignmentsPage() {
                                     )}
                                   </Button>
                                 </DialogTrigger>
-                                <DialogContent className="max-w-2xl rounded-3xl">
+                                <DialogContent className="max-w-2xl">
                                   <DialogHeader>
                                     <DialogTitle className="text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                                       Submit Assignment
@@ -874,7 +808,6 @@ export default function AssignmentsPage() {
                                         id="submission-text"
                                         placeholder="Describe your solution or paste your code here..."
                                         rows={6}
-                                        className="rounded-xl"
                                         value={submission.text}
                                         onChange={(e) =>
                                           setSubmission({ ...submission, text: e.target.value })
@@ -887,7 +820,6 @@ export default function AssignmentsPage() {
                                       <Input
                                         id="submission-file"
                                         type="file"
-                                        className="rounded-xl"
                                         onChange={(e) =>
                                           setSubmission({
                                             ...submission,
@@ -907,7 +839,6 @@ export default function AssignmentsPage() {
                                   <DialogFooter>
                                     <Button
                                       variant="outline"
-                                      className="rounded-xl"
                                       onClick={() => setSubmitDialogOpen(false)}
                                     >
                                       Cancel
@@ -915,7 +846,7 @@ export default function AssignmentsPage() {
                                     <Button
                                       onClick={() => handleSubmitAssignment(assignment._id)}
                                       disabled={submitting === assignment._id || !submission.text}
-                                      className="rounded-xl bg-gradient-to-r from-blue-600 to-purple-600"
+                                      className="bg-gradient-to-r from-blue-600 to-purple-600"
                                     >
                                       {submitting === assignment._id ? (
                                         <>
@@ -940,22 +871,22 @@ export default function AssignmentsPage() {
                           <div className="flex gap-2 flex-1">
                             <Button
                               variant="outline"
-                              className="flex-1 rounded-xl"
+                              className="flex-1"
                               onClick={() => router.push(`/dashboard/classrooms/${assignment.classroomId}`)}
                             >
                               <Users className="h-4 w-4 mr-2" />
                               View Submissions
                             </Button>
-                            <Button variant="outline" size="icon" className="rounded-xl">
+                            <Button variant="outline" size="icon">
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="outline" size="icon" className="rounded-xl text-red-600 hover:text-red-700">
+                            <Button variant="outline" size="icon" className="text-red-600 hover:text-red-700">
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         )}
-                      </div>
-                    </div>
+                      </CardFooter>
+                    </Card>
                   </motion.div>
                 );
               })}
