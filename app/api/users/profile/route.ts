@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
+import jwt from "jsonwebtoken";
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,9 +38,29 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    // Get token from cookies
+    const token = request.cookies.get("auth-token")?.value;
+    
+    if (!token) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    // Verify token and get user email
+    const decoded = jwt.verify(token, process.env.NEXTAUTH_SECRET || "fallback-secret") as any;
+    const userEmail = decoded.email;
+
+    if (!userEmail) {
+      return NextResponse.json(
+        { error: "Invalid token" },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { 
-      email, 
       name,
       role, 
       department, 
@@ -47,19 +70,16 @@ export async function PUT(request: NextRequest) {
       onboardingCompleted,
       bio,
       phone,
+      usn,
+      studentId,
+      collegeId,
       location,
       github,
       linkedin,
       twitter,
-      website
+      website,
+      avatar
     } = body;
-
-    if (!email) {
-      return NextResponse.json(
-        { error: "Email is required" },
-        { status: 400 }
-      );
-    }
 
     const { db } = await connectToDatabase();
     
@@ -76,14 +96,18 @@ export async function PUT(request: NextRequest) {
     if (onboardingCompleted !== undefined) updateData.onboardingCompleted = onboardingCompleted;
     if (bio !== undefined) updateData.bio = bio;
     if (phone !== undefined) updateData.phone = phone;
+    if (usn !== undefined) updateData.usn = usn.toUpperCase();
+    if (studentId !== undefined) updateData.studentId = studentId;
+    if (collegeId !== undefined) updateData.collegeId = collegeId;
     if (location !== undefined) updateData.location = location;
     if (github !== undefined) updateData.github = github;
     if (linkedin !== undefined) updateData.linkedin = linkedin;
     if (twitter !== undefined) updateData.twitter = twitter;
     if (website !== undefined) updateData.website = website;
+    if (avatar !== undefined) updateData.avatar = avatar;
 
     const result = await db.collection("users").updateOne(
-      { email: email },
+      { email: userEmail },
       { $set: updateData }
     );
 
@@ -96,7 +120,7 @@ export async function PUT(request: NextRequest) {
 
     // Get updated user
     const updatedUser = await db.collection("users").findOne({
-      email: email
+      email: userEmail
     });
 
     if (!updatedUser) {

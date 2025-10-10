@@ -128,21 +128,35 @@ export default function DashboardSidebar({ isOpen, setIsOpen }: SidebarProps) {
 
           {/* User info */}
           <div className="border-b px-6 py-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-muted overflow-hidden">
-                <img
-                  src={user?.avatar || "/placeholder.svg?height=40&width=40"}
-                  alt="Avatar"
-                  className="h-full w-full object-cover"
-                />
+            <Link
+              href="/profile/edit"
+              className="flex items-center gap-3 rounded-lg p-2 -m-2 hover:bg-accent transition-colors group"
+            >
+              <div className="h-10 w-10 rounded-full bg-muted overflow-hidden ring-2 ring-transparent group-hover:ring-primary transition-all">
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-500">
+                    <span className="text-white font-semibold text-lg">
+                      {user?.name?.charAt(0).toUpperCase() || "U"}
+                    </span>
+                  </div>
+                )}
               </div>
-              <div>
-                <div className="font-medium">{user?.name || "User Name"}</div>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium truncate">{user?.name || "User Name"}</div>
                 <div className="text-xs text-muted-foreground capitalize">
                   {user?.role || "student"}
                 </div>
               </div>
-            </div>
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                <Settings className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </Link>
           </div>
 
           {/* Navigation */}

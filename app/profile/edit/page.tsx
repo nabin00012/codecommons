@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/lib/context/user-context";
 import { useToast } from "@/components/ui/use-toast";
@@ -27,6 +27,7 @@ import {
   AlertCircle,
   ArrowLeft,
   Upload,
+  Camera,
 } from "lucide-react";
 import Link from "next/link";
 import ProtectedRoute from "@/lib/components/ProtectedRoute";
@@ -38,6 +39,8 @@ export default function ProfileEditPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSendingVerification, setIsSendingVerification] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Profile form data
   const [formData, setFormData] = useState({
@@ -46,10 +49,14 @@ export default function ProfileEditPage() {
     phone: "",
     location: "",
     department: "",
+    usn: "",
+    studentId: "",
+    collegeId: "",
     github: "",
     linkedin: "",
     twitter: "",
     website: "",
+    avatar: "",
   });
 
   useEffect(() => {
@@ -60,13 +67,53 @@ export default function ProfileEditPage() {
         phone: user.phone || "",
         location: user.location || "",
         department: user.department || "",
+        usn: user.usn || "",
+        studentId: user.studentId || "",
+        collegeId: user.collegeId || "",
         github: user.github || "",
         linkedin: user.linkedin || "",
         twitter: user.twitter || "",
         website: user.website || "",
+        avatar: user.avatar || "",
       });
+      if (user.avatar) {
+        setImagePreview(user.avatar);
+      }
     }
   }, [user]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Error",
+          description: "Image size should be less than 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        toast({
+          title: "Error",
+          description: "Please select a valid image file",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setImagePreview(base64String);
+        setFormData(prev => ({ ...prev, avatar: base64String }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -188,6 +235,54 @@ export default function ProfileEditPage() {
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleUpdate} className="space-y-6">
+                    {/* Profile Photo Upload */}
+                    <div className="flex flex-col items-center gap-4 pb-6 border-b">
+                      <div className="relative">
+                        <div className="h-32 w-32 rounded-full overflow-hidden border-4 border-primary/20 bg-gradient-to-br from-blue-500/10 to-purple-500/10">
+                          {imagePreview ? (
+                            <img
+                              src={imagePreview}
+                              alt="Profile Preview"
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center">
+                              <User className="h-16 w-16 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="absolute bottom-0 right-0 p-2 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors"
+                        >
+                          <Camera className="h-4 w-4" />
+                        </button>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="hidden"
+                        />
+                      </div>
+                      <div className="text-center">
+                        <h3 className="font-semibold mb-1">Profile Photo</h3>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          JPG, PNG or GIF. Max size 5MB
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Upload Photo
+                        </Button>
+                      </div>
+                    </div>
+
                     {/* Basic Info */}
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -251,6 +346,58 @@ export default function ProfileEditPage() {
                             }
                             placeholder="Computer Science"
                           />
+                        </div>
+                      </div>
+
+                      {/* Student Information */}
+                      <div className="pt-4 border-t">
+                        <h3 className="text-lg font-semibold mb-4">Student Information</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="usn" className="flex items-center gap-2">
+                              <Badge className="h-4 w-4" />
+                              USN (University Seat Number)
+                            </Label>
+                            <Input
+                              id="usn"
+                              value={formData.usn}
+                              onChange={(e) =>
+                                setFormData({ ...formData, usn: e.target.value.toUpperCase() })
+                              }
+                              placeholder="1AB21CS001"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="studentId" className="flex items-center gap-2">
+                              <Badge className="h-4 w-4" />
+                              Student ID
+                            </Label>
+                            <Input
+                              id="studentId"
+                              value={formData.studentId}
+                              onChange={(e) =>
+                                setFormData({ ...formData, studentId: e.target.value })
+                              }
+                              placeholder="Your Student ID"
+                            />
+                          </div>
+
+                          <div className="space-y-2 md:col-span-2">
+                            <Label htmlFor="collegeId" className="flex items-center gap-2">
+                              <Mail className="h-4 w-4" />
+                              College Email
+                            </Label>
+                            <Input
+                              id="collegeId"
+                              type="email"
+                              value={formData.collegeId}
+                              onChange={(e) =>
+                                setFormData({ ...formData, collegeId: e.target.value })
+                              }
+                              placeholder="your.email@college.edu"
+                            />
+                          </div>
                         </div>
                       </div>
 
