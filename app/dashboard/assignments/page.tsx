@@ -2,10 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { useUser } from "@/lib/context/user-context";
-import ProtectedRoute from "@/lib/components/ProtectedRoute";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Calendar,
   Clock,
@@ -13,7 +19,44 @@ import {
   CheckCircle,
   AlertCircle,
   FileText,
+  Upload,
+  Download,
+  Eye,
+  Edit,
+  Trash2,
+  Plus,
+  Filter,
+  Search,
+  TrendingUp,
+  Award,
+  Target,
+  Zap,
+  Sparkles,
+  Send,
+  Check,
+  X,
+  Loader2,
+  ArrowRight,
+  Users,
+  BarChart3,
+  GraduationCap,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Assignment {
   _id: string;
@@ -22,136 +65,831 @@ interface Assignment {
   dueDate: string;
   points: number;
   classroomId: string;
+  classroomName?: string;
   createdBy: string;
-  status: string;
+  status?: string;
+  submissionStatus?: "pending" | "submitted" | "graded";
+  grade?: number;
+  submittedAt?: string;
   createdAt: string;
 }
 
+interface Classroom {
+  _id: string;
+  name: string;
+}
+
+// Animated loading skeleton
+const LoadingSkeleton = () => (
+  <div className="space-y-4">
+    {[1, 2, 3].map((i) => (
+      <motion.div
+        key={i}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: i * 0.1 }}
+        className="relative overflow-hidden"
+      >
+        <Card className="border-2">
+          <CardHeader>
+            <div className="space-y-3">
+              <div className="h-6 bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200 dark:from-blue-900 dark:via-purple-900 dark:to-pink-900 rounded animate-pulse" />
+              <div className="h-4 bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100 dark:from-blue-900 dark:via-purple-900 dark:to-pink-900 rounded w-3/4 animate-pulse" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-5/6 animate-pulse" />
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    ))}
+  </div>
+);
+
+// Animated empty state
+const EmptyState = ({ isTeacher }: { isTeacher: boolean }) => (
+  <motion.div
+    initial={{ opacity: 0, scale: 0.9 }}
+    animate={{ opacity: 1, scale: 1 }}
+    className="flex flex-col items-center justify-center py-16 px-4"
+  >
+    <motion.div
+      animate={{
+        y: [0, -10, 0],
+      }}
+      transition={{
+        duration: 2,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+      className="w-32 h-32 mb-6 rounded-full bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400 flex items-center justify-center shadow-2xl"
+    >
+      <FileText className="h-16 w-16 text-white" />
+    </motion.div>
+    <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+      {isTeacher ? "No Assignments Created Yet" : "No Assignments Available"}
+    </h3>
+    <p className="text-muted-foreground text-center max-w-md">
+      {isTeacher
+        ? "Create your first assignment to get started with your classroom"
+        : "Your teachers haven't assigned any work yet. Check back soon!"}
+    </p>
+  </motion.div>
+);
+
 export default function AssignmentsPage() {
   const { user } = useUser();
+  const router = useRouter();
+  const { toast } = useToast();
+
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"all" | "pending" | "submitted" | "graded">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
+
+  // New assignment form
+  const [newAssignment, setNewAssignment] = useState({
+    title: "",
+    description: "",
+    dueDate: "",
+    points: 100,
+    classroomId: "",
+  });
+
+  // Submission form
+  const [submission, setSubmission] = useState({
+    text: "",
+    file: null as File | null,
+  });
 
   useEffect(() => {
-    const fetchAssignments = async () => {
-      try {
-        const token = localStorage.getItem("auth-token");
-        const response = await fetch("/api/assignments", {
+    fetchData();
+  }, [user]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // Fetch assignments
+      const assignmentsRes = await fetch("/api/assignments", {
+        credentials: "include",
+      });
+
+      if (assignmentsRes.ok) {
+        const data = await assignmentsRes.json();
+        setAssignments(data.assignments || data.data || []);
+      }
+
+      // Fetch classrooms if teacher
+      if (user?.role === "teacher") {
+        const classroomsRes = await fetch("/api/classrooms", {
           credentials: "include",
-          headers: {
-            ...(token && { Authorization: `Bearer ${token}` }),
-            "Content-Type": "application/json",
-          },
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          setAssignments(data.data || []);
+        if (classroomsRes.ok) {
+          const data = await classroomsRes.json();
+          setClassrooms(data.classrooms || []);
         }
-      } catch (error) {
-        console.error("Error fetching assignments:", error);
-      } finally {
-        setLoading(false);
       }
-    };
-
-    fetchAssignments();
-  }, []);
-
-  const getStatusColor = (dueDate: string) => {
-    const due = new Date(dueDate);
-    const now = new Date();
-    const diffDays = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (diffDays < 0) return "destructive";
-    if (diffDays <= 2) return "secondary";
-    return "default";
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load assignments",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getStatusText = (dueDate: string) => {
-    const due = new Date(dueDate);
+  const handleCreateAssignment = async () => {
+    if (!newAssignment.title || !newAssignment.classroomId || !newAssignment.dueDate) {
+      toast({
+        title: "Missing Fields",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSubmitting("creating");
+
+    try {
+      const response = await fetch("/api/assignments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(newAssignment),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "🎉 Assignment Created!",
+          description: "Your assignment has been published successfully",
+        });
+        setCreateDialogOpen(false);
+        setNewAssignment({
+          title: "",
+          description: "",
+          dueDate: "",
+          points: 100,
+          classroomId: "",
+        });
+        fetchData();
+      } else {
+        throw new Error("Failed to create assignment");
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create assignment",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(null);
+    }
+  };
+
+  const handleSubmitAssignment = async (assignmentId: string) => {
+    setSubmitting(assignmentId);
+
+    try {
+      const formData = new FormData();
+      formData.append("text", submission.text);
+      if (submission.file) {
+        formData.append("file", submission.file);
+      }
+
+      const response = await fetch(`/api/assignments/${assignmentId}/submit`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+
+      if (response.ok) {
+        toast({
+          title: "🎯 Assignment Submitted!",
+          description: "Your work has been submitted successfully",
+        });
+        setSubmitDialogOpen(false);
+        setSubmission({ text: "", file: null });
+        fetchData();
+      } else {
+        throw new Error("Failed to submit");
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit assignment",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(null);
+    }
+  };
+
+  const getStatusInfo = (assignment: Assignment) => {
+    const due = new Date(assignment.dueDate);
     const now = new Date();
-    const diffDays = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (diffDays < 0) return "Overdue";
-    if (diffDays === 0) return "Due Today";
-    if (diffDays === 1) return "Due Tomorrow";
-    return `${diffDays} days left`;
+    const diffTime = due.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
+
+    if (assignment.submissionStatus === "graded") {
+      return {
+        color: "from-green-500 to-emerald-500",
+        icon: Award,
+        text: `Graded: ${assignment.grade}/${assignment.points}`,
+        badge: "success",
+      };
+    }
+
+    if (assignment.submissionStatus === "submitted") {
+      return {
+        color: "from-blue-500 to-cyan-500",
+        icon: CheckCircle,
+        text: "Submitted",
+        badge: "default",
+      };
+    }
+
+    if (diffTime < 0) {
+      return {
+        color: "from-red-500 to-pink-500",
+        icon: AlertCircle,
+        text: "Overdue",
+        badge: "destructive",
+      };
+    }
+
+    if (diffHours <= 24) {
+      return {
+        color: "from-orange-500 to-red-500",
+        icon: Clock,
+        text: diffHours <= 1 ? "Due in 1 hour!" : `Due in ${diffHours} hours`,
+        badge: "secondary",
+      };
+    }
+
+    if (diffDays <= 3) {
+      return {
+        color: "from-yellow-500 to-orange-500",
+        icon: Clock,
+        text: `${diffDays} days left`,
+        badge: "secondary",
+      };
+    }
+
+    return {
+      color: "from-green-500 to-teal-500",
+      icon: Calendar,
+      text: `${diffDays} days left`,
+      badge: "outline",
+    };
+  };
+
+  const filteredAssignments = assignments.filter((assignment) => {
+    const matchesFilter =
+      filter === "all" || assignment.submissionStatus === filter;
+    const matchesSearch = assignment.title
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
+
+  const stats = {
+    total: assignments.length,
+    pending: assignments.filter((a) => !a.submissionStatus || a.submissionStatus === "pending").length,
+    submitted: assignments.filter((a) => a.submissionStatus === "submitted").length,
+    graded: assignments.filter((a) => a.submissionStatus === "graded").length,
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-8">
+            <div className="h-12 w-64 bg-gradient-to-r from-blue-200 to-purple-200 dark:from-blue-900 dark:to-purple-900 rounded-lg animate-pulse mb-4" />
+            <div className="h-6 w-96 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          </div>
+          <LoadingSkeleton />
+        </div>
       </div>
     );
   }
 
   return (
-    <ProtectedRoute>
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Assignments
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            {user?.role === "teacher" 
-              ? "Manage assignments for your classrooms"
-              : "View and submit your assignments"}
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header with gradient */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-8 shadow-2xl">
+            {/* Animated background pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute inset-0" style={{
+                backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)`
+              }} />
+            </div>
 
-        {assignments.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <FileText className="h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-xl font-semibold mb-2">No assignments yet</h3>
-              <p className="text-gray-600 dark:text-gray-300 text-center">
-                {user?.role === "teacher" 
-                  ? "Create assignments in your classrooms to get started"
-                  : "Assignments from your teachers will appear here"}
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {assignments.map((assignment) => (
-              <Card key={assignment._id} className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <CardTitle className="text-lg font-semibold line-clamp-2">
-                      {assignment.title}
-                    </CardTitle>
-                    <Badge variant={getStatusColor(assignment.dueDate)}>
-                      {getStatusText(assignment.dueDate)}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3">
-                    {assignment.description}
-                  </p>
-                  
-                  <div className="flex items-center justify-between text-sm text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      {new Date(assignment.dueDate).toLocaleDateString()}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <BookOpen className="h-4 w-4" />
-                      {assignment.points} pts
-                    </div>
-                  </div>
+            <div className="relative z-10">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                  <motion.h1
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="text-4xl md:text-5xl font-bold text-white mb-2 flex items-center gap-3"
+                  >
+                    <motion.div
+                      animate={{
+                        rotate: [0, 5, -5, 0],
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                    >
+                      <GraduationCap className="h-10 w-10" />
+                    </motion.div>
+                    Assignments
+                  </motion.h1>
+                  <motion.p
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="text-white/90 text-lg"
+                  >
+                    {user?.role === "teacher"
+                      ? "Create and manage assignments for your students"
+                      : "Track your assignments and submit your work"}
+                  </motion.p>
+                </div>
 
-                  <Button className="w-full" size="sm">
-                    {user?.role === "teacher" ? "Manage" : "View Details"}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                {user?.role === "teacher" && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button
+                          size="lg"
+                          className="bg-white text-purple-600 hover:bg-white/90 shadow-xl hover:shadow-2xl transition-all"
+                        >
+                          <Plus className="h-5 w-5 mr-2" />
+                          Create Assignment
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle className="text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                            Create New Assignment
+                          </DialogTitle>
+                          <DialogDescription>
+                            Fill in the details for your new assignment
+                          </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="classroom">Classroom *</Label>
+                            <Select
+                              value={newAssignment.classroomId}
+                              onValueChange={(value) =>
+                                setNewAssignment({ ...newAssignment, classroomId: value })
+                              }
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a classroom" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {classrooms.map((classroom) => (
+                                  <SelectItem key={classroom._id} value={classroom._id}>
+                                    {classroom.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="title">Title *</Label>
+                            <Input
+                              id="title"
+                              placeholder="e.g., Week 5: React Hooks Assignment"
+                              value={newAssignment.title}
+                              onChange={(e) =>
+                                setNewAssignment({ ...newAssignment, title: e.target.value })
+                              }
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea
+                              id="description"
+                              placeholder="Describe the assignment requirements..."
+                              rows={4}
+                              value={newAssignment.description}
+                              onChange={(e) =>
+                                setNewAssignment({
+                                  ...newAssignment,
+                                  description: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="dueDate">Due Date *</Label>
+                              <Input
+                                id="dueDate"
+                                type="datetime-local"
+                                value={newAssignment.dueDate}
+                                onChange={(e) =>
+                                  setNewAssignment({
+                                    ...newAssignment,
+                                    dueDate: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor="points">Points</Label>
+                              <Input
+                                id="points"
+                                type="number"
+                                min="1"
+                                value={newAssignment.points}
+                                onChange={(e) =>
+                                  setNewAssignment({
+                                    ...newAssignment,
+                                    points: parseInt(e.target.value) || 100,
+                                  })
+                                }
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <DialogFooter>
+                          <Button
+                            variant="outline"
+                            onClick={() => setCreateDialogOpen(false)}
+                            disabled={submitting === "creating"}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={handleCreateAssignment}
+                            disabled={submitting === "creating"}
+                            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                          >
+                            {submitting === "creating" ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Creating...
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="h-4 w-4 mr-2" />
+                                Create Assignment
+                              </>
+                            )}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Stats for students */}
+              {user?.role === "student" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6"
+                >
+                  {[
+                    { label: "Total", value: stats.total, icon: Target, color: "bg-white/20" },
+                    { label: "Pending", value: stats.pending, icon: Clock, color: "bg-yellow-500/20" },
+                    { label: "Submitted", value: stats.submitted, icon: CheckCircle, color: "bg-blue-500/20" },
+                    { label: "Graded", value: stats.graded, icon: Award, color: "bg-green-500/20" },
+                  ].map((stat, index) => (
+                    <motion.div
+                      key={stat.label}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.5 + index * 0.1 }}
+                      className={`${stat.color} backdrop-blur-sm rounded-xl p-4 border border-white/20`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <stat.icon className="h-8 w-8 text-white" />
+                        <div>
+                          <div className="text-3xl font-bold text-white">{stat.value}</div>
+                          <div className="text-white/80 text-sm">{stat.label}</div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </div>
           </div>
-        )}
+        </motion.div>
+
+        {/* Filters and Search */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mb-6 flex flex-col sm:flex-row gap-4"
+        >
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              placeholder="Search assignments..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-12 bg-white dark:bg-gray-800 border-2 focus:border-purple-500"
+            />
+          </div>
+
+          {user?.role === "student" && (
+            <div className="flex gap-2 overflow-x-auto">
+              {["all", "pending", "submitted", "graded"].map((f) => (
+                <Button
+                  key={f}
+                  variant={filter === f ? "default" : "outline"}
+                  onClick={() => setFilter(f as any)}
+                  className={
+                    filter === f
+                      ? "bg-gradient-to-r from-blue-600 to-purple-600 whitespace-nowrap"
+                      : "whitespace-nowrap"
+                  }
+                >
+                  {f.charAt(0).toUpperCase() + f.slice(1)}
+                </Button>
+              ))}
+            </div>
+          )}
+        </motion.div>
+
+        {/* Assignments List */}
+        <AnimatePresence mode="wait">
+          {filteredAssignments.length === 0 ? (
+            <EmptyState isTeacher={user?.role === "teacher"} />
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="grid gap-6"
+            >
+              {filteredAssignments.map((assignment, index) => {
+                const statusInfo = getStatusInfo(assignment);
+                const StatusIcon = statusInfo.icon;
+
+                return (
+                  <motion.div
+                    key={assignment._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    whileHover={{ scale: 1.01 }}
+                    className="group"
+                  >
+                    <Card className="border-2 hover:border-purple-500 transition-all shadow-lg hover:shadow-2xl overflow-hidden">
+                      {/* Gradient top bar */}
+                      <div
+                        className={`h-2 bg-gradient-to-r ${statusInfo.color}`}
+                      />
+
+                      <CardHeader className="pb-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <motion.div
+                                whileHover={{ rotate: 360 }}
+                                transition={{ duration: 0.5 }}
+                                className={`p-2 rounded-lg bg-gradient-to-r ${statusInfo.color}`}
+                              >
+                                <StatusIcon className="h-5 w-5 text-white" />
+                              </motion.div>
+                              <CardTitle className="text-2xl group-hover:text-purple-600 transition-colors">
+                                {assignment.title}
+                              </CardTitle>
+                            </div>
+
+                            {assignment.classroomName && (
+                              <Badge variant="outline" className="mb-2">
+                                <BookOpen className="h-3 w-3 mr-1" />
+                                {assignment.classroomName}
+                              </Badge>
+                            )}
+
+                            <CardDescription className="text-base">
+                              {assignment.description || "No description provided"}
+                            </CardDescription>
+                          </div>
+
+                          <Badge
+                            className={`bg-gradient-to-r ${statusInfo.color} text-white border-0 whitespace-nowrap`}
+                          >
+                            {statusInfo.text}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+
+                      <CardContent className="pb-4">
+                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            Due: {new Date(assignment.dueDate).toLocaleDateString()}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Award className="h-4 w-4" />
+                            {assignment.points} points
+                          </div>
+                          {assignment.submittedAt && (
+                            <div className="flex items-center gap-2 text-green-600">
+                              <CheckCircle className="h-4 w-4" />
+                              Submitted {new Date(assignment.submittedAt).toLocaleDateString()}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Progress bar for graded assignments */}
+                        {assignment.submissionStatus === "graded" && assignment.grade !== undefined && (
+                          <div className="mt-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-medium">Your Score</span>
+                              <span className="text-sm font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                {assignment.grade}/{assignment.points}
+                              </span>
+                            </div>
+                            <Progress
+                              value={(assignment.grade / assignment.points) * 100}
+                              className="h-3"
+                            />
+                          </div>
+                        )}
+                      </CardContent>
+
+                      <CardFooter className="bg-muted/50 flex justify-between gap-2">
+                        {user?.role === "student" && (
+                          <>
+                            {assignment.submissionStatus === "submitted" || assignment.submissionStatus === "graded" ? (
+                              <Button variant="outline" className="flex-1">
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Submission
+                              </Button>
+                            ) : (
+                              <Dialog
+                                open={submitDialogOpen && selectedAssignment?._id === assignment._id}
+                                onOpenChange={(open) => {
+                                  setSubmitDialogOpen(open);
+                                  if (open) setSelectedAssignment(assignment);
+                                }}
+                              >
+                                <DialogTrigger asChild>
+                                  <Button
+                                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                                  >
+                                    {submitting === assignment._id ? (
+                                      <>
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        Submitting...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Send className="h-4 w-4 mr-2" />
+                                        Submit Assignment
+                                      </>
+                                    )}
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-2xl">
+                                  <DialogHeader>
+                                    <DialogTitle className="text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                      Submit Assignment
+                                    </DialogTitle>
+                                    <DialogDescription>
+                                      {assignment.title}
+                                    </DialogDescription>
+                                  </DialogHeader>
+
+                                  <div className="space-y-4 py-4">
+                                    <div className="space-y-2">
+                                      <Label htmlFor="submission-text">Your Work *</Label>
+                                      <Textarea
+                                        id="submission-text"
+                                        placeholder="Describe your solution or paste your code here..."
+                                        rows={6}
+                                        value={submission.text}
+                                        onChange={(e) =>
+                                          setSubmission({ ...submission, text: e.target.value })
+                                        }
+                                      />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                      <Label htmlFor="submission-file">Attach File (Optional)</Label>
+                                      <Input
+                                        id="submission-file"
+                                        type="file"
+                                        onChange={(e) =>
+                                          setSubmission({
+                                            ...submission,
+                                            file: e.target.files?.[0] || null,
+                                          })
+                                        }
+                                      />
+                                      {submission.file && (
+                                        <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                          <FileText className="h-4 w-4" />
+                                          {submission.file.name}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <DialogFooter>
+                                    <Button
+                                      variant="outline"
+                                      onClick={() => setSubmitDialogOpen(false)}
+                                    >
+                                      Cancel
+                                    </Button>
+                                    <Button
+                                      onClick={() => handleSubmitAssignment(assignment._id)}
+                                      disabled={submitting === assignment._id || !submission.text}
+                                      className="bg-gradient-to-r from-blue-600 to-purple-600"
+                                    >
+                                      {submitting === assignment._id ? (
+                                        <>
+                                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                          Submitting...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Check className="h-4 w-4 mr-2" />
+                                          Submit
+                                        </>
+                                      )}
+                                    </Button>
+                                  </DialogFooter>
+                                </DialogContent>
+                              </Dialog>
+                            )}
+                          </>
+                        )}
+
+                        {user?.role === "teacher" && (
+                          <div className="flex gap-2 flex-1">
+                            <Button
+                              variant="outline"
+                              className="flex-1"
+                              onClick={() => router.push(`/dashboard/classrooms/${assignment.classroomId}`)}
+                            >
+                              <Users className="h-4 w-4 mr-2" />
+                              View Submissions
+                            </Button>
+                            <Button variant="outline" size="icon">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="outline" size="icon" className="text-red-600 hover:text-red-700">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </CardFooter>
+                    </Card>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </ProtectedRoute>
+    </div>
   );
 }
