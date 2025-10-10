@@ -106,6 +106,7 @@ interface Member {
   role: string;
   department: string;
   joinedAt: string;
+  profileImage?: string;
 }
 
 export default function ClassroomDetailPage() {
@@ -1843,30 +1844,51 @@ export default function ClassroomDetailPage() {
 
           {/* Members Tab */}
           <TabsContent value="members" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Class Members</h2>
-              <Badge variant="outline">{members.length} total members</Badge>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  Class Members
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Connect and collaborate with your classmates
+                </p>
+              </div>
+              <Badge variant="outline" className="px-4 py-2 text-sm">
+                <Users className="h-4 w-4 mr-2" />
+                {members.length} members
+              </Badge>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {members.map((member) => (
-                <Card key={member._id}>
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src="/placeholder.svg" />
-                        <AvatarFallback>
-                          {member.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <CardTitle className="text-base">
+                <Card key={member._id} className="group hover:shadow-xl hover:scale-[1.02] transition-all duration-300 border-2 hover:border-blue-300 dark:hover:border-blue-700">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <Avatar className="h-16 w-16 ring-4 ring-offset-2 ring-blue-500/30 group-hover:ring-blue-500/50 transition-all">
+                          <AvatarImage 
+                            src={member.profileImage || "/placeholder-user.jpg"} 
+                            alt={member.name}
+                            className="object-cover"
+                          />
+                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white font-bold text-lg">
+                            {member.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        {/* Online status indicator (can be dynamic later) */}
+                        <div className="absolute bottom-0 right-0 h-4 w-4 bg-green-500 rounded-full ring-2 ring-white dark:ring-gray-800"></div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-lg truncate group-hover:text-blue-600 transition-colors">
                           {member.name}
                         </CardTitle>
-                        <p className="text-sm text-gray-500">{member.email}</p>
+                        <p className="text-xs text-muted-foreground truncate mt-1">
+                          {member.email}
+                        </p>
                       </div>
                     </div>
                   </CardHeader>
