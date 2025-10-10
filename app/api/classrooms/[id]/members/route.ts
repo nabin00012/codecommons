@@ -57,7 +57,6 @@ export async function GET(
         role: "teacher",
         department: teacher?.department || "Engineering",
         joinedAt: classroom.createdAt,
-        profileImage: teacher?.profileImage || null,
       },
       ...students.map((student) => ({
         _id: student._id.toString(),
@@ -66,7 +65,6 @@ export async function GET(
         role: "student",
         department: student.department || "Engineering",
         joinedAt: student.createdAt,
-        profileImage: student.profileImage || null,
       })),
     ];
 

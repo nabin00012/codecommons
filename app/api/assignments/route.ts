@@ -3,13 +3,13 @@ import { connectToDatabase } from "@/lib/mongodb";
 import jwt from "jsonwebtoken";
 import { ObjectId } from "mongodb";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 // Get all assignments for current user
 export async function GET(request: NextRequest) {
   try {
     console.log("Fetching assignments for user...");
-    
+
     const token = request.cookies.get("auth-token")?.value;
     if (!token) {
       return NextResponse.json(
@@ -18,34 +18,45 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const decoded = jwt.verify(token, process.env.NEXTAUTH_SECRET || "fallback-secret") as any;
+    const decoded = jwt.verify(
+      token,
+      process.env.NEXTAUTH_SECRET || "fallback-secret"
+    ) as any;
 
     const { db } = await connectToDatabase();
-    
+
     // Get assignments for user's classrooms
     const assignments = await db.collection("assignments").find({}).toArray();
 
     // Get all submissions for the current user to check submission status
-    const submissions = await db.collection("submissions").find({
-      studentEmail: decoded.email
-    }).toArray();
+    const submissions = await db
+      .collection("submissions")
+      .find({
+        studentEmail: decoded.email,
+      })
+      .toArray();
 
     // Create a map of assignmentId -> submission for quick lookup
     const submissionMap = new Map(
-      submissions.map(sub => [sub.assignmentId, sub])
+      submissions.map((sub) => [sub.assignmentId, sub])
     );
 
     // Get classroom names
-    const classroomIds = [...new Set(assignments.map(a => a.classroomId))];
-    const classrooms = await db.collection("classrooms").find({
-      _id: { $in: classroomIds.map(id => new ObjectId(id)) }
-    }).toArray();
-    const classroomMap = new Map(classrooms.map(c => [c._id.toString(), c.name]));
+    const classroomIds = [...new Set(assignments.map((a) => a.classroomId))];
+    const classrooms = await db
+      .collection("classrooms")
+      .find({
+        _id: { $in: classroomIds.map((id) => new ObjectId(id)) },
+      })
+      .toArray();
+    const classroomMap = new Map(
+      classrooms.map((c) => [c._id.toString(), c.name])
+    );
 
-    const formattedAssignments = assignments.map(assignment => {
+    const formattedAssignments = assignments.map((assignment) => {
       const assignmentId = assignment._id.toString();
       const submission = submissionMap.get(assignmentId);
-      
+
       return {
         _id: assignmentId,
         title: assignment.title,
@@ -55,8 +66,10 @@ export async function GET(request: NextRequest) {
         classroomId: assignment.classroomId,
         classroomName: classroomMap.get(assignment.classroomId) || "Unknown",
         createdBy: assignment.createdBy,
-        submissionStatus: submission 
-          ? (submission.status === "graded" ? "graded" : "submitted")
+        submissionStatus: submission
+          ? submission.status === "graded"
+            ? "graded"
+            : "submitted"
           : "pending",
         grade: submission?.grade,
         submittedAt: submission?.submittedAt,

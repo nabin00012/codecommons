@@ -35,7 +35,7 @@ export function middleware(request: NextRequest) {
   if (isPublic) return NextResponse.next();
 
   // Check for auth tokens (both NextAuth and custom)
-  const token = 
+  const token =
     safeGetCookie(request.cookies, "next-auth.session-token") ||
     safeGetCookie(request.cookies, "__Secure-next-auth.session-token") ||
     safeGetCookie(request.cookies, "auth-token") ||

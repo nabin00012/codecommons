@@ -17,17 +17,18 @@ export interface User {
   specialization?: string;
   onboardingCompleted?: boolean;
   profileCompleted?: boolean;
-  avatar?: string;
   bio?: string;
   phone?: string;
+  location?: string;
   usn?: string;
   studentId?: string;
   collegeId?: string;
-  location?: string;
   github?: string;
   linkedin?: string;
   twitter?: string;
   website?: string;
+  avatar?: string;
+  profileImage?: string;
   isEmailVerified?: boolean;
   preferences?: {
     theme: string;
@@ -77,17 +78,18 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
               specialization: data.user.specialization || "",
               onboardingCompleted: data.user.onboardingCompleted ?? false,
               profileCompleted: data.user.profileCompleted ?? false,
-              avatar: data.user.avatar || "",
-              bio: data.user.bio || "",
-              phone: data.user.phone || null,
-              usn: data.user.usn || null,
-              studentId: data.user.studentId || null,
-              collegeId: data.user.collegeId || null,
-              location: data.user.location || "",
-              github: data.user.github || "",
-              linkedin: data.user.linkedin || "",
-              twitter: data.user.twitter || "",
-              website: data.user.website || "",
+              bio: data.user.bio,
+              phone: data.user.phone,
+              location: data.user.location,
+              usn: data.user.usn,
+              studentId: data.user.studentId,
+              collegeId: data.user.collegeId,
+              github: data.user.github,
+              linkedin: data.user.linkedin,
+              twitter: data.user.twitter,
+              website: data.user.website,
+              avatar: data.user.avatar || data.user.profileImage,
+              profileImage: data.user.profileImage || data.user.avatar,
               isEmailVerified: data.user.isEmailVerified ?? false,
               preferences: data.user.preferences,
             });
@@ -138,17 +140,18 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             specialization: data.user.specialization || "",
             onboardingCompleted: data.user.onboardingCompleted ?? false,
             profileCompleted: data.user.profileCompleted ?? false,
-            avatar: data.user.avatar || "",
-            bio: data.user.bio || "",
-            phone: data.user.phone || "",
-            usn: data.user.usn || "",
-            studentId: data.user.studentId || "",
-            collegeId: data.user.collegeId || "",
-            location: data.user.location || "",
-            github: data.user.github || "",
-            linkedin: data.user.linkedin || "",
-            twitter: data.user.twitter || "",
-            website: data.user.website || "",
+            bio: data.user.bio,
+            phone: data.user.phone,
+            location: data.user.location,
+            usn: data.user.usn,
+            studentId: data.user.studentId,
+            collegeId: data.user.collegeId,
+            github: data.user.github,
+            linkedin: data.user.linkedin,
+            twitter: data.user.twitter,
+            website: data.user.website,
+            avatar: data.user.avatar || data.user.profileImage,
+            profileImage: data.user.profileImage || data.user.avatar,
             isEmailVerified: data.user.isEmailVerified ?? false,
             preferences: data.user.preferences,
           });

@@ -281,9 +281,27 @@ export default function ClassroomsListPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
+      <ProtectedRoute>
+        <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+          <div className="container py-8">
+            {/* Skeleton Header */}
+            <div className="mb-8 rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-8 shadow-2xl">
+              <div className="h-8 w-64 bg-white/20 rounded-lg mb-3 animate-pulse" />
+              <div className="h-6 w-96 bg-white/15 rounded-lg animate-pulse" />
+            </div>
+
+            {/* Skeleton Search Bar */}
+            <div className="mb-6 p-6 rounded-lg bg-card border shadow-lg">
+              <div className="h-10 w-full bg-muted rounded-lg animate-pulse" />
+            </div>
+
+            {/* Skeleton Classrooms - Fixed height to prevent CLS */}
+            <div className="h-[600px] w-full rounded-lg overflow-hidden border bg-card/50 flex items-center justify-center">
+              <Loader2 className="w-12 h-12 animate-spin text-primary" />
+            </div>
+          </div>
+        </div>
+      </ProtectedRoute>
     );
   }
 
