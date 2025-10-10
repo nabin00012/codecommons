@@ -75,6 +75,13 @@ export async function POST(request: NextRequest) {
       user: {
         ...userWithoutPassword,
         id: user._id.toString(),
+        _id: user._id.toString(),
+        profileCompleted: user.profileCompleted || false,
+        phone: user.phone || null,
+        usn: user.usn || null,
+        studentId: user.studentId || null,
+        collegeId: user.collegeId || null,
+        department: user.department || null,
       },
       token,
     });

@@ -211,6 +211,13 @@ export default function DashboardPage() {
   const [hasClassrooms, setHasClassrooms] = useState(false);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   
+  // Redirect to complete-profile if user hasn't completed profile yet
+  useEffect(() => {
+    if (!loading && user && !user.profileCompleted && user.role === 'student') {
+      window.location.href = '/complete-profile';
+    }
+  }, [user, loading]);
+  
   // Stats state - will be fetched from API
   // Initial stats without assignments (shown before classrooms are loaded)
   const [stats, setStats] = useState([

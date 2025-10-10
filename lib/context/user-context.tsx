@@ -16,9 +16,13 @@ export interface User {
   year?: string;
   specialization?: string;
   onboardingCompleted?: boolean;
+  profileCompleted?: boolean;
   avatar?: string;
   bio?: string;
   phone?: string;
+  usn?: string;
+  studentId?: string;
+  collegeId?: string;
   location?: string;
   github?: string;
   linkedin?: string;
@@ -72,6 +76,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
               year: data.user.year || "",
               specialization: data.user.specialization || "",
               onboardingCompleted: data.user.onboardingCompleted ?? false,
+              profileCompleted: data.user.profileCompleted ?? false,
+              phone: data.user.phone || null,
+              usn: data.user.usn || null,
+              studentId: data.user.studentId || null,
+              collegeId: data.user.collegeId || null,
               preferences: data.user.preferences,
             });
           } else {

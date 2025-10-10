@@ -19,6 +19,14 @@ const publicPrefixes = [
   "/robots.txt",
 ];
 
+// Pages that don't require profile completion
+const profileNotRequiredPaths = [
+  "/complete-profile",
+  "/settings",
+  "/profile",
+  "/api/",
+];
+
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 

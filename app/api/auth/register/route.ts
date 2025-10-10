@@ -58,6 +58,11 @@ export async function POST(request: NextRequest) {
       year: "",
       specialization: "",
       onboardingCompleted: false,
+      profileCompleted: false,
+      phone: null,
+      usn: null,
+      studentId: null,
+      collegeId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
