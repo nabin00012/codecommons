@@ -130,19 +130,34 @@ export default function ProfileEditPage() {
       });
 
       if (response.ok) {
-        await refreshUser();
+        // Show uploading toast
         toast({
-          title: "Success",
-          description: "Profile updated successfully",
+          title: "Uploading... 📤",
+          description: "Please wait while we save your changes",
         });
+
+        // Refresh user context
+        await refreshUser();
+
+        // Show success with confetti animation
+        toast({
+          title: "✨ Profile Updated Successfully! ✨",
+          description: "Your changes have been saved and are now visible to everyone.",
+        });
+
+        // Redirect to profile view after 1.5 seconds
+        setTimeout(() => {
+          router.push("/profile");
+        }, 1500);
       } else {
-        throw new Error("Failed to update profile");
+        const data = await response.json();
+        throw new Error(data.error || "Failed to update profile");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating profile:", error);
       toast({
         title: "Error",
-        description: "Failed to update profile",
+        description: error.message || "Failed to update profile. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -159,19 +174,32 @@ export default function ProfileEditPage() {
         credentials: "include",
       });
 
+      const data = await response.json();
+
       if (response.ok) {
         toast({
-          title: "Verification Email Sent",
-          description: "Please check your email to verify your account",
+          title: "📧 Verification Email Sent!",
+          description: data.verificationLink 
+            ? `Development Mode: Check console for verification link`
+            : "Please check your email inbox and spam folder for the verification link",
         });
+
+        // In development, also show the link
+        if (data.verificationLink) {
+          console.log("=".repeat(80));
+          console.log("VERIFICATION LINK (Development Only)");
+          console.log("=".repeat(80));
+          console.log(data.verificationLink);
+          console.log("=".repeat(80));
+        }
       } else {
-        throw new Error("Failed to send verification email");
+        throw new Error(data.error || "Failed to send verification email");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending verification:", error);
       toast({
         title: "Error",
-        description: "Failed to send verification email",
+        description: error.message || "Failed to send verification email. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -189,7 +217,25 @@ export default function ProfileEditPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 relative">
+        {/* Loading Overlay */}
+        {isLoading && (
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div className="bg-card p-8 rounded-2xl shadow-2xl border-2 border-primary/20">
+              <div className="flex flex-col items-center gap-4">
+                <div className="relative">
+                  <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20 border-t-primary"></div>
+                  <Upload className="h-6 w-6 text-primary absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+                </div>
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold">Saving Your Profile...</h3>
+                  <p className="text-sm text-muted-foreground">Please wait while we update your information</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           {/* Header */}
           <div className="mb-6">
