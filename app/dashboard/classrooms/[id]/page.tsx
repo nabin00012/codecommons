@@ -1126,30 +1126,36 @@ export default function ClassroomDetailPage() {
                                   className="gap-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-lg shadow-green-500/30"
                                   onClick={async () => {
                                     setSelectedAssignment(assignment);
+                                    setLoadingSubmissions(true);
                                     
-                                    // Check cache first
-                                    if (submissionsCache.has(assignment._id)) {
-                                      setAssignmentSubmissions(submissionsCache.get(assignment._id) || []);
-                                    } else {
-                                      // Fetch submissions only if not cached
-                                      setLoadingSubmissions(true);
-                                      try {
-                                        const res = await fetch(
-                                          `/api/classrooms/${classroomId}/assignments/${assignment._id}`,
-                                          { credentials: "include" }
-                                        );
-                                        if (res.ok) {
-                                          const data = await res.json();
-                                          const submissions = data.data.submissions || [];
-                                          setAssignmentSubmissions(submissions);
-                                          // Cache the submissions
-                                          setSubmissionsCache(prev => new Map(prev).set(assignment._id, submissions));
+                                    try {
+                                      // Always fetch fresh data to verify submission status
+                                      const res = await fetch(
+                                        `/api/classrooms/${classroomId}/assignments/${assignment._id}`,
+                                        { credentials: "include" }
+                                      );
+                                      if (res.ok) {
+                                        const data = await res.json();
+                                        const submissions = data.data.submissions || [];
+                                        setAssignmentSubmissions(submissions);
+                                        
+                                        // Update submitted assignments set
+                                        if (submissions.length > 0) {
+                                          setSubmittedAssignments(prev => new Set(prev).add(assignment._id));
                                         }
-                                      } catch (error) {
-                                        console.error("Error fetching submissions:", error);
-                                      } finally {
-                                        setLoadingSubmissions(false);
+                                        
+                                        // Cache the submissions
+                                        setSubmissionsCache(prev => new Map(prev).set(assignment._id, submissions));
                                       }
+                                    } catch (error) {
+                                      console.error("Error fetching submissions:", error);
+                                      toast({
+                                        title: "Error",
+                                        description: "Failed to load submission details",
+                                        variant: "destructive",
+                                      });
+                                    } finally {
+                                      setLoadingSubmissions(false);
                                     }
                                   }}
                                 >
@@ -1162,30 +1168,36 @@ export default function ClassroomDetailPage() {
                                   className="gap-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
                                   onClick={async () => {
                                     setSelectedAssignment(assignment);
+                                    setLoadingSubmissions(true);
                                     
-                                    // Check cache first
-                                    if (submissionsCache.has(assignment._id)) {
-                                      setAssignmentSubmissions(submissionsCache.get(assignment._id) || []);
-                                    } else {
-                                      // Fetch submissions only if not cached
-                                      setLoadingSubmissions(true);
-                                      try {
-                                        const res = await fetch(
-                                          `/api/classrooms/${classroomId}/assignments/${assignment._id}`,
-                                          { credentials: "include" }
-                                        );
-                                        if (res.ok) {
-                                          const data = await res.json();
-                                          const submissions = data.data.submissions || [];
-                                          setAssignmentSubmissions(submissions);
-                                          // Cache the submissions
-                                          setSubmissionsCache(prev => new Map(prev).set(assignment._id, submissions));
+                                    try {
+                                      // Fetch to verify if student has actually submitted
+                                      const res = await fetch(
+                                        `/api/classrooms/${classroomId}/assignments/${assignment._id}`,
+                                        { credentials: "include" }
+                                      );
+                                      if (res.ok) {
+                                        const data = await res.json();
+                                        const submissions = data.data.submissions || [];
+                                        setAssignmentSubmissions(submissions);
+                                        
+                                        // Update submitted status if there's a submission
+                                        if (submissions.length > 0) {
+                                          setSubmittedAssignments(prev => new Set(prev).add(assignment._id));
                                         }
-                                      } catch (error) {
-                                        console.error("Error fetching submissions:", error);
-                                      } finally {
-                                        setLoadingSubmissions(false);
+                                        
+                                        // Cache the submissions
+                                        setSubmissionsCache(prev => new Map(prev).set(assignment._id, submissions));
                                       }
+                                    } catch (error) {
+                                      console.error("Error fetching submissions:", error);
+                                      toast({
+                                        title: "Error",
+                                        description: "Failed to load assignment details",
+                                        variant: "destructive",
+                                      });
+                                    } finally {
+                                      setLoadingSubmissions(false);
                                     }
                                   }}
                                 >
@@ -1203,9 +1215,42 @@ export default function ClassroomDetailPage() {
                             </DialogHeader>
                             
                             {loadingSubmissions ? (
-                              <div className="flex flex-col items-center justify-center py-12">
-                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                                <p className="mt-4 text-sm text-muted-foreground">Loading submissions...</p>
+                              <div className="space-y-6 py-6">
+                                {/* Beautiful animated loading state */}
+                                <div className="flex flex-col items-center justify-center">
+                                  <div className="relative w-24 h-24 mb-4">
+                                    {/* Outer ring */}
+                                    <div className="absolute inset-0 rounded-full border-4 border-blue-200 dark:border-blue-900"></div>
+                                    {/* Spinning gradient ring */}
+                                    <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-500 border-r-purple-500 animate-spin"></div>
+                                    {/* Inner pulsing circle */}
+                                    <div className="absolute inset-3 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 animate-pulse"></div>
+                                    {/* Center icon */}
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                      <FileText className="h-8 w-8 text-blue-600 dark:text-blue-400 animate-pulse" />
+                                    </div>
+                                  </div>
+                                  <h4 className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                                    Loading Assignment Details
+                                  </h4>
+                                  <p className="text-sm text-muted-foreground text-center max-w-md">
+                                    Checking submission status and fetching assignment data...
+                                  </p>
+                                </div>
+
+                                {/* Skeleton content preview */}
+                                <div className="space-y-4 pt-4 border-t">
+                                  <div className="space-y-2">
+                                    <div className="h-4 bg-gradient-to-r from-blue-200 to-purple-200 dark:from-blue-900 dark:to-purple-900 rounded-full w-1/3 animate-pulse"></div>
+                                    <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded-full w-full animate-pulse"></div>
+                                    <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded-full w-5/6 animate-pulse"></div>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <div className="h-4 bg-gradient-to-r from-purple-200 to-pink-200 dark:from-purple-900 dark:to-pink-900 rounded-full w-1/4 animate-pulse"></div>
+                                    <div className="h-20 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse"></div>
+                                  </div>
+                                  <div className="h-12 bg-gradient-to-r from-blue-300 to-purple-300 dark:from-blue-800 dark:to-purple-800 rounded-xl animate-pulse"></div>
+                                </div>
                               </div>
                             ) : !isTeacher && !submittedAssignments.has(assignment._id) && (
                               <div className="space-y-4 mt-4">
