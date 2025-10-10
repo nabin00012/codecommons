@@ -827,11 +827,58 @@ export default function AssignmentsPage() {
                       <div className="px-6 py-4 bg-gray-50/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-b-[2rem] flex justify-between gap-2">
                         {user?.role === "student" && (
                           <>
-                            {assignment.submissionStatus === "submitted" || assignment.submissionStatus === "graded" ? (
-                              <Button variant="outline" className="flex-1 rounded-xl">
-                                <Eye className="h-4 w-4 mr-2" />
-                                View Submission
-                              </Button>
+                            {assignment.submissionStatus === "submitted" ? (
+                              <div className="flex-1 flex items-center justify-center gap-3 py-2 px-4 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-700">
+                                <motion.div
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  transition={{ type: "spring", stiffness: 200, damping: 10 }}
+                                >
+                                  <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                                </motion.div>
+                                <div className="flex flex-col items-start">
+                                  <span className="text-sm font-semibold text-green-700 dark:text-green-300">
+                                    ✨ Submitted Successfully!
+                                  </span>
+                                  <span className="text-xs text-green-600 dark:text-green-400">
+                                    Waiting for review
+                                  </span>
+                                </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="ml-auto rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30"
+                                >
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  View
+                                </Button>
+                              </div>
+                            ) : assignment.submissionStatus === "graded" ? (
+                              <div className="flex-1 flex items-center justify-center gap-3 py-2 px-4 rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-2 border-purple-200 dark:border-purple-700">
+                                <motion.div
+                                  initial={{ scale: 0, rotate: -180 }}
+                                  animate={{ scale: 1, rotate: 0 }}
+                                  transition={{ type: "spring", stiffness: 200, damping: 10 }}
+                                >
+                                  <Award className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                                </motion.div>
+                                <div className="flex flex-col items-start">
+                                  <span className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+                                    🎉 Graded!
+                                  </span>
+                                  <span className="text-xs text-purple-600 dark:text-purple-400">
+                                    Score: {assignment.grade}/{assignment.points} points
+                                  </span>
+                                </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="ml-auto rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30"
+                                >
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  View
+                                </Button>
+                              </div>
                             ) : (
                               <Dialog
                                 open={submitDialogOpen && selectedAssignment?._id === assignment._id}

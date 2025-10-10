@@ -1082,65 +1082,118 @@ export default function ClassroomDetailPage() {
                         </div>
                         
                         <div className="flex items-center gap-2">
-                          {!isTeacher && submittedAssignments.has(assignment._id) && (
-                            <Badge className="bg-green-500 hover:bg-green-600 text-white">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Submitted
-                            </Badge>
-                          )}
-                          
                           <Dialog>
                             <DialogTrigger asChild>
-                              <Button 
-                                size="sm"
-                                className="gap-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
-                                onClick={async () => {
-                                  setSelectedAssignment(assignment);
-                                  
-                                  // Check cache first
-                                  if (submissionsCache.has(assignment._id)) {
-                                    setAssignmentSubmissions(submissionsCache.get(assignment._id) || []);
-                                  } else {
-                                    // Fetch submissions only if not cached
-                                    setLoadingSubmissions(true);
-                                    try {
-                                      const res = await fetch(
-                                        `/api/classrooms/${classroomId}/assignments/${assignment._id}`,
-                                        { credentials: "include" }
-                                      );
-                                      if (res.ok) {
-                                        const data = await res.json();
-                                        const submissions = data.data.submissions || [];
-                                        setAssignmentSubmissions(submissions);
-                                        // Cache the submissions
-                                        setSubmissionsCache(prev => new Map(prev).set(assignment._id, submissions));
+                              {isTeacher ? (
+                                <Button 
+                                  size="sm"
+                                  className="gap-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+                                  onClick={async () => {
+                                    setSelectedAssignment(assignment);
+                                    
+                                    // Check cache first
+                                    if (submissionsCache.has(assignment._id)) {
+                                      setAssignmentSubmissions(submissionsCache.get(assignment._id) || []);
+                                    } else {
+                                      // Fetch submissions only if not cached
+                                      setLoadingSubmissions(true);
+                                      try {
+                                        const res = await fetch(
+                                          `/api/classrooms/${classroomId}/assignments/${assignment._id}`,
+                                          { credentials: "include" }
+                                        );
+                                        if (res.ok) {
+                                          const data = await res.json();
+                                          const submissions = data.data.submissions || [];
+                                          setAssignmentSubmissions(submissions);
+                                          // Cache the submissions
+                                          setSubmissionsCache(prev => new Map(prev).set(assignment._id, submissions));
+                                        }
+                                      } catch (error) {
+                                        console.error("Error fetching submissions:", error);
+                                      } finally {
+                                        setLoadingSubmissions(false);
                                       }
-                                    } catch (error) {
-                                      console.error("Error fetching submissions:", error);
-                                    } finally {
-                                      setLoadingSubmissions(false);
                                     }
-                                  }
-                                }}
-                              >
-                                {isTeacher ? (
-                                  <>
-                                    <Eye className="h-4 w-4" />
-                                    View Submissions
-                                  </>
-                                ) : submittedAssignments.has(assignment._id) ? (
-                                  <>
-                                    <Eye className="h-4 w-4" />
-                                    View Submission
-                                  </>
-                                ) : (
-                                  <>
-                                    <Upload className="h-4 w-4" />
-                                    Submit Work
-                                </>
+                                  }}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                  View Submissions
+                                </Button>
+                              ) : submittedAssignments.has(assignment._id) ? (
+                                <Button 
+                                  size="sm"
+                                  className="gap-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-lg shadow-green-500/30"
+                                  onClick={async () => {
+                                    setSelectedAssignment(assignment);
+                                    
+                                    // Check cache first
+                                    if (submissionsCache.has(assignment._id)) {
+                                      setAssignmentSubmissions(submissionsCache.get(assignment._id) || []);
+                                    } else {
+                                      // Fetch submissions only if not cached
+                                      setLoadingSubmissions(true);
+                                      try {
+                                        const res = await fetch(
+                                          `/api/classrooms/${classroomId}/assignments/${assignment._id}`,
+                                          { credentials: "include" }
+                                        );
+                                        if (res.ok) {
+                                          const data = await res.json();
+                                          const submissions = data.data.submissions || [];
+                                          setAssignmentSubmissions(submissions);
+                                          // Cache the submissions
+                                          setSubmissionsCache(prev => new Map(prev).set(assignment._id, submissions));
+                                        }
+                                      } catch (error) {
+                                        console.error("Error fetching submissions:", error);
+                                      } finally {
+                                        setLoadingSubmissions(false);
+                                      }
+                                    }
+                                  }}
+                                >
+                                  <CheckCircle className="h-4 w-4" />
+                                  ✨ Submitted
+                                </Button>
+                              ) : (
+                                <Button 
+                                  size="sm"
+                                  className="gap-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+                                  onClick={async () => {
+                                    setSelectedAssignment(assignment);
+                                    
+                                    // Check cache first
+                                    if (submissionsCache.has(assignment._id)) {
+                                      setAssignmentSubmissions(submissionsCache.get(assignment._id) || []);
+                                    } else {
+                                      // Fetch submissions only if not cached
+                                      setLoadingSubmissions(true);
+                                      try {
+                                        const res = await fetch(
+                                          `/api/classrooms/${classroomId}/assignments/${assignment._id}`,
+                                          { credentials: "include" }
+                                        );
+                                        if (res.ok) {
+                                          const data = await res.json();
+                                          const submissions = data.data.submissions || [];
+                                          setAssignmentSubmissions(submissions);
+                                          // Cache the submissions
+                                          setSubmissionsCache(prev => new Map(prev).set(assignment._id, submissions));
+                                        }
+                                      } catch (error) {
+                                        console.error("Error fetching submissions:", error);
+                                      } finally {
+                                        setLoadingSubmissions(false);
+                                      }
+                                    }
+                                  }}
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  Submit Work
+                                </Button>
                               )}
-                            </Button>
-                          </DialogTrigger>
+                            </DialogTrigger>
                           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                             <DialogHeader>
                               <DialogTitle>{assignment.title}</DialogTitle>
