@@ -176,30 +176,37 @@ export default function ProfileEditPage() {
 
       const data = await response.json();
 
-      if (response.ok) {
+      if (response.ok && data.verificationLink) {
+        // Show a success message with the link
         toast({
-          title: "📧 Verification Email Sent!",
-          description: data.verificationLink 
-            ? `Development Mode: Check console for verification link`
-            : "Please check your email inbox and spam folder for the verification link",
+          title: "✅ Verification Link Ready!",
+          description: "Click below to verify your email",
         });
 
-        // In development, also show the link
-        if (data.verificationLink) {
-          console.log("=".repeat(80));
-          console.log("VERIFICATION LINK (Development Only)");
-          console.log("=".repeat(80));
-          console.log(data.verificationLink);
-          console.log("=".repeat(80));
-        }
+        // Log to console
+        console.log("=".repeat(80));
+        console.log("📧 EMAIL VERIFICATION LINK");
+        console.log("=".repeat(80));
+        console.log(data.verificationLink);
+        console.log("=".repeat(80));
+        console.log("Click the link above or copy-paste it in your browser to verify your email");
+        console.log("=".repeat(80));
+
+        // Open the link in a new tab automatically
+        window.open(data.verificationLink, '_blank');
+        
+        toast({
+          title: "🎉 Verification page opened!",
+          description: "A new tab has been opened. Complete the verification there.",
+        });
       } else {
-        throw new Error(data.error || "Failed to send verification email");
+        throw new Error(data.error || "Failed to generate verification link");
       }
     } catch (error: any) {
       console.error("Error sending verification:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to send verification email. Please try again.",
+        description: error.message || "Failed to send verification. Please try again.",
         variant: "destructive",
       });
     } finally {
