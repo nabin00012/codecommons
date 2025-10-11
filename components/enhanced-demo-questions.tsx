@@ -233,6 +233,15 @@ const demoQuestions = [
 export function EnhancedDemoQuestions() {
   return (
     <div className="space-y-6">
+      <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/20 border border-indigo-200 dark:border-indigo-800 rounded-lg">
+        <p className="text-sm text-indigo-700 dark:text-indigo-300 flex items-center gap-2">
+          <span className="text-lg">🎯</span>
+          <span>
+            <strong>Demo Content:</strong> These questions and answers are examples to demonstrate our Q&A system. Real community content will be available soon!
+          </span>
+        </p>
+      </div>
+      
       {demoQuestions.map((question) => (
         <Card key={question.id} className="overflow-hidden">
           <CardContent className="p-6">

@@ -217,6 +217,15 @@ export default function QuestionDetailPage() {
             Back to Questions
           </Link>
 
+          <div className="mb-4 p-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+            <p className="text-sm text-amber-700 dark:text-amber-300 flex items-center gap-2">
+              <span className="text-lg">✨</span>
+              <span>
+                <strong>Sample Question:</strong> This is demonstration data. Real questions and answers from our community will replace these examples soon!
+              </span>
+            </p>
+          </div>
+
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             <Card className="border-primary/10">
               <CardHeader className="pb-3">

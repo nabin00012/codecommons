@@ -1,5 +1,10 @@
 import type { Project } from "@/components/project-showcase"
 
+// 🌟 MOCK DATA NOTICE 🌟
+// These are sample projects created to showcase the platform's project management features.
+// Real student projects will replace this demonstration data once the platform goes live!
+// Stay tuned for amazing projects from our talented community! 🚀
+
 // Mock projects data
 export const mockProjects: Record<string, Project[]> = {
   rahulsingh: [

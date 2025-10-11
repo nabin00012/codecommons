@@ -135,6 +135,14 @@ export function DemoQuestions() {
             Explore real questions and solutions from our community of
             passionate developers
           </p>
+          <div className="mt-6 max-w-2xl mx-auto p-4 bg-gradient-to-r from-cyan-50 to-teal-50 dark:from-cyan-950/20 dark:to-teal-950/20 border border-cyan-200 dark:border-cyan-800 rounded-lg">
+            <p className="text-sm text-cyan-700 dark:text-cyan-300 flex items-center justify-center gap-2">
+              <span className="text-lg">💡</span>
+              <span>
+                <strong>Preview Mode:</strong> These are sample questions to showcase our platform. Your real questions will appear here soon!
+              </span>
+            </p>
+          </div>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

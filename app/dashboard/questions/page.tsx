@@ -354,6 +354,14 @@ export default function QuestionsPage() {
               Browse, search, and filter questions from the CodeCommons
               community
             </p>
+            <div className="mt-2 p-3 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+              <p className="text-sm text-purple-700 dark:text-purple-300 flex items-center gap-2">
+                <span className="text-lg">🚀</span>
+                <span>
+                  <strong>Demo Mode:</strong> These questions are sample data showcasing our Q&A system. Real community questions coming soon!
+                </span>
+              </p>
+            </div>
           </motion.div>
 
           <motion.div

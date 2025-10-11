@@ -1,8 +1,12 @@
 import { Request, Response } from "express";
+import mongoose from "mongoose";
 import Assignment from "../models/Assignment";
 import Classroom from "../models/Classroom";
+import File from "../models/File";
 import { asyncHandler } from "../middleware/async";
 import { ErrorResponse } from "../utils/errorResponse";
+import path from "path";
+import fs from "fs";
 
 // @desc    Create a new assignment
 // @route   POST /api/classrooms/:classroomId/assignments
@@ -15,7 +19,15 @@ export const createAssignment = asyncHandler(
       dueDate,
       submissionType,
       codeTemplate,
-      points,
+      instructions,
+      maxPoints,
+      isPublished,
+      allowLateSubmissions,
+      lateSubmissionDeadline,
+      rubric,
+      tags,
+      difficulty,
+      estimatedDuration,
     } = req.body;
     const classroomId = req.params.classroomId;
 
@@ -29,19 +41,102 @@ export const createAssignment = asyncHandler(
       throw new ErrorResponse("Not authorized to create assignments", 403);
     }
 
-    const assignment = await Assignment.create({
+    // Prepare assignment data
+    const assignmentData: any = {
       title,
       description,
       dueDate,
       classroom: classroomId,
-      submissionType,
+      submissionType: submissionType || "mixed",
       codeTemplate,
-      points,
+      instructions,
+      maxPoints: maxPoints || 100,
+      isPublished: isPublished || false,
+      allowLateSubmissions: allowLateSubmissions || false,
+      lateSubmissionDeadline,
+      rubric,
+      tags: tags || [],
+      difficulty: difficulty || "medium",
+      estimatedDuration,
       submissions: [],
-    });
+    };
+
+    const assignment = await Assignment.create(assignmentData);
+
+    // Handle file attachments if provided
+    if (req.files && Array.isArray(req.files)) {
+      const attachmentFiles = req.files.filter(
+        (file: any) => file.fieldname === "attachments"
+      );
+      const materialFiles = req.files.filter(
+        (file: any) => file.fieldname === "materials"
+      );
+
+      // Save attachment files
+      if (attachmentFiles.length > 0) {
+        const attachmentFileDocs: mongoose.Types.ObjectId[] = [];
+        for (const file of attachmentFiles) {
+          const fileInfo = {
+            filename: file.filename,
+            originalName: file.originalname,
+            mimetype: file.mimetype,
+            size: file.size,
+            path: file.path,
+            url: `/uploads/${file.filename}`,
+          };
+
+          const fileDoc = await File.create({
+            ...fileInfo,
+            uploadedBy: req.user._id,
+            type: "assignment_attachment",
+            relatedId: assignment._id,
+            isPublic: false,
+          });
+          attachmentFileDocs.push(fileDoc._id as mongoose.Types.ObjectId);
+        }
+        assignment.attachments = attachmentFileDocs;
+      }
+
+      // Save material files
+      if (materialFiles.length > 0) {
+        const materialFileDocs: mongoose.Types.ObjectId[] = [];
+        for (const file of materialFiles) {
+          const fileInfo = {
+            filename: file.filename,
+            originalName: file.originalname,
+            mimetype: file.mimetype,
+            size: file.size,
+            path: file.path,
+            url: `/uploads/${file.filename}`,
+          };
+
+          const fileDoc = await File.create({
+            ...fileInfo,
+            uploadedBy: req.user._id,
+            type: "material",
+            relatedId: assignment._id,
+            isPublic: true, // Materials are public for enrolled students
+          });
+          materialFileDocs.push(fileDoc._id as mongoose.Types.ObjectId);
+        }
+        assignment.materials = materialFileDocs;
+      }
+
+      await assignment.save();
+    }
+
+    await assignment.populate(
+      "attachments",
+      "filename originalName mimetype size url"
+    );
+    await assignment.populate(
+      "materials",
+      "filename originalName mimetype size url"
+    );
 
     res.status(201).json({
       success: true,
+      message: "Assignment created successfully",
       data: assignment,
     });
   }
@@ -71,6 +166,8 @@ export const getAssignments = asyncHandler(
 
     const assignments = await Assignment.find({ classroom: classroomId })
       .populate("submissions.student", "name email")
+      .populate("attachments", "filename originalName mimetype size url")
+      .populate("materials", "filename originalName mimetype size url")
       .sort("-createdAt");
 
     res.status(200).json({
