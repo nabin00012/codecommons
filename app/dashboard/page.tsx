@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpen,
@@ -206,17 +207,28 @@ const getBaseActions = () => [
 
 export default function DashboardPage() {
   const { user, loading } = useUser();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [quickActions, setQuickActions] = useState(getBaseActions());
   const [hasClassrooms, setHasClassrooms] = useState(false);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [profileCheckDone, setProfileCheckDone] = useState(false);
   
   // Redirect to complete-profile if user hasn't completed profile yet
+  // Only check once after initial load to prevent flickering
   useEffect(() => {
-    if (!loading && user && !user.profileCompleted && user.role === 'student') {
-      window.location.href = '/complete-profile';
+    if (!loading && user && !profileCheckDone) {
+      setProfileCheckDone(true);
+      
+      // Only redirect if student hasn't completed profile
+      if (user.role === 'student' && !user.profileCompleted) {
+        // Add a small delay to ensure user context is fully loaded
+        setTimeout(() => {
+          router.push('/complete-profile');
+        }, 100);
+      }
     }
-  }, [user, loading]);
+  }, [user, loading, profileCheckDone, router]);
   
   // Stats state - will be fetched from API
   // Initial stats without assignments (shown before classrooms are loaded)

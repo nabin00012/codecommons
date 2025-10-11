@@ -21,7 +21,7 @@ import {
 
 export default function CompleteProfilePage() {
   const router = useRouter();
-  const { user, refreshUser } = useUser();
+  const { user, refreshUser, updateUser } = useUser();
   const { toast } = useToast();
   
   const [loading, setLoading] = useState(false);
@@ -66,12 +66,25 @@ export default function CompleteProfilePage() {
       });
 
       if (response.ok) {
+        const data = await response.json();
+        
+        // Update user context immediately with the returned user data
+        if (data.user) {
+          updateUser(data.user);
+        }
+        
+        // Also refresh to ensure latest data
         await refreshUser();
+        
         toast({
           title: "Success!",
           description: "Your profile has been completed successfully.",
         });
-        router.push("/dashboard");
+        
+        // Small delay before redirect to ensure context is updated
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 300);
       } else {
         const data = await response.json();
         throw new Error(data.error || "Failed to update profile");
