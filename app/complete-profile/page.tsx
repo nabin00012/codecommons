@@ -3,27 +3,33 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/lib/context/user-context";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { 
-  User, 
-  Phone, 
-  CreditCard, 
-  GraduationCap, 
+import {
+  User,
+  Phone,
+  CreditCard,
+  GraduationCap,
   Building2,
   ArrowRight,
   CheckCircle,
-  Mail
+  Mail,
 } from "lucide-react";
 
 export default function CompleteProfilePage() {
   const router = useRouter();
   const { user, refreshUser, updateUser } = useUser();
   const { toast } = useToast();
-  
+
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     phone: "",
@@ -35,10 +41,12 @@ export default function CompleteProfilePage() {
 
   useEffect(() => {
     // Redirect if user already completed profile
-    if (user && user.profileCompleted) {
-      router.push("/dashboard");
+    if (user && user.profileCompleted === true) {
+      console.log("Profile already completed, redirecting to dashboard");
+      router.replace("/dashboard");
+      return;
     }
-    
+
     // Pre-fill if user has some data
     if (user) {
       setFormData({
@@ -49,7 +57,7 @@ export default function CompleteProfilePage() {
         department: user.department || "",
       });
     }
-  }, [user, router]);
+  }, [user?.profileCompleted, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,20 +75,20 @@ export default function CompleteProfilePage() {
 
       if (response.ok) {
         const data = await response.json();
-        
+
         // Update user context immediately with the returned user data
         if (data.user) {
           updateUser(data.user);
         }
-        
+
         // Also refresh to ensure latest data
         await refreshUser();
-        
+
         toast({
           title: "Success!",
           description: "Your profile has been completed successfully.",
         });
-        
+
         // Small delay before redirect to ensure context is updated
         setTimeout(() => {
           router.push("/dashboard");
@@ -101,8 +109,44 @@ export default function CompleteProfilePage() {
     }
   };
 
-  const handleSkip = () => {
-    router.push("/dashboard");
+  const handleSkip = async () => {
+    setLoading(true);
+    try {
+      // Mark profile as completed even though skipped
+      const response = await fetch("/api/users/skip-profile", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        // Update user context immediately
+        if (data.user) {
+          updateUser(data.user);
+        }
+
+        await refreshUser();
+
+        toast({
+          title: "Profile Setup Skipped",
+          description: "You can complete your profile anytime from settings.",
+        });
+
+        setTimeout(() => {
+          router.replace("/dashboard");
+        }, 300);
+      } else {
+        // If API fails, just redirect
+        router.replace("/dashboard");
+      }
+    } catch (error) {
+      console.error("Error skipping profile:", error);
+      // Fallback - just redirect to dashboard
+      router.replace("/dashboard");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -132,7 +176,7 @@ export default function CompleteProfilePage() {
               Please fill in your details. Fields marked with * are required.
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Phone Number */}
@@ -146,7 +190,9 @@ export default function CompleteProfilePage() {
                   type="tel"
                   placeholder="Enter your phone number"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
                   required
                   className="h-12"
                 />
@@ -163,7 +209,12 @@ export default function CompleteProfilePage() {
                   type="text"
                   placeholder="e.g., 1CR21CS001"
                   value={formData.usn}
-                  onChange={(e) => setFormData({ ...formData, usn: e.target.value.toUpperCase() })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      usn: e.target.value.toUpperCase(),
+                    })
+                  }
                   required
                   className="h-12 font-mono"
                 />
@@ -173,14 +224,19 @@ export default function CompleteProfilePage() {
               <div className="space-y-2">
                 <Label htmlFor="studentId" className="flex items-center gap-2">
                   <CreditCard className="h-4 w-4 text-green-500" />
-                  Student ID <span className="text-xs text-muted-foreground">(Optional)</span>
+                  Student ID{" "}
+                  <span className="text-xs text-muted-foreground">
+                    (Optional)
+                  </span>
                 </Label>
                 <Input
                   id="studentId"
                   type="text"
                   placeholder="Your student ID if different from USN"
                   value={formData.studentId}
-                  onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, studentId: e.target.value })
+                  }
                   className="h-12"
                 />
               </div>
@@ -196,12 +252,15 @@ export default function CompleteProfilePage() {
                   type="email"
                   placeholder="your.email@college.edu"
                   value={formData.collegeId}
-                  onChange={(e) => setFormData({ ...formData, collegeId: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, collegeId: e.target.value })
+                  }
                   required
                   className="h-12"
                 />
                 <p className="text-xs text-muted-foreground">
-                  We'll send a verification email to confirm your college identity
+                  We'll send a verification email to confirm your college
+                  identity
                 </p>
               </div>
 
@@ -214,7 +273,9 @@ export default function CompleteProfilePage() {
                 <select
                   id="department"
                   value={formData.department}
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, department: e.target.value })
+                  }
                   required
                   className="w-full h-12 px-3 rounded-md border border-input bg-background"
                 >
@@ -226,7 +287,9 @@ export default function CompleteProfilePage() {
                   <option value="MECH">Mechanical Engineering</option>
                   <option value="CIVIL">Civil Engineering</option>
                   <option value="IT">Information Technology</option>
-                  <option value="AI/ML">Artificial Intelligence & Machine Learning</option>
+                  <option value="AI/ML">
+                    Artificial Intelligence & Machine Learning
+                  </option>
                   <option value="DS">Data Science</option>
                   <option value="OTHER">Other</option>
                 </select>
@@ -237,10 +300,14 @@ export default function CompleteProfilePage() {
                 <div className="flex gap-3">
                   <CheckCircle className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                   <div className="text-sm text-blue-800 dark:text-blue-300">
-                    <p className="font-medium mb-1">Why do we need this information?</p>
+                    <p className="font-medium mb-1">
+                      Why do we need this information?
+                    </p>
                     <ul className="list-disc list-inside space-y-1 text-xs">
                       <li>To verify you're a genuine student</li>
-                      <li>To connect you with classmates from your department</li>
+                      <li>
+                        To connect you with classmates from your department
+                      </li>
                       <li>To provide relevant course content and materials</li>
                       <li>To enable communication with teachers</li>
                     </ul>

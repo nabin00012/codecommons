@@ -50,6 +50,8 @@ export async function GET(
         _id: student._id,
         name: student.name,
         email: student.email,
+        profileImage: student.profileImage || student.avatar || null,
+        avatar: student.avatar || student.profileImage || null,
         joinDate: student.createdAt,
         points: stats?.points || 0,
         solutions: stats?.solutions || 0,

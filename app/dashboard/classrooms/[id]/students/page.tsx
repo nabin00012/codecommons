@@ -16,6 +16,8 @@ interface Student {
   _id: string;
   name: string;
   email: string;
+  profileImage?: string;
+  avatar?: string;
   joinDate: string;
   points: number;
   solutions: number;
@@ -114,8 +116,16 @@ export default function ClassroomStudentsPage() {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                          <User className="h-6 w-6 text-primary" />
+                        <div className="relative w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                          {student.profileImage || student.avatar ? (
+                            <img
+                              src={student.profileImage || student.avatar}
+                              alt={student.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <User className="h-6 w-6 text-white" />
+                          )}
                         </div>
                         <div>
                           <h3 className="font-semibold">{student.name}</h3>
