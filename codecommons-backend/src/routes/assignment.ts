@@ -183,6 +183,8 @@ router.post(
         fileUrl: "",
         fileType: "",
         fileSize: "",
+        attempts: 1,
+        lastModifiedAt: new Date(),
       };
 
       // Handle file upload if present
