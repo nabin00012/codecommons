@@ -175,7 +175,7 @@ export default function ClassroomDetailPage() {
     const fetchData = async () => {
       try {
         // Step 1: Fetch classroom details first for quick display
-        const classroomResponse = await fetch(`/api/classrooms/${classroomId}`, { credentials: "include" });
+        const classroomResponse = await fetch(`/api/classrooms/${classroomId}`, { credentials: "include", cache: "no-store" });
         if (classroomResponse.ok) {
           const classroomData = await classroomResponse.json();
           setClassroom(classroomData.data);
@@ -190,11 +190,11 @@ export default function ClassroomDetailPage() {
           discussionsResponse,
           membersResponse
         ] = await Promise.all([
-          fetch(`/api/classrooms/${classroomId}/announcements`, { credentials: "include" }),
-          fetch(`/api/classrooms/${classroomId}/assignments`, { credentials: "include" }),
-          fetch(`/api/classrooms/${classroomId}/materials`, { credentials: "include" }),
-          fetch(`/api/classrooms/${classroomId}/discussions`, { credentials: "include" }),
-          fetch(`/api/classrooms/${classroomId}/members`, { credentials: "include" })
+          fetch(`/api/classrooms/${classroomId}/announcements`, { credentials: "include", cache: "no-store" }),
+          fetch(`/api/classrooms/${classroomId}/assignments`, { credentials: "include", cache: "no-store" }),
+          fetch(`/api/classrooms/${classroomId}/materials`, { credentials: "include", cache: "no-store" }),
+          fetch(`/api/classrooms/${classroomId}/discussions`, { credentials: "include", cache: "no-store" }),
+          fetch(`/api/classrooms/${classroomId}/members`, { credentials: "include", cache: "no-store" })
         ]);
 
         if (announcementsResponse.ok) {
@@ -212,7 +212,7 @@ export default function ClassroomDetailPage() {
           if (!isTeacher && assignments.length > 0) {
             const submissionsResponse = await fetch(
               `/api/classrooms/${classroomId}/submissions/my-submissions`,
-              { credentials: "include" }
+              { credentials: "include", cache: "no-store" }
             );
             if (submissionsResponse.ok) {
               const submissionsData = await submissionsResponse.json();
