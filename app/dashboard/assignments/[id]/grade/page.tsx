@@ -63,7 +63,7 @@ export default function TeacherGradingPage() {
   const params = useParams();
   const { toast } = useToast();
 
-  const assignmentId = params.assignmentId as string;
+  const assignmentId = params.id as string;
 
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
